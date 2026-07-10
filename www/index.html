@@ -421,11 +421,19 @@ const state={ services:new Set(['netflix','disney','max']), moods:new Set(), isP
    If no key or no poster is found, the on-brand gradient card is the graceful fallback. ---------- */
 const TMDB_KEY='__TMDB_API_KEY__';
 const TMDB_OK=(typeof TMDB_KEY==='string' && TMDB_KEY.length>0 && TMDB_KEY.indexOf('__TMDB')!==0);
+// v4 read token (JWT, starts "eyJ") uses Authorization: Bearer; v3 key (32 hex) uses ?api_key=
+const TMDB_BEARER=(TMDB_KEY.indexOf('eyJ')===0 || TMDB_KEY.length>100);
 const TMDB_IMG='https://image.tmdb.org/t/p/w500';
 const metaCache={};
+function tmdbGet(pathAndQuery){
+  var url='https://api.themoviedb.org/3/'+pathAndQuery, opts;
+  if(TMDB_BEARER){ opts={headers:{Authorization:'Bearer '+TMDB_KEY, accept:'application/json'}}; }
+  else { url += (url.indexOf('?')<0?'?':'&')+'api_key='+encodeURIComponent(TMDB_KEY); opts={}; }
+  return fetch(url,opts).then(function(r){ if(!r.ok) throw new Error('tmdb '+r.status); return r.json(); });
+}
 function tmdbQuery(t){
-  const q=(t.t||'').replace(/[‐‑]/g,'-').trim();
-  const wm=(t.wiki||'').match(/\b(19|20)\d{2}\b/);
+  var q=(t.t||'').replace(/[‐‑]/g,'-').trim();
+  var wm=(t.wiki||'').match(/\b(19|20)\d{2}\b/);
   return {q:q, year:wm?wm[0]:'', tv:(t.media==='tvShow')};
 }
 function normTitle(x){ return (x||'').toLowerCase().replace(/[‐‑]/g,'-').replace(/[^a-z0-9]+/g,''); }
@@ -435,27 +443,21 @@ function pickTmdb(list,want){
   for(var j=0;j<list.length;j++){ var n=normTitle(list[j].title||list[j].name); if(n&&(n.indexOf(want)===0||want.indexOf(n)===0)) return list[j]; }
   return list[0];
 }
-function tmdbUrl(s,withYear){
-  var path=s.tv?'search/tv':'search/movie';
-  var yp=s.tv?'first_air_date_year':'year';
-  var u='https://api.themoviedb.org/3/'+path+'?api_key='+encodeURIComponent(TMDB_KEY)+'&include_adult=false&language=en-US&query='+encodeURIComponent(s.q);
-  if(withYear&&s.year) u+='&'+yp+'='+s.year;
-  return u;
+function searchPath(kind,s,withYear){
+  var p='search/'+kind+'?include_adult=false&language=en-US&query='+encodeURIComponent(s.q);
+  if(withYear && s.year && kind!=='multi'){ p+='&'+(kind==='tv'?'first_air_date_year':'year')+'='+s.year; }
+  return p;
 }
 function fetchMeta(t){
   if(metaCache[t.id]) return metaCache[t.id];
   if(!TMDB_OK){ var np=Promise.resolve({img:null,desc:''}); metaCache[t.id]=np; return np; }
-  const s=tmdbQuery(t), want=normTitle(s.q);
-  function run(withYear){
-    return fetch(tmdbUrl(s,withYear)).then(function(r){ if(!r.ok) throw 0; return r.json(); })
-      .then(function(d){ return (d&&d.results)||[]; });
-  }
-  const p=run(true).then(function(list){
-      if(list.length) return list;
-      return s.year?run(false):list;            // retry without year if the year filter over-narrowed
-    })
-    .then(function(list){
-      var hit=pickTmdb(list,want);
+  var s=tmdbQuery(t), want=normTitle(s.q), kind=s.tv?'tv':'movie';
+  function results(k,withYear){ return tmdbGet(searchPath(k,s,withYear)).then(function(d){ return (d&&d.results)||[]; }).catch(function(){ return []; }); }
+  var p=results(kind,true)
+    .then(function(l){ return l.length?l:results(kind,false); })
+    .then(function(l){ return l.length?l:results('multi',false); })
+    .then(function(l){
+      var hit=pickTmdb(l,want);
       if(!hit) return {img:null,desc:''};
       return {img:hit.poster_path?TMDB_IMG+hit.poster_path:null, desc:hit.overview||''};
     })
