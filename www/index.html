@@ -222,7 +222,7 @@
 
       <!-- ONBOARDING 1 -->
       <section class="screen active" id="ob1">
-        <div class="screen-body no-tab" style="display:flex;flex-direction:column;justify-content:center;text-align:center;padding-top:40px">
+        <div class="screen-body no-tab" style="display:flex;flex-direction:column;justify-content:center;text-align:center;padding-top:calc(env(safe-area-inset-top) + 24px);padding-bottom:calc(env(safe-area-inset-bottom) + 24px)">
           <div style="display:flex;justify-content:center;margin-bottom:24px">
             <div class="mascot" style="width:116px;height:116px">
               <div class="eye l"></div><div class="eye r"></div><div class="cheek l"></div><div class="cheek r"></div><div class="smile"></div>
@@ -230,8 +230,7 @@
           </div>
           <h1 style="font-size:33px;margin:0 0 12px;letter-spacing:-1px">Never argue about<br>what to watch again</h1>
           <p style="color:var(--muted);font-size:16px;line-height:1.5;margin:0 22px">Tell Moodie how you want to <b style="color:#fff">feel</b> tonight. Tap shuffle. Get the one thing everyone will actually watch.</p>
-          <div style="flex:1"></div>
-          <button class="btn shuffle-btn" onclick="showScreen('ob2')">Let's go 🍿</button>
+          <button class="btn shuffle-btn" style="margin-top:28px" onclick="showScreen('ob2')">Let's go 🍿</button>
           <div class="hint">Free to use solo • No account needed to start</div>
         </div>
       </section>
@@ -267,7 +266,7 @@
           <div><h1>What are you<br>in the mood for?</h1><div class="sub">Set the vibe, then shuffle.</div></div>
           
         </div>
-        <div class="screen-body no-tab">
+        <div class="screen-body" style="padding-bottom:calc(120px + env(safe-area-inset-bottom))">
           <div class="section-title" style="margin-top:2px">Movies or TV · how much time</div>
           <div class="seg" id="ctypeRow"></div>
           <div class="tchips" id="timeRow" style="margin-top:10px"></div>
@@ -614,6 +613,54 @@ function catalogFallback(){
   return { id:t.id, media:t.media==='tvShow'?'tv':'movie', title:t.t, poster:null, overview:'', genres:[], vote:7, pop:30, year:'', _catalog:true, g:t.g, em:t.em, wiki:t.wiki, why:t.why };
 }
 
+/* ---------- Unlimited results browser: top 25, then +25 per tap, paged from TMDB, deduped ---------- */
+var BROWSE={ list:[], seen:{}, page:{movie:0,tv:0}, exhausted:{movie:false,tv:false}, loading:false };
+function browseMedias(){ return state.ctype==='movie'?['movie']: state.ctype==='tv'?['tv']:['movie','tv']; }
+function discoverPage(media,page){
+  if(!TMDB_OK) return Promise.resolve({results:[],total:0});
+  var isCringe=state.moods.has('cringe');
+  var p=['include_adult=false','language=en-US','watch_region=US','sort_by=popularity.desc','vote_count.gte='+(isCringe?25:80)];
+  var provs=[...state.services];
+  if(provs.length){ p.push('with_watch_providers='+provs.join('|')); p.push('with_watch_monetization_types=flatrate|free|ads|rent|buy'); }
+  var genres=[]; state.moods.forEach(function(m){ genres=genres.concat(moodGenres(m,media)); });
+  genres=genres.filter(function(v,i,a){ return v && a.indexOf(v)===i; });
+  if(genres.length) p.push('with_genres='+genres.join('|'));
+  if(isCringe) p.push('vote_average.lte=6.3');
+  if(media==='movie'){ var rb=RUNTIME.filter(function(r){ return r.id===state.runtime; })[0]; if(rb){ if(rb.gte!=null) p.push('with_runtime.gte='+rb.gte); if(rb.lte!=null) p.push('with_runtime.lte='+rb.lte); } }
+  if(media==='movie'){ var mmax=currentMovieMax(); if(mmax){ p.push('certification_country=US'); p.push('certification.lte='+encodeURIComponent(mmax)); } }
+  p.push('page='+page);
+  return tmdbGet('discover/'+media+'?'+p.join('&')).then(function(d){ return { results:((d&&d.results)||[]).map(function(r){ return normResult(r,media); }), total:(d&&d.total_pages)||0 }; }).catch(function(){ return {results:[],total:0}; });
+}
+function initBrowse(hero){ BROWSE={ list:[], seen:{}, page:{movie:0,tv:0}, exhausted:{movie:false,tv:false}, loading:false }; if(hero) BROWSE.seen[keyOf(hero)]=1; }
+function browseFetchBatch(need){
+  var medias=browseMedias(); var got=[];
+  function round(){
+    var active=medias.filter(function(m){ return !BROWSE.exhausted[m]; });
+    if(!active.length || got.length>=need) return Promise.resolve(got);
+    return Promise.all(active.map(function(m){ var np=BROWSE.page[m]+1; return discoverPage(m,np).then(function(res){ BROWSE.page[m]=np; if(!res.results.length || (res.total && np>=res.total)) BROWSE.exhausted[m]=true; return res.results; }); })).then(function(lists){
+      var merged=[]; lists.forEach(function(l){ merged=merged.concat(l); });
+      merged.sort(function(a,b){ return (b.pop||0)-(a.pop||0); });
+      merged.forEach(function(c){ if(got.length>=need) return; if(!c||!c.poster) return; var k=keyOf(c); if(BROWSE.seen[k]) return; BROWSE.seen[k]=1; got.push(c); });
+      if(got.length>=need) return got;
+      if(!medias.filter(function(m){ return !BROWSE.exhausted[m]; }).length) return got;
+      return round();
+    });
+  }
+  return round();
+}
+function openCandidate(c){ haptic('LIGHT'); curPick=c; showScreen('result'); enrich(c).then(function(){ settleResult(c); }); }
+function browseMore(n){
+  var grid=document.getElementById('moreGrid'); var btn=document.getElementById('moreTitlesBtn'); if(!grid) return;
+  if(!TMDB_OK){ if(btn) btn.style.display='none'; return; }
+  if(BROWSE.loading) return; BROWSE.loading=true; if(btn){ btn.disabled=true; btn.textContent='Loading…'; }
+  browseFetchBatch(n).then(function(items){
+    items.forEach(function(c){ BROWSE.list.push(c); var d=recPoster(c,'mini'); d.style.cursor='pointer'; d.onclick=(function(cc){ return function(){ openCandidate(cc); }; })(c); grid.appendChild(d); });
+    BROWSE.loading=false;
+    var exhausted=browseMedias().every(function(m){ return BROWSE.exhausted[m]; });
+    if(btn){ btn.disabled=false; btn.textContent='More show titles'; btn.style.display=(exhausted && (items.length<n || BROWSE.list.length===0))?'none':'block'; }
+  }).catch(function(){ BROWSE.loading=false; if(btn){ btn.disabled=false; btn.textContent='More show titles'; } });
+}
+
 /* ---------- Nav ---------- */
 var APP_TABS=['home','groups','saved','profile'];
 function showScreen(id){ var els=document.querySelectorAll('.screen'); for(var i=0;i<els.length;i++) els[i].classList.remove('active'); var el=document.getElementById(id); if(el) el.classList.add('active'); document.getElementById('tabbar').style.display=APP_TABS.indexOf(id)>=0?'flex':'none'; var bodies=document.querySelectorAll('.screen-body'); for(var j=0;j<bodies.length;j++) bodies[j].scrollTop=0; }
@@ -687,7 +734,9 @@ function settleResult(c){
    +'<button class="btn secondary" style="margin-top:10px" onclick="seenPick()">👀 I\'ve seen it</button>'
    +'<div style="margin-top:10px"><textarea id="noteBox" placeholder="Add a note so Moodie learns (e.g. “loved the twist”, “too slow”)…" style="width:100%;min-height:52px;background:var(--surface);border:1px solid var(--line);border-radius:12px;color:#fff;padding:10px;font-family:var(--font);font-size:14px;resize:vertical"></textarea>'
    +'<button class="btn secondary small" style="margin-top:6px;width:100%" onclick="saveNote()">Save note</button></div>'
+   +(TMDB_OK?'<div class="section-title">More show titles</div><div class="grid2" id="moreGrid"></div><button class="btn secondary small" id="moreTitlesBtn" style="margin-top:12px;width:100%" onclick="browseMore(25)">More show titles</button>':'')
    +'<div class="spacer"></div>';
+  if(TMDB_OK){ initBrowse(c); browseMore(25); }
   if(!state.rated) setTimeout(openRate,1200);
 }
 function openImdb(){ if(curPick) openURL(imdbURL(curPick)); }
