@@ -10,6 +10,8 @@ workflows:
     integrations:
       app_store_connect: ChordLoopAPIKey
     environment:
+      groups:
+        - tmdb
       vars:
         BUNDLE_ID: "com.jonathanbiles.moodie"
         XCODE_WORKSPACE: "ios/App/App.xcworkspace"
