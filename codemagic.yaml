@@ -1,13 +1,13 @@
 # Moodie — Capacitor iOS -> signed IPA -> TestFlight, built in the cloud.
-# One-time: in Codemagic > Team settings > Integrations > App Store Connect,
-# add your App Store Connect API key and name it exactly:  MoodieAppStore
+# Reuses the existing App Store Connect API key integration "ChordLoopAPIKey"
+# (Codemagic > Settings > Integrations > Developer Portal) shared across the owner's apps.
 workflows:
   ios-testflight:
     name: Moodie -> TestFlight
     instance_type: mac_mini_m2
     max_build_duration: 60
     integrations:
-      app_store_connect: MoodieAppStore
+      app_store_connect: ChordLoopAPIKey
     environment:
       vars:
         BUNDLE_ID: "com.jonathanbiles.moodie"
