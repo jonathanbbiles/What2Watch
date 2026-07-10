@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<meta name="theme-color" content="#100C1D" />
+<title>Moodie</title>
+<style>
+  :root{
+    --bg:#100C1D; --bg2:#17122A; --surface:#1F1838; --surface2:#2A2150; --line:#332A55;
+    --text:#FFFFFF; --muted:#B8B0D0; --dim:#8A80AC;
+    --pink:#FF3D8A; --purple:#8B5CFF; --violet:#6B4CFF; --orange:#FF8A3D;
+    --yellow:#FFD23D; --teal:#34E0C4; --blue:#43B4FF; --green:#9BE04A;
+    --grad:linear-gradient(135deg,#FF3D8A 0%,#8B5CFF 100%);
+    --grad2:linear-gradient(135deg,#FF8A3D 0%,#FF3D8A 60%,#8B5CFF 100%);
+    --font:-apple-system,BlinkMacSystemFont,"SF Pro Rounded","SF Pro Display","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:var(--font); background:
+      radial-gradient(1200px 600px at 50% -10%, #241a44 0%, transparent 60%),
+      radial-gradient(900px 500px at 90% 20%, #2a1350 0%, transparent 55%),
+      var(--bg);
+    color:var(--text); min-height:100dvh; display:flex; flex-direction:column;
+    align-items:center; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{width:100%; display:flex; flex-direction:column; align-items:center}
+  .stage{position:relative; width:100%; max-width:430px}
+  .phone{position:relative; width:100%; height:100dvh; max-height:100dvh;
+    background:var(--bg); overflow:hidden; display:flex; flex-direction:column; user-select:none}
+  @media(min-width:480px){
+    body{padding:26px 12px 40px}
+    .phone{height:900px; max-height:90dvh; border-radius:44px; border:11px solid #05030c;
+      box-shadow:0 40px 90px rgba(0,0,0,.6), 0 0 0 2px #2a2350 inset;}
+    .stage{max-width:410px}
+  }
+
+  .screen{position:absolute; inset:0; display:none; flex-direction:column; background:var(--bg)}
+  .screen.active{display:flex}
+  .screen-body{flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:0 18px 130px}
+  .screen-body.no-tab{padding-bottom:22px}
+
+  .topbar{display:flex; align-items:center; justify-content:space-between; padding:16px 18px 6px; min-height:52px}
+  .topbar h1{font-size:24px; margin:0; letter-spacing:-.5px; font-weight:800; line-height:1.1}
+  .topbar .sub{font-size:13px; color:var(--muted); margin-top:3px}
+  .icon-btn{width:40px; height:40px; border-radius:50%; background:var(--surface); border:1px solid var(--line);
+    display:flex; align-items:center; justify-content:center; font-size:18px; color:var(--text); cursor:pointer}
+  .back{display:flex; align-items:center; gap:5px; color:var(--blue); font-weight:700; cursor:pointer; font-size:16px}
+
+  .btn{display:flex; align-items:center; justify-content:center; gap:8px; width:100%; border:none; cursor:pointer;
+    font-family:var(--font); font-weight:800; font-size:17px; color:#fff; background:var(--grad);
+    padding:16px 20px; border-radius:16px; letter-spacing:.2px; box-shadow:0 12px 30px rgba(255,61,138,.35)}
+  .btn:active{transform:scale(.98)}
+  .btn.secondary{background:var(--surface); box-shadow:none; border:1px solid var(--line); color:var(--text)}
+  .btn.small{font-size:15px; padding:13px 16px; border-radius:14px}
+  .btn.ghost{background:transparent; box-shadow:none; color:var(--muted); font-weight:700}
+  .shuffle-btn{background:var(--grad2); box-shadow:0 16px 40px rgba(255,138,61,.4); font-size:18px; padding:18px}
+
+  .mascot{position:relative; border-radius:30%; background:var(--grad2); flex:none;
+    box-shadow:0 14px 34px rgba(139,92,255,.4), inset 0 -8px 20px rgba(0,0,0,.15)}
+  .mascot .eye{position:absolute; top:38%; width:12%; height:12%; background:#1b0e2e; border-radius:50%}
+  .mascot .eye.l{left:30%}
+  .mascot .eye.r{left:58%; height:4%; border-radius:6px; top:42%}
+  .mascot .smile{position:absolute; left:34%; top:56%; width:32%; height:20%; border:3px solid #1b0e2e; border-top:none; border-radius:0 0 40px 40px}
+  .mascot .cheek{position:absolute; top:52%; width:9%; height:6%; background:#ff9ec4; border-radius:50%; opacity:.7}
+  .mascot .cheek.l{left:20%}
+  .mascot .cheek.r{left:71%}
+
+  .chips{display:flex; flex-wrap:wrap; gap:10px}
+  .chip{padding:11px 15px; border-radius:14px; background:var(--surface); border:1.5px solid var(--line);
+    font-weight:700; font-size:15px; cursor:pointer; display:flex; align-items:center; gap:8px; color:var(--text)}
+  .chip.selected{border-color:transparent; color:#12101d; transform:translateY(-1px)}
+
+  /* Mood picker — compact, fits one screen */
+  .mood-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:4px}
+  .mood{position:relative; border-radius:15px; padding:13px 14px; cursor:pointer; overflow:hidden;
+    background:var(--surface); border:2px solid var(--line); display:flex; align-items:center; gap:10px}
+  .mood .em{font-size:19px; position:relative; z-index:2}
+  .mood .lbl{font-weight:800; font-size:15px; position:relative; z-index:2}
+  .mood .glow{position:absolute; inset:0; opacity:0; transition:opacity .2s}
+  .mood.selected{border-color:#fff}
+  .mood.selected .glow{opacity:.92}
+  .mood.selected .em,.mood.selected .lbl{color:#151024}
+
+  /* Posters — designed key-art cards (real art comes from the metadata DB in production) */
+  .poster{position:relative; border-radius:18px; overflow:hidden; display:flex; flex-direction:column;
+    justify-content:flex-end; color:#fff; aspect-ratio:2/3; box-shadow:0 16px 40px rgba(0,0,0,.4)}
+  .poster .art{position:absolute; inset:0; z-index:0; display:flex; align-items:center; justify-content:center;
+    font-size:68px; opacity:.30; transform:translateY(-9%); transition:opacity .3s}
+  .poster .pimg{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0; transition:opacity .45s; z-index:1}
+  .poster.has-img .pimg{opacity:1}
+  .poster.has-img .art{opacity:0}
+  .poster.fit-contain .pimg{object-fit:contain}
+  .poster .sheen{position:absolute; inset:0; z-index:2; pointer-events:none;
+    background:radial-gradient(120% 80% at 22% 10%, rgba(255,255,255,.30), transparent 52%),
+      linear-gradient(to top, rgba(0,0,0,.62), rgba(0,0,0,.05) 58%, transparent)}
+  .poster .pmeta{position:relative; z-index:3; padding:12px}
+  .poster .ptitle{font-weight:800; font-size:17px; line-height:1.12; letter-spacing:-.3px; text-shadow:0 1px 10px rgba(0,0,0,.4)}
+  .poster .psub{font-size:12px; color:#f2eeff; margin-top:6px; display:flex; gap:6px; flex-wrap:wrap; align-items:center}
+  .poster.mini .art{font-size:46px}
+  .poster.mini .ptitle{font-size:13.5px}
+  .poster.mini .pmeta{padding:9px}
+  .poster.big{aspect-ratio:2/3; height:min(44vh,360px); width:auto; margin:6px auto 0}
+  .poster.big .art{font-size:120px}
+  .poster.big .ptitle{font-size:22px}
+  .poster.picked{outline:3px solid #fff; outline-offset:2px}
+
+  .badge{display:inline-flex; align-items:center; gap:5px; padding:4px 9px; border-radius:8px; font-size:11px; font-weight:800; background:rgba(255,255,255,.16)}
+  .badge.svc{background:rgba(255,255,255,.94); color:#151024}
+  .badge.rating{background:rgba(0,0,0,.5); border:1px solid rgba(255,255,255,.3)}
+
+  .why{background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:13px 15px; margin-top:14px; font-size:15px; color:#e9e4ff; line-height:1.4}
+  .why b{color:#fff}
+  .synopsis{font-size:13.5px; color:var(--muted); line-height:1.5; margin-top:12px}
+  .synopsis:before{content:"SYNOPSIS"; display:block; font-size:10px; letter-spacing:1.2px; color:var(--dim); font-weight:800; margin-bottom:5px}
+
+  .card{background:var(--surface); border:1px solid var(--line); border-radius:20px; padding:16px; margin-top:14px}
+  .card h3{margin:0 0 4px; font-size:17px}
+  .card p{margin:0; color:var(--muted); font-size:14px; line-height:1.45}
+  .rowitem{display:flex; align-items:center; gap:13px; padding:13px 0; border-bottom:1px solid var(--line); cursor:pointer}
+  .rowitem:last-child{border-bottom:none}
+  .rowitem .av{width:44px; height:44px; border-radius:50%; flex:none; display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:800; color:#151024}
+  .rowitem .grow{flex:1}
+  .rowitem .name{font-weight:700; font-size:16px}
+  .rowitem .desc{font-size:13px; color:var(--muted); margin-top:2px}
+
+  .grid3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-top:10px}
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:14px}
+  .section-title{font-size:13px; text-transform:uppercase; letter-spacing:1.2px; color:var(--dim); font-weight:800; margin:20px 2px 4px}
+
+  .tabbar{position:absolute; left:0; right:0; bottom:0; height:84px; padding:8px 14px calc(env(safe-area-inset-bottom) + 6px);
+    background:rgba(16,12,29,.86); backdrop-filter:blur(20px); border-top:1px solid var(--line);
+    display:flex; justify-content:space-around; align-items:flex-start}
+  .tab{display:flex; flex-direction:column; align-items:center; gap:3px; padding:8px 12px; cursor:pointer; color:var(--dim); font-size:11px; font-weight:700; flex:1}
+  .tab .ti{font-size:22px; line-height:1}
+  .tab.active{color:#fff}
+
+  .pw-hero{text-align:center; padding:24px 6px 6px}
+  .pw-benefit{display:flex; gap:13px; align-items:flex-start; padding:10px 0}
+  .pw-benefit .pi{width:34px; height:34px; border-radius:11px; background:var(--surface2); display:flex; align-items:center; justify-content:center; font-size:18px; flex:none}
+  .pw-benefit .bt{font-weight:700; font-size:15.5px}
+  .pw-benefit .bd{font-size:13px; color:var(--muted); margin-top:1px}
+  .plan{border:2px solid var(--line); border-radius:18px; padding:15px 16px; margin-top:12px; display:flex; align-items:center; justify-content:space-between; cursor:pointer; background:var(--surface)}
+  .plan.best{border-color:var(--pink); background:linear-gradient(135deg,rgba(255,61,138,.14),rgba(139,92,255,.14))}
+  .plan .pl-name{font-weight:800; font-size:16px}
+  .plan .pl-sub{font-size:12.5px; color:var(--muted); margin-top:3px}
+  .plan .pl-price{font-weight:800; font-size:17px; text-align:right}
+  .plan .pl-price small{display:block; font-size:11px; color:var(--muted); font-weight:600}
+  .tag{display:inline-block; background:var(--pink); color:#fff; font-size:10px; font-weight:800; padding:3px 8px; border-radius:6px; letter-spacing:.4px; margin-bottom:6px}
+  .fineprint{font-size:11px; color:var(--dim); text-align:center; line-height:1.6; margin-top:14px}
+  .fineprint a{color:var(--muted)}
+
+  .as-head{display:flex; gap:16px; align-items:center; padding:4px 2px 6px}
+  .as-head .meta{flex:1}
+  .as-head .title{font-size:22px; font-weight:800; letter-spacing:-.4px}
+  .as-head .subtitle{font-size:14px; color:var(--muted); margin-top:2px}
+  .as-get{background:var(--grad); border:none; color:#fff; font-weight:800; padding:9px 20px; border-radius:20px; font-size:15px; cursor:pointer}
+  .as-stats{display:flex; margin:16px 0; border-radius:16px; overflow:hidden; background:var(--surface); border:1px solid var(--line)}
+  .as-stat{flex:1; text-align:center; padding:12px 6px; border-right:1px solid var(--line)}
+  .as-stat:last-child{border-right:none}
+  .as-stat .n{font-weight:800; font-size:15px}
+  .as-stat .l{font-size:10px; color:var(--dim); text-transform:uppercase; letter-spacing:.5px; margin-top:3px}
+  .shots{display:flex; gap:14px; overflow-x:auto; padding:6px 2px 12px; scroll-snap-type:x mandatory}
+  .shot{flex:none; width:200px; scroll-snap-align:center}
+  .shot .cap{font-weight:800; font-size:15px; margin-bottom:9px; line-height:1.25; min-height:38px}
+  .shot .frame{border-radius:22px; overflow:hidden; border:1px solid var(--line); background:var(--bg2); aspect-ratio:9/17; position:relative}
+  .stars{color:var(--yellow); letter-spacing:2px; font-size:15px}
+
+  .toast{position:absolute; left:50%; bottom:104px; transform:translateX(-50%) translateY(20px); background:#000; color:#fff;
+    padding:12px 18px; border-radius:14px; font-weight:700; font-size:14px; opacity:0; pointer-events:none; transition:.25s; z-index:60; border:1px solid #3a2f60; white-space:nowrap}
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
+  .modal{position:absolute; inset:0; background:rgba(6,4,14,.72); backdrop-filter:blur(6px); display:none; align-items:center; justify-content:center; z-index:70; padding:24px}
+  .modal.show{display:flex}
+  .modal .box{background:var(--surface); border:1px solid var(--line); border-radius:24px; padding:24px; text-align:center; width:100%; max-width:320px}
+  .modal .box .bigstars{font-size:30px; letter-spacing:4px; margin:10px 0 4px}
+
+  .lock-pill{display:inline-flex; align-items:center; gap:6px; background:var(--surface2); color:#fff; font-size:12px; font-weight:800; padding:6px 12px; border-radius:20px}
+  .hint{font-size:13px; color:var(--dim); text-align:center; margin-top:10px}
+  .blurred{filter:blur(5px); opacity:.5; pointer-events:none}
+  .pop{animation:pop .35s cubic-bezier(.2,1.3,.5,1)}
+  @keyframes pop{0%{transform:scale(.9);opacity:.5}100%{transform:scale(1);opacity:1}}
+  .spacer{height:14px}
+
+  .dec details{background:var(--surface); border:1px solid var(--line); border-radius:16px; margin-top:12px; overflow:hidden}
+  .dec summary{padding:15px 16px; font-weight:800; font-size:15px; cursor:pointer; list-style:none; display:flex; justify-content:space-between; align-items:center}
+  .dec summary::-webkit-details-marker{display:none}
+  .dec summary::after{content:"＋"; color:var(--muted)}
+  .dec details[open] summary::after{content:"–"}
+  .dec .db{padding:0 16px 16px; font-size:14px; color:#d9d3ef; line-height:1.55}
+  .dec .db b{color:#fff}
+  .dec .db ul{margin:8px 0 0; padding-left:18px}
+  .dec .db li{margin:5px 0}
+  .kv{display:flex; gap:8px; margin:4px 0}
+  .kv .k{color:var(--dim); min-width:92px; font-weight:700}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="stage">
+    <div class="phone" id="phone">
+
+      <!-- ONBOARDING 1 -->
+      <section class="screen active" id="ob1">
+        <div class="screen-body no-tab" style="display:flex;flex-direction:column;justify-content:center;text-align:center;padding-top:40px">
+          <div style="display:flex;justify-content:center;margin-bottom:24px">
+            <div class="mascot" style="width:116px;height:116px">
+              <div class="eye l"></div><div class="eye r"></div><div class="cheek l"></div><div class="cheek r"></div><div class="smile"></div>
+            </div>
+          </div>
+          <h1 style="font-size:33px;margin:0 0 12px;letter-spacing:-1px">Never argue about<br>what to watch again</h1>
+          <p style="color:var(--muted);font-size:16px;line-height:1.5;margin:0 22px">Tell Moodie how you want to <b style="color:#fff">feel</b> tonight. Tap shuffle. Get the one thing everyone will actually watch.</p>
+          <div style="flex:1"></div>
+          <button class="btn shuffle-btn" onclick="showScreen('ob2')">Let's go 🍿</button>
+          <div class="hint">Free to use solo • No account needed to start</div>
+        </div>
+      </section>
+
+      <!-- ONBOARDING 2: services -->
+      <section class="screen" id="ob2">
+        <div class="topbar"><div><h1>Your services</h1><div class="sub">We'll only suggest what you can actually stream.</div></div></div>
+        <div class="screen-body no-tab">
+          <div class="chips" id="svcChips" style="margin-top:6px"></div>
+          <p class="hint" style="margin-top:18px">Tap the ones you have. Change anytime.</p>
+        </div>
+        <div style="padding:14px 18px calc(env(safe-area-inset-bottom) + 14px)">
+          <button class="btn" onclick="showScreen('ob3')">Continue</button>
+        </div>
+      </section>
+
+      <!-- ONBOARDING 3: taste -->
+      <section class="screen" id="ob3">
+        <div class="topbar"><div><h1>Quick vibe check</h1><div class="sub">Tap a few you love — Moodie learns your taste. Or skip.</div></div></div>
+        <div class="screen-body no-tab">
+          <div class="grid3" id="tasteGrid"></div>
+          <button class="btn secondary small" id="moreBtn" style="margin-top:14px" onclick="buildTaste(false)">Show more titles</button>
+        </div>
+        <div style="padding:12px 18px calc(env(safe-area-inset-bottom) + 14px);display:flex;gap:10px">
+          <button class="btn secondary" style="flex:.5" onclick="finishOnboarding()">Skip</button>
+          <button class="btn" style="flex:1" onclick="finishOnboarding()">Start shuffling</button>
+        </div>
+      </section>
+
+      <!-- HOME / MOOD PICKER (one screen) -->
+      <section class="screen" id="home">
+        <div class="topbar">
+          <div><h1>How do you want<br>to feel tonight?</h1><div class="sub">Tap one or more.</div></div>
+          
+        </div>
+        <div class="screen-body no-tab">
+          <div class="mood-grid" id="moodGrid"></div>
+          <button class="btn shuffle-btn" style="margin-top:16px" onclick="doShuffle()">🔀 Shuffle my pick</button>
+          <div class="hint">Moodie finds one perfect match across your services.</div>
+        </div>
+      </section>
+
+      <!-- RESULT -->
+      <section class="screen" id="result">
+        <div class="topbar"><div class="back" onclick="setTab('home')">‹ Moods</div><div class="sub">Your pick</div><div style="width:20px"></div></div>
+        <div class="screen-body no-tab" id="resultBody"></div>
+      </section>
+
+      <!-- GROUPS -->
+      <section class="screen" id="groups">
+        <div class="topbar"><div><h1>Watch together</h1><div class="sub">Blend everyone's services, tastes & ratings.</div></div></div>
+        <div class="screen-body" id="groupsBody"></div>
+      </section>
+
+      <!-- SAVED -->
+      <section class="screen" id="saved">
+        <div class="topbar"><div><h1>Saved</h1><div class="sub">Your watch‑later list.</div></div></div>
+        <div class="screen-body">
+          <div class="grid2" id="savedGrid"></div>
+          <div id="savedEmpty" class="center" style="margin-top:40px;color:var(--dim);text-align:center">
+            <div style="font-size:40px">🔖</div>
+            <p style="font-size:14px">Tap ＋ Save on any pick to keep it here.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- PROFILE -->
+      <section class="screen" id="profile">
+        <div class="topbar"><div><h1>You</h1></div></div>
+        <div class="screen-body">
+          <div class="card" style="display:flex;align-items:center;gap:14px">
+            <div class="mascot" style="width:56px;height:56px">
+              <div class="eye l"></div><div class="eye r"></div><div class="smile"></div>
+            </div>
+            <div style="flex:1">
+              <div style="font-weight:800;font-size:18px">Jonathan</div>
+              <div id="planLabel" style="font-size:13px;color:var(--muted)">Free plan • Solo shuffle</div>
+            </div>
+          </div>
+          <div class="section-title">My services</div>
+          <div class="chips" id="profileSvc"></div>
+          <div class="section-title">Watch together</div>
+          <div class="card" style="margin-top:6px">
+            <h3 id="plusTitle">Pair up &amp; make groups</h3>
+            <p>Share a code, blend everyone's services &amp; tastes, and set kid-safe rating limits.</p>
+            <button class="btn small" style="margin-top:12px" onclick="setTab('groups')">Open Together</button>
+          </div>
+          <div class="section-title">Settings</div>
+          <div class="card">
+            
+            <div class="rowitem" onclick="openURL('https://jonathanscribbles.com/moodie')"><div class="grow"><div class="name">Terms of Service</div></div><div style="color:var(--dim)">›</div></div>
+            <div class="rowitem" onclick="openURL('https://jonathanscribbles.com/moodie')"><div class="grow"><div class="name">Privacy Policy</div></div><div style="color:var(--dim)">›</div></div>
+            
+          </div>
+          <div class="spacer"></div>
+        </div>
+      </section>
+
+      <!-- PAYWALL -->
+      
+
+      <!-- APP STORE LISTING -->
+      
+
+      <!-- DECISIONS -->
+      
+
+      <nav class="tabbar" id="tabbar" style="display:none">
+        <div class="tab" data-tab="home" onclick="setTab('home')"><div class="ti">🔀</div>Shuffle</div>
+        <div class="tab" data-tab="groups" onclick="setTab('groups')"><div class="ti">👥</div>Together</div>
+        <div class="tab" data-tab="saved" onclick="setTab('saved')"><div class="ti">🔖</div>Saved</div>
+        <div class="tab" data-tab="profile" onclick="setTab('profile')"><div class="ti">😌</div>You</div>
+      </nav>
+
+      <div class="toast" id="toast"></div>
+      <div class="modal" id="rateModal">
+        <div class="box">
+          <div style="font-size:15px;color:var(--muted)">Nice pick! 🎉</div>
+          <div style="font-weight:800;font-size:19px;margin-top:6px">Enjoying Moodie?</div>
+          <div class="bigstars stars">★★★★★</div>
+          <button class="btn" style="margin-top:14px" onclick="rate()">Rate Moodie</button>
+          <button class="btn ghost" style="margin-top:6px" onclick="closeRate()">Not now</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------- Native bridge (Capacitor): haptics, native Share sheet, on-device storage ---------- */
+var Cap = window.Capacitor || {};
+var NP = (Cap && Cap.Plugins) || {};
+function haptic(style){ try{ if(NP.Haptics && NP.Haptics.impact) NP.Haptics.impact({style:style||'MEDIUM'}); }catch(e){} }
+var Store={
+  set:function(k,v){ try{ if(NP.Preferences){ NP.Preferences.set({key:k,value:JSON.stringify(v)}); return; } }catch(e){} try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} },
+  get:function(k){ return new Promise(function(res){ try{ if(NP.Preferences){ NP.Preferences.get({key:k}).then(function(r){ try{ res(r&&r.value?JSON.parse(r.value):null); }catch(e){ res(null); } }).catch(function(){ res(null); }); return; } }catch(e){} try{ var raw=localStorage.getItem(k); res(raw?JSON.parse(raw):null); }catch(e){ res(null); } }); }
+};
+function persistServices(){ try{ Store.set('services',[...state.services]); }catch(e){} }
+function persistSaved(){ try{ Store.set('saved',[...state.saved]); }catch(e){} }
+function openURL(u){ try{ window.open(u,'_blank'); }catch(e){} }
+function sharePick(id){ var t=TITLES.find(function(x){ return x.id===id; }); if(!t) return; var text='Moodie says watch \"'+t.t+'\" tonight \u2014 '+t.why+' (on '+svcName(t.svc)+')'; try{ if(NP.Share && NP.Share.share){ NP.Share.share({title:'Moodie',text:text,dialogTitle:'Share your pick'}); return; } }catch(e){} try{ if(navigator.share){ navigator.share({text:text}); return; } }catch(e){} toast('Shared '+t.t+' \ud83c\udf7f'); }
+function boot(){ buildTaste(true); buildMoods(); buildServiceChips(document.getElementById('svcChips')); Store.get('services').then(function(sv){ if(Array.isArray(sv)&&sv.length){ state.services=new Set(sv); buildServiceChips(document.getElementById('svcChips')); if(document.getElementById('profileSvc')) buildServiceChips(document.getElementById('profileSvc')); } }); Store.get('saved').then(function(sd){ if(Array.isArray(sd)){ state.saved=new Set(sd); } }); }
+/* ---------- Data ---------- */
+const SERVICES=[
+  {id:'netflix',name:'Netflix',c:'#E50914'},{id:'prime',name:'Prime Video',c:'#00A8E1'},
+  {id:'disney',name:'Disney+',c:'#1F5FE0'},{id:'max',name:'Max',c:'#7B2FF7'},
+  {id:'hulu',name:'Hulu',c:'#1CE783'},{id:'apple',name:'Apple TV+',c:'#6E6E73'},
+  {id:'peacock',name:'Peacock',c:'#F5A623'},{id:'paramount',name:'Paramount+',c:'#0064FF'},
+];
+const MOODS=[
+  {id:'laugh',em:'😂',lbl:'Laugh',c:'#FFD23D'},{id:'cry',em:'🥲',lbl:'Cry it out',c:'#43B4FF'},
+  {id:'thrill',em:'😨',lbl:'Thrills',c:'#FF5C7A'},{id:'romance',em:'❤️',lbl:'Romance',c:'#FF7AB8'},
+  {id:'mindblown',em:'🤯',lbl:'Mind‑blown',c:'#A879FF'},{id:'chill',em:'😌',lbl:'Chill',c:'#34E0C4'},
+  {id:'scared',em:'👻',lbl:'Spooky',c:'#7CE084'},{id:'hyped',em:'🔥',lbl:'Hyped',c:'#FF8A3D'},
+  {id:'smart',em:'🧠',lbl:'Smart',c:'#6BA8FF'},{id:'family',em:'👨‍👩‍👧',lbl:'Family',c:'#9BE04A'},
+];
+const svcName=id=>(SERVICES.find(s=>s.id===id)||{}).name;
+const TITLES=[
+  {id:1,t:'The Good Place',em:'😄',svc:'netflix',r:'TV‑14',rt:'22m',moods:['laugh','smart','chill'],g:'linear-gradient(135deg,#34E0C4,#43B4FF)',why:'Feel‑good and clever without trying too hard.',media:'tvShow'},
+  {id:2,t:'Brooklyn Nine‑Nine',em:'🚔',svc:'peacock',r:'TV‑14',rt:'22m',moods:['laugh','chill'],g:'linear-gradient(135deg,#FF8A3D,#FFD23D)',why:'A comfort‑watch that never misses.',media:'tvShow'},
+  {id:3,t:"Schitt's Creek",em:'🏨',svc:'hulu',r:'TV‑14',rt:'22m',moods:['laugh','chill'],g:'linear-gradient(135deg,#FF7AB8,#FF8A3D)',why:'Warm, silly, impossible not to smile.',media:'tvShow'},
+  {id:4,t:'Ted Lasso',em:'⚽️',svc:'apple',r:'TV‑MA',rt:'45m',moods:['laugh','cry','smart'],g:'linear-gradient(135deg,#43B4FF,#8B5CFF)',why:'Kindness as a superpower — you\'ll feel better.',media:'tvShow'},
+  {id:5,t:'Paddington 2',em:'🐻',svc:'max',r:'PG',rt:'103m',moods:['family','laugh','chill'],g:'linear-gradient(135deg,#FF8A3D,#FF3D8A)',why:'The purest feel‑good movie ever made.',media:'movie'},
+  {id:6,t:'Bluey',em:'🐶',svc:'disney',r:'TV‑Y',rt:'8m',moods:['family','chill'],g:'linear-gradient(135deg,#43B4FF,#34E0C4)',why:'Sweet, tiny, secretly for the grown‑ups too.',media:'tvShow'},
+  {id:7,t:'Spider‑Man: Into the Spider‑Verse',em:'🕷️',svc:'netflix',r:'PG',rt:'117m',moods:['hyped','family','mindblown'],g:'linear-gradient(135deg,#FF3D8A,#8B5CFF)',why:'A jolt of color and joy for everyone.',media:'movie'},
+  {id:8,t:'Everything Everywhere All at Once',em:'🥯',svc:'hulu',r:'R',rt:'139m',moods:['mindblown','cry','hyped'],g:'linear-gradient(135deg,#8B5CFF,#FF3D8A)',why:'It\'ll scramble and then mend your heart.',media:'movie'},
+  {id:9,t:'Inception',em:'🌀',svc:'netflix',r:'PG‑13',rt:'148m',moods:['mindblown','thrill'],g:'linear-gradient(135deg,#6B4CFF,#43B4FF)',why:'Bend your brain, then argue the ending.',media:'movie'},
+  {id:10,t:'Interstellar',em:'🚀',svc:'paramount',r:'PG‑13',rt:'169m',moods:['cry','mindblown'],g:'linear-gradient(135deg,#151B4A,#43B4FF)',why:'Big feelings, bigger space.',media:'movie'},
+  {id:11,t:'The Notebook',em:'💌',svc:'max',r:'PG‑13',rt:'123m',moods:['romance','cry'],g:'linear-gradient(135deg,#FF7AB8,#FF3D8A)',why:'The classic ugly‑cry love story.',media:'movie'},
+  {id:12,t:'Pride & Prejudice',em:'💐',svc:'peacock',r:'PG',rt:'129m',moods:['romance','chill'],g:'linear-gradient(135deg,#9BE04A,#34E0C4)',why:'Longing glances and rolling hills.',media:'movie'},
+  {id:13,t:'A Quiet Place',em:'🤫',svc:'paramount',r:'PG‑13',rt:'90m',moods:['thrill','scared'],g:'linear-gradient(135deg,#2A2150,#FF5C7A)',why:'Hold your breath the whole way through.',media:'movie'},
+  {id:14,t:'Hereditary',em:'🕯️',svc:'max',r:'R',rt:'127m',moods:['scared','thrill'],g:'linear-gradient(135deg,#1a1030,#7CE084)',why:'Genuinely terrifying. Lights on.',media:'movie'},
+  {id:15,t:'Knives Out',em:'🔪',svc:'netflix',r:'PG‑13',rt:'130m',moods:['smart','laugh','thrill'],g:'linear-gradient(135deg,#FF8A3D,#6B4CFF)',why:'A twisty whodunit that\'s actually fun.',media:'movie'},
+  {id:16,t:'Coco',em:'🎸',svc:'disney',r:'PG',rt:'105m',moods:['family','cry'],g:'linear-gradient(135deg,#FF8A3D,#FFD23D)',why:'Bring tissues — a gorgeous cry.',media:'movie'},
+  {id:17,t:'Planet Earth II',em:'🌍',svc:'max',r:'TV‑G',rt:'50m',moods:['chill','smart','family'],g:'linear-gradient(135deg,#34E0C4,#9BE04A)',why:'Breathe out. The planet is stunning.',media:'tvShow'},
+  {id:18,t:'Top Gun: Maverick',em:'✈️',svc:'paramount',r:'PG‑13',rt:'130m',moods:['hyped','thrill'],g:'linear-gradient(135deg,#0064FF,#FF8A3D)',why:'Pure adrenaline and a grin.',media:'movie'},
+  {id:19,t:'Fleabag',em:'🍷',svc:'prime',r:'TV‑MA',rt:'27m',moods:['smart','laugh','cry'],g:'linear-gradient(135deg,#FF3D8A,#6B4CFF)',why:'Sharp, filthy, secretly devastating.',media:'tvShow'},
+  {id:20,t:'Spirited Away',em:'🐉',svc:'max',r:'PG',rt:'125m',moods:['family','mindblown','chill'],g:'linear-gradient(135deg,#43B4FF,#8B5CFF)',why:'Dreamlike magic for all ages.',media:'movie'},
+  {id:21,t:'The Office',em:'📎',svc:'peacock',r:'TV‑14',rt:'22m',moods:['laugh','chill'],g:'linear-gradient(135deg,#43B4FF,#6B4CFF)',why:'The endless comfort re‑watch.',media:'tvShow'},
+  {id:22,t:'Parks and Recreation',em:'🏞️',svc:'peacock',r:'TV‑14',rt:'22m',moods:['laugh','chill'],g:'linear-gradient(135deg,#9BE04A,#43B4FF)',why:'Relentlessly sunny and quotable.',media:'tvShow'},
+  {id:23,t:'Modern Family',em:'🏡',svc:'hulu',r:'TV‑PG',rt:'22m',moods:['laugh','family'],g:'linear-gradient(135deg,#FFD23D,#FF8A3D)',why:'Easy laughs the whole family gets.',media:'tvShow'},
+  {id:24,t:'Stranger Things',em:'🚲',svc:'netflix',r:'TV‑14',rt:'51m',moods:['thrill','hyped','scared'],g:'linear-gradient(135deg,#E50914,#151B4A)',why:'Nostalgic, spooky, totally binge‑able.',media:'tvShow'},
+  {id:25,t:'The Bear',em:'🔥',svc:'hulu',r:'TV‑MA',rt:'30m',moods:['thrill','smart','hyped'],g:'linear-gradient(135deg,#FF5C7A,#FF8A3D)',why:'Intense, delicious, wildly good.',media:'tvShow'},
+  {id:26,t:'Wednesday',em:'🖤',svc:'netflix',r:'TV‑14',rt:'50m',moods:['scared','smart','thrill'],g:'linear-gradient(135deg,#2A2150,#8B5CFF)',why:'Deadpan, gothic and fun.',media:'tvShow'},
+  {id:27,t:'Encanto',em:'🦋',svc:'disney',r:'PG',rt:'102m',moods:['family','hyped'],g:'linear-gradient(135deg,#FF7AB8,#FFD23D)',why:'Color, songs and all the feels.',media:'movie'},
+  {id:28,t:'Moana',em:'🌊',svc:'disney',r:'PG',rt:'107m',moods:['family','hyped','chill'],g:'linear-gradient(135deg,#34E0C4,#0064FF)',why:'A big‑hearted adventure with bangers.',media:'movie'},
+  {id:29,t:'La La Land',em:'🎹',svc:'max',r:'PG‑13',rt:'128m',moods:['romance','chill'],g:'linear-gradient(135deg,#6B4CFF,#FF7AB8)',why:'Dreamy, gorgeous, bittersweet.',media:'movie'},
+  {id:30,t:'Dune',em:'🏜️',svc:'max',r:'PG‑13',rt:'155m',moods:['mindblown','hyped'],g:'linear-gradient(135deg,#FF8A3D,#151B4A)',why:'Epic, immersive big‑screen sci‑fi.',media:'movie'},
+  {id:31,t:'Abbott Elementary',em:'🍎',svc:'hulu',r:'TV‑PG',rt:'22m',moods:['laugh','chill'],g:'linear-gradient(135deg,#FFD23D,#34E0C4)',why:'Warm workplace comedy that lands.',media:'tvShow'},
+  {id:32,t:'The Menu',em:'🍽️',svc:'hulu',r:'R',rt:'107m',moods:['thrill','smart'],g:'linear-gradient(135deg,#1a1030,#FF5C7A)',why:'A deliciously dark, twisty ride.',media:'movie'},
+];
+
+/* Exact article titles so the live lookup always resolves the right show (no wrong matches) */
+const WIKI={1:'The Good Place',2:'Brooklyn Nine-Nine',3:"Schitt's Creek",4:'Ted Lasso',5:'Paddington 2',6:'Bluey (2018 TV series)',7:'Spider-Man: Into the Spider-Verse',8:'Everything Everywhere All at Once',9:'Inception',10:'Interstellar (film)',11:'The Notebook',12:'Pride & Prejudice (2005 film)',13:'A Quiet Place',14:'Hereditary (film)',15:'Knives Out',16:'Coco (2017 film)',17:'Planet Earth II',18:'Top Gun: Maverick',19:'Fleabag',20:'Spirited Away',21:'The Office (American TV series)',22:'Parks and Recreation',23:'Modern Family',24:'Stranger Things',25:'The Bear (TV series)',26:'Wednesday (TV series)',27:'Encanto',28:'Moana (2016 film)',29:'La La Land',30:'Dune (2021 film)',31:'Abbott Elementary',32:'The Menu (2022 film)'};
+TITLES.forEach(function(t){ t.wiki=WIKI[t.id]||t.t; });
+
+/* ---------- State ---------- */
+const state={ services:new Set(['netflix','disney','max']), moods:new Set(), isPlus:true, saved:new Set([1,7]), lastMatch:null, rated:false };
+
+/* ---------- Live metadata: real posters + descriptions from a public movie/TV DB.
+   Production swaps this for TMDB (consistent portrait posters) + a licensed availability feed. ---------- */
+const metaCache={};
+function fetchMeta(t){
+  if(metaCache[t.id]) return metaCache[t.id];
+  const wiki=t.wiki||t.t;
+  const rest='https://en.wikipedia.org/api/rest_v1/page/summary/'+encodeURIComponent(wiki)+'?redirect=true';
+  const api='https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&prop=extracts%7Cpageimages&exintro=1&explaintext=1&piprop=original%7Cthumbnail&pithumbsize=500&pilicense=any&redirects=1&titles='+encodeURIComponent(wiki);
+  const p=fetch(rest).then(function(r){ if(!r.ok) throw 0; return r.json(); })
+    .then(function(d){ var img=(d.originalimage&&d.originalimage.source)||(d.thumbnail&&d.thumbnail.source)||null; var desc=d.extract||''; if(!img&&!desc) throw 0; return {img:img,desc:desc}; })
+    .catch(function(){ return fetch(api).then(function(r){ if(!r.ok) throw 0; return r.json(); })
+      .then(function(d){ var pg=(d&&d.query&&d.query.pages)?Object.values(d.query.pages)[0]:{}; return {img:(pg.original&&pg.original.source)||(pg.thumbnail&&pg.thumbnail.source)||null, desc:pg.extract||''}; })
+      .catch(function(){ return {img:null,desc:''}; }); });
+  metaCache[t.id]=p; return p;
+}
+function hydrate(el,t,onDesc){
+  fetchMeta(t).then(function(m){
+    if(m.img){ var img=el.querySelector('.pimg'); if(img){ img.onload=function(){ if(img.naturalWidth>img.naturalHeight*1.02) el.classList.add('fit-contain'); el.classList.add('has-img'); }; img.src=m.img; } }
+    if(onDesc) onDesc(m.desc||'');
+  });
+}
+function posterArt(t,cls){
+  const d=document.createElement('div'); d.className='poster'+(cls?' '+cls:''); d.style.background=t.g;
+  d.innerHTML='<div class="art">'+t.em+'</div><img class="pimg" alt="" loading="lazy"><div class="sheen"></div><div class="pmeta"><div class="ptitle">'+t.t+'</div></div>';
+  hydrate(d,t);
+  return d;
+}
+function posterMini(t,showSvc,onClick){
+  const d=posterArt(t,'mini');
+  if(showSvc) d.querySelector('.pmeta').insertAdjacentHTML('beforeend','<div class="psub"><span class="badge svc">'+svcName(t.svc)+'</span></div>');
+  if(onClick) d.onclick=function(){ onClick(d,t); };
+  return d;
+}
+
+/* ---------- Nav ---------- */
+const APP_TABS=['home','groups','saved','profile'];
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.getElementById('tabbar').style.display=APP_TABS.includes(id)?'flex':'none';
+  document.querySelectorAll('.screen-body').forEach(b=>b.scrollTop=0);
+}
+function setTab(name){
+  showScreen(name);
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===name));
+  if(name==='groups') renderGroups();
+  if(name==='saved') renderSaved();
+  if(name==='profile') renderProfile();
+}
+function finishOnboarding(){ setTab('home'); }
+
+/* ---------- Builders ---------- */
+function buildServiceChips(container){
+  container.innerHTML='';
+  SERVICES.forEach(s=>{
+    const c=document.createElement('div'); c.className='chip'+(state.services.has(s.id)?' selected':'');
+    if(state.services.has(s.id)) c.style.background=s.c;
+    c.innerHTML='<span style="width:8px;height:8px;border-radius:50%;background:'+(state.services.has(s.id)?'#fff':s.c)+'"></span>'+s.name;
+    c.onclick=function(){ haptic('LIGHT'); state.services.has(s.id)?state.services.delete(s.id):state.services.add(s.id); persistServices();
+      buildServiceChips(document.getElementById('svcChips'));
+      if(document.getElementById('profileSvc')) buildServiceChips(document.getElementById('profileSvc')); };
+    container.appendChild(c);
+  });
+}
+let tasteShown=0;
+function buildTaste(reset){
+  const g=document.getElementById('tasteGrid');
+  if(reset){ g.innerHTML=''; tasteShown=0; }
+  const size=tasteShown===0?24:8;
+  TITLES.slice(tasteShown,tasteShown+size).forEach(t=>{
+    g.appendChild(posterMini(t,false,function(d){ d.classList.toggle('picked'); }));
+  });
+  tasteShown+=size;
+  document.getElementById('moreBtn').style.display=tasteShown>=TITLES.length?'none':'block';
+}
+function buildMoods(){
+  const g=document.getElementById('moodGrid'); g.innerHTML='';
+  MOODS.forEach(m=>{
+    const d=document.createElement('div'); d.className='mood'+(state.moods.has(m.id)?' selected':'');
+    d.innerHTML='<div class="glow" style="background:'+m.c+'"></div><span class="em">'+m.em+'</span><span class="lbl">'+m.lbl+'</span>';
+    d.onclick=function(){ haptic('LIGHT'); state.moods.has(m.id)?state.moods.delete(m.id):state.moods.add(m.id); buildMoods(); };
+    g.appendChild(d);
+  });
+}
+
+/* ---------- Shuffle ---------- */
+function pool(){
+  let p=TITLES.filter(t=> state.moods.size===0 || t.moods.some(x=>state.moods.has(x)));
+  const ps=p.filter(t=>state.services.has(t.svc)); if(ps.length) p=ps;
+  if(state.lastMatch && p.length>1) p=p.filter(t=>t.id!==state.lastMatch);
+  return p;
+}
+function moodPhrase(){
+  if(state.moods.size===0) return 'watch something great';
+  const m=MOODS.find(x=>x.id===[...state.moods][0]); return (m?m.lbl:'').toLowerCase();
+}
+let _pool=[];
+function doShuffle(){
+  haptic('MEDIUM'); _pool=pool(); if(!_pool.length){ toast('Pick a mood to shuffle'); return; }
+  showScreen('result');
+  const body=document.getElementById('resultBody'); let n=0;
+  const spin=setInterval(function(){
+    const t=_pool[Math.floor(Math.random()*_pool.length)];
+    body.innerHTML='<div class="section-title">Shuffling…</div><div class="poster big" style="background:'+t.g+'"><div class="art">'+t.em+'</div><div class="sheen"></div><div class="pmeta"><div class="ptitle">'+t.t+'</div></div></div>';
+    if(++n>7){ clearInterval(spin); settleResult(_pool[Math.floor(Math.random()*_pool.length)]); }
+  },90);
+}
+function settleResult(t){
+  state.lastMatch=t.id; haptic('HEAVY'); const isSaved=state.saved.has(t.id);
+  const body=document.getElementById('resultBody');
+  body.innerHTML=
+    '<div class="section-title">Your pick</div>'
+   +'<div class="poster big pop" id="rposter" style="background:'+t.g+'"><div class="art">'+t.em+'</div><img class="pimg" alt=""><div class="sheen"></div>'
+   +'<div class="pmeta"><div class="ptitle" style="font-size:22px">'+t.t+'</div><div class="psub"><span class="badge svc">▶ '+svcName(t.svc)+'</span><span class="badge rating">'+t.r+'</span><span class="badge rating">'+t.rt+'</span></div></div></div>'
+   +'<div class="why"><b>Because you want to '+moodPhrase()+':</b> '+t.why+'</div>'
+   +'<div class="synopsis" id="rsyn">Loading synopsis…</div>'
+   +'<button class="btn" style="margin-top:14px" onclick="watchNow(\''+svcName(t.svc)+'\')">▶ Watch on '+svcName(t.svc)+'</button>'
+   +'<div style="display:flex;gap:10px;margin-top:10px"><button class="btn secondary" id="saveBtn" onclick="toggleSave('+t.id+')">'+(isSaved?'✓ Saved':'＋ Save')+'</button>'
+   +'<button class="btn secondary" onclick="doShuffle()">🔀 Again</button>'
+   +'<button class="btn secondary" onclick="sharePick('+t.id+')">↗ Share</button></div>'
+   +'<button class="btn" style="margin-top:10px;background:var(--surface2);box-shadow:none" onclick="groupCTA()">👥 Watch this with someone →</button>';
+  hydrate(document.getElementById('rposter'),t,function(desc){ var el=document.getElementById('rsyn'); if(!el) return; if(desc){ el.textContent=desc; } else { el.style.display='none'; } });
+  if(!state.rated) setTimeout(openRate,800);
+}
+function toggleSave(id){
+  haptic('LIGHT'); state.saved.has(id)?state.saved.delete(id):state.saved.add(id); persistSaved();
+  const b=document.getElementById('saveBtn'); if(b) b.textContent=state.saved.has(id)?'✓ Saved':'＋ Save';
+  toast(state.saved.has(id)?'Saved to your list 🔖':'Removed');
+}
+function watchNow(s){ toast('Opening '+s+'… 🍿'); }
+function groupCTA(){ setTab('groups'); }
+
+/* ---------- Groups ---------- */
+function renderGroups(){
+  const b=document.getElementById('groupsBody');
+  if(!state.isPlus){
+    b.innerHTML='<div style="text-align:center;margin-top:8px"><span class="lock-pill">🔒 Moodie+</span></div>'
+     +'<div class="card" style="margin-top:14px"><h3>Pick together, in seconds</h3><p>Start a group, share a 6‑letter code, and Moodie blends everyone\'s services, tastes and rating limits into one shuffle you\'ll all agree on.</p><button class="btn" style="margin-top:14px" onclick="openPaywall()">Unlock group watch</button></div>'
+     +'<div class="section-title">Preview</div>'
+     +'<div class="card blurred"><div class="rowitem"><div class="av" style="background:#FFD23D">S</div><div class="grow"><div class="name">Sam</div><div class="desc">Netflix · Max · loves thrillers</div></div></div>'
+     +'<div class="rowitem"><div class="av" style="background:#34E0C4">K</div><div class="grow"><div class="name">Kids</div><div class="desc">Max rating: PG‑13</div></div></div></div>';
+    return;
+  }
+  b.innerHTML='<div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><div><h3 style="font-size:19px">🍿 Movie Night</h3><p>3 members · blended</p></div><div class="lock-pill" style="background:var(--pink)">Code: PZQK4T</div></div>'
+   +'<div style="margin-top:12px">'+grpRow('#FF3D8A','J','You','Netflix · Disney+ · Max')+grpRow('#FFD23D','S','Sam','Netflix · Max · loves thrillers')+grpRow('#34E0C4','K','Kids','Max rating: PG‑13 🧒')+'</div>'
+   +'<button class="btn secondary small" style="margin-top:12px" onclick="toast(\'Code copied — send it to anyone 📋\')">＋ Invite someone (share code)</button></div>'
+   +'<div class="section-title">Shuffle for the group</div>'
+   +'<div class="card"><p>Blended services: <b style="color:#fff">Netflix · Disney+ · Max</b> · Max rating <b style="color:#fff">PG‑13</b></p>'
+   +'<button class="btn shuffle-btn" style="margin-top:12px" onclick="groupShuffle()">🔀 Shuffle for everyone</button><div id="groupPick"></div></div>';
+}
+function grpRow(c,ini,name,desc){ return '<div class="rowitem" style="cursor:default"><div class="av" style="background:'+c+'">'+ini+'</div><div class="grow"><div class="name">'+name+'</div><div class="desc">'+desc+'</div></div></div>'; }
+function groupShuffle(){
+  const p=TITLES.filter(t=>['netflix','disney','max'].includes(t.svc) && !['R','TV‑MA'].includes(t.r));
+  const t=p[Math.floor(Math.random()*p.length)];
+  const holder=document.getElementById('groupPick');
+  holder.innerHTML='';
+  const node=posterArt(t,'pop'); node.style.aspectRatio='16/11'; node.style.marginTop='14px';
+  node.querySelector('.pmeta').innerHTML='<div class="ptitle" style="font-size:18px">'+t.t+'</div><div class="psub"><span class="badge svc">▶ '+svcName(t.svc)+'</span><span class="badge rating">'+t.r+'</span><span class="badge">👍 everyone can watch</span></div>';
+  holder.appendChild(node);
+}
+
+/* ---------- Saved ---------- */
+function renderSaved(){
+  const g=document.getElementById('savedGrid'); const empty=document.getElementById('savedEmpty');
+  const items=[...state.saved].map(id=>TITLES.find(t=>t.id===id)).filter(Boolean);
+  g.innerHTML=''; empty.style.display=items.length?'none':'block';
+  items.forEach(t=>{ g.appendChild(posterMini(t,true,function(d,tt){ watchNow(svcName(tt.svc)); })); });
+}
+
+/* ---------- Profile ---------- */
+function renderProfile(){
+  buildServiceChips(document.getElementById('profileSvc'));
+  document.getElementById('planLabel').textContent=state.isPlus?'Moodie+ • Watch together':'Free plan • Solo shuffle';
+  document.getElementById('plusTitle').textContent=state.isPlus?'You\'re on Moodie+ 🎉':'Unlock watching together 💞';
+}
+
+/* ---------- Paywall / toast / rating ---------- */
+function openPaywall(){ setTab('groups'); }
+function closePaywall(){ if(state.isPlus){ setTab('groups'); } else { setTab('home'); } }
+function startTrial(){ state.isPlus=true; toast('Welcome to Moodie+ 🎉'); setTimeout(function(){ setTab('groups'); },500); }
+let toastT; function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(function(){ t.classList.remove('show'); },1900); }
+function openRate(){ document.getElementById('rateModal').classList.add('show'); }
+function closeRate(){ state.rated=true; document.getElementById('rateModal').classList.remove('show'); }
+function rate(){ state.rated=true; document.getElementById('rateModal').classList.remove('show'); toast('Thank you! ⭐️⭐️⭐️⭐️⭐️'); }
+
+/* ---------- App Store screenshots ---------- */
+function buildShots(){
+  const c=document.getElementById('shots'); c.innerHTML='';
+  const defs=[
+    {cap:'Pick a mood. Tap shuffle. Done.',build:f=>{ f.innerHTML='<div style="padding:14px"><div style="font-weight:800;font-size:13px;margin-bottom:8px">How do you want to feel?</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">'
+      +mm('😂','Laugh')+mm('❤️','Romance')+mm('🤯','Mind‑blown')+mm('😌','Chill')+'</div><div style="background:var(--grad2);border-radius:10px;text-align:center;padding:10px;font-weight:800;font-size:12px;margin-top:8px">🔀 Shuffle</div></div>'; }},
+    {cap:'Decide together — pair up in seconds.',build:f=>{ f.innerHTML='<div style="padding:14px"><div style="font-weight:800;font-size:13px">🍿 Movie Night</div><div style="background:var(--surface2);border-radius:8px;padding:6px 8px;font-size:10px;font-weight:800;display:inline-block;margin:8px 0">Code: PZQK4T</div>'
+      +row('#FF3D8A','J','You')+row('#FFD23D','S','Sam')+row('#34E0C4','K','Kids · PG‑13')+'</div>'; }},
+    {cap:'Only shows what you can actually stream.',build:f=>{ f.style.padding='16px'; f.style.display='flex'; f.style.alignItems='center'; const n=posterMini(TITLES[6],true); f.appendChild(n); }},
+    {cap:'Kid‑safe groups with parental controls.',build:f=>{ f.innerHTML='<div style="padding:14px;text-align:center"><div style="font-size:34px;margin-top:24px">🧒</div><div style="font-weight:800;font-size:13px;margin-top:8px">Max rating: PG‑13</div><div style="font-size:10px;color:var(--muted);margin-top:4px">Family shuffles stay appropriate.</div></div>'; }},
+    {cap:'Your watchlist, always ready.',build:f=>{ f.style.padding='12px'; const grid=document.createElement('div'); grid.style.display='grid'; grid.style.gridTemplateColumns='1fr 1fr'; grid.style.gap='6px';
+      [0,14,10,9].forEach(i=>grid.appendChild(posterMini(TITLES[i],false))); f.appendChild(grid); }},
+  ];
+  defs.forEach(d=>{ const shot=document.createElement('div'); shot.className='shot';
+    const cap=document.createElement('div'); cap.className='cap'; cap.textContent=d.cap;
+    const fr=document.createElement('div'); fr.className='frame'; d.build(fr);
+    shot.appendChild(cap); shot.appendChild(fr); c.appendChild(shot); });
+}
+const mm=(e,l)=>'<div style="background:var(--surface);border-radius:8px;padding:8px 6px;text-align:center;font-size:11px;font-weight:700"><div style="font-size:15px">'+e+'</div>'+l+'</div>';
+const row=(c,i,n)=>'<div style="display:flex;align-items:center;gap:6px;margin-top:6px"><div style="width:20px;height:20px;border-radius:50%;background:'+c+';color:#151024;font-weight:800;font-size:10px;display:flex;align-items:center;justify-content:center">'+i+'</div><div style="font-size:11px;font-weight:700">'+n+'</div></div>';
+
+/* ---------- init ---------- */
+boot();
+</script>
+</body>
+</html>
