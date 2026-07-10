@@ -1,0 +1,9 @@
+{
+  "appId": "com.jonathanbiles.moodie",
+  "appName": "Moodie",
+  "webDir": "www",
+  "ios": {
+    "contentInset": "always",
+    "backgroundColor": "#100C1DFF"
+  }
+}

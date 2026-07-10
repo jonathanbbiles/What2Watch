@@ -1,0 +1,72 @@
+# Moodie — Capacitor iOS -> signed IPA -> TestFlight, built in the cloud.
+# One-time: in Codemagic > Team settings > Integrations > App Store Connect,
+# add your App Store Connect API key and name it exactly:  MoodieAppStore
+workflows:
+  ios-testflight:
+    name: Moodie -> TestFlight
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+    integrations:
+      app_store_connect: MoodieAppStore
+    environment:
+      vars:
+        BUNDLE_ID: "com.jonathanbiles.moodie"
+        XCODE_SCHEME: "App"
+        APP_STORE_APP_ID: "6788245223"
+      node: 22
+      xcode: latest
+      cocoapods: default
+    scripts:
+      - name: Install npm dependencies
+        script: npm install
+      - name: Add + sync iOS platform (Capacitor)
+        script: |
+          [ -d ios ] || npx cap add ios
+          npx cap sync ios
+      - name: Embed the real app icon (replace Capacitor default)
+        script: |
+          ICONSET="ios/App/App/Assets.xcassets/AppIcon.appiconset"
+          rm -rf "$ICONSET"; mkdir -p "$ICONSET"
+          cp appicon-1024.png "$ICONSET/AppIcon-1024.png"
+          cat > "$ICONSET/Contents.json" <<'JSON'
+          { "images": [ { "filename": "AppIcon-1024.png", "idiom": "universal", "platform": "ios", "size": "1024x1024" } ], "info": { "author": "xcode", "version": 1 } }
+          JSON
+          ls -la "$ICONSET"
+      - name: iPhone-only + build number + export-compliance flag
+        script: |
+          PLIST=ios/App/App/Info.plist
+          LATEST=$(app-store-connect get-latest-testflight-build-number "$APP_STORE_APP_ID" 2>/dev/null || echo 0)
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $(( LATEST + 1 ))" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Add :ITSAppUsesNonExemptEncryption bool false" "$PLIST" 2>/dev/null \
+            || /usr/libexec/PlistBuddy -c "Set :ITSAppUsesNonExemptEncryption false" "$PLIST"
+          # iPhone-only target (family 1) so App Store Connect does not require iPad screenshots
+          /usr/bin/sed -i '' 's/TARGETED_DEVICE_FAMILY = "1,2"/TARGETED_DEVICE_FAMILY = 1/g' ios/App/App.xcodeproj/project.pbxproj || true
+      - name: Set up code signing (create cert + profile if missing)
+        script: |
+          keychain initialize
+          openssl genrsa -out /tmp/dist_key.pem 2048
+          app-store-connect certificates create \
+            --type IOS_DISTRIBUTION \
+            --certificate-key=@file:/tmp/dist_key.pem \
+            --save
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --type IOS_APP_STORE \
+            --certificate-key=@file:/tmp/dist_key.pem \
+            --create
+          keychain add-certificates
+          xcode-project use-profiles
+      - name: Build signed IPA
+        script: |
+          if [ -f "ios/App/App.xcworkspace/contents.xcworkspacedata" ]; then
+            TARGET="--workspace ios/App/App.xcworkspace"
+          else
+            TARGET="--project ios/App/App.xcodeproj"
+          fi
+          echo "Building with: $TARGET"
+          xcode-project build-ipa $TARGET --scheme "$XCODE_SCHEME"
+    artifacts:
+      - build/ios/ipa/*.ipa
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true

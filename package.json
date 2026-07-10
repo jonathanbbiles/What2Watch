@@ -1,0 +1,16 @@
+{
+  "name": "moodie",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Moodie — what to watch tonight, by mood.",
+  "dependencies": {
+    "@capacitor/core": "^6.2.0",
+    "@capacitor/ios": "^6.2.0",
+    "@capacitor/haptics": "^6.0.2",
+    "@capacitor/share": "^6.0.3",
+    "@capacitor/preferences": "^6.0.3"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.2.0"
+  }
+}
