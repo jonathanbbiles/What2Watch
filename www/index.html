@@ -304,6 +304,7 @@
             
             <div class="rowitem" onclick="openURL('https://jonathanscribbles.com/moodie')"><div class="grow"><div class="name">Terms of Service</div></div><div style="color:var(--dim)">›</div></div>
             <div class="rowitem" onclick="openURL('https://jonathanscribbles.com/moodie')"><div class="grow"><div class="name">Privacy Policy</div></div><div style="color:var(--dim)">›</div></div>
+            <div class="rowitem" style="cursor:default"><div class="grow"><div class="name" style="font-size:12px;color:var(--dim);font-weight:600;line-height:1.4">Posters &amp; info from TMDB.<br>This product uses the TMDB API but is not endorsed or certified by TMDB.</div></div></div>
             
           </div>
           <div class="spacer"></div>
@@ -412,19 +413,53 @@ TITLES.forEach(function(t){ t.wiki=WIKI[t.id]||t.t; });
 /* ---------- State ---------- */
 const state={ services:new Set(['netflix','disney','max']), moods:new Set(), isPlus:true, saved:new Set([1,7]), lastMatch:null, rated:false };
 
-/* ---------- Live metadata: real posters + descriptions from a public movie/TV DB.
-   Production swaps this for TMDB (consistent portrait posters) + a licensed availability feed. ---------- */
+/* ---------- Live metadata: real posters + synopses from TMDB (The Movie Database).
+   Each title is searched by its display name + year (from the disambiguated WIKI map)
+   and media type, and the returned poster_path is used for a real, correct portrait poster.
+   The API key is injected at BUILD TIME from the Codemagic env var TMDB_API_KEY
+   (see codemagic.yaml -> "Inject TMDB API key"); it is never committed to source.
+   If no key or no poster is found, the on-brand gradient card is the graceful fallback. ---------- */
+const TMDB_KEY='__TMDB_API_KEY__';
+const TMDB_OK=(typeof TMDB_KEY==='string' && TMDB_KEY.length>0 && TMDB_KEY.indexOf('__TMDB')!==0);
+const TMDB_IMG='https://image.tmdb.org/t/p/w500';
 const metaCache={};
+function tmdbQuery(t){
+  const q=(t.t||'').replace(/[‐‑]/g,'-').trim();
+  const wm=(t.wiki||'').match(/\b(19|20)\d{2}\b/);
+  return {q:q, year:wm?wm[0]:'', tv:(t.media==='tvShow')};
+}
+function normTitle(x){ return (x||'').toLowerCase().replace(/[‐‑]/g,'-').replace(/[^a-z0-9]+/g,''); }
+function pickTmdb(list,want){
+  if(!list||!list.length) return null;
+  for(var i=0;i<list.length;i++){ if(normTitle(list[i].title||list[i].name)===want) return list[i]; }
+  for(var j=0;j<list.length;j++){ var n=normTitle(list[j].title||list[j].name); if(n&&(n.indexOf(want)===0||want.indexOf(n)===0)) return list[j]; }
+  return list[0];
+}
+function tmdbUrl(s,withYear){
+  var path=s.tv?'search/tv':'search/movie';
+  var yp=s.tv?'first_air_date_year':'year';
+  var u='https://api.themoviedb.org/3/'+path+'?api_key='+encodeURIComponent(TMDB_KEY)+'&include_adult=false&language=en-US&query='+encodeURIComponent(s.q);
+  if(withYear&&s.year) u+='&'+yp+'='+s.year;
+  return u;
+}
 function fetchMeta(t){
   if(metaCache[t.id]) return metaCache[t.id];
-  const wiki=t.wiki||t.t;
-  const rest='https://en.wikipedia.org/api/rest_v1/page/summary/'+encodeURIComponent(wiki)+'?redirect=true';
-  const api='https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&prop=extracts%7Cpageimages&exintro=1&explaintext=1&piprop=original%7Cthumbnail&pithumbsize=500&pilicense=any&redirects=1&titles='+encodeURIComponent(wiki);
-  const p=fetch(rest).then(function(r){ if(!r.ok) throw 0; return r.json(); })
-    .then(function(d){ var img=(d.originalimage&&d.originalimage.source)||(d.thumbnail&&d.thumbnail.source)||null; var desc=d.extract||''; if(!img&&!desc) throw 0; return {img:img,desc:desc}; })
-    .catch(function(){ return fetch(api).then(function(r){ if(!r.ok) throw 0; return r.json(); })
-      .then(function(d){ var pg=(d&&d.query&&d.query.pages)?Object.values(d.query.pages)[0]:{}; return {img:(pg.original&&pg.original.source)||(pg.thumbnail&&pg.thumbnail.source)||null, desc:pg.extract||''}; })
-      .catch(function(){ return {img:null,desc:''}; }); });
+  if(!TMDB_OK){ var np=Promise.resolve({img:null,desc:''}); metaCache[t.id]=np; return np; }
+  const s=tmdbQuery(t), want=normTitle(s.q);
+  function run(withYear){
+    return fetch(tmdbUrl(s,withYear)).then(function(r){ if(!r.ok) throw 0; return r.json(); })
+      .then(function(d){ return (d&&d.results)||[]; });
+  }
+  const p=run(true).then(function(list){
+      if(list.length) return list;
+      return s.year?run(false):list;            // retry without year if the year filter over-narrowed
+    })
+    .then(function(list){
+      var hit=pickTmdb(list,want);
+      if(!hit) return {img:null,desc:''};
+      return {img:hit.poster_path?TMDB_IMG+hit.poster_path:null, desc:hit.overview||''};
+    })
+    .catch(function(){ return {img:null,desc:''}; });
   metaCache[t.id]=p; return p;
 }
 function hydrate(el,t,onDesc){
