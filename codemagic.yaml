@@ -24,9 +24,10 @@ workflows:
         script: npm install
       - name: Inject TMDB API key
         script: |
-          if [ -n "$TMDB_API_KEY" ]; then
-            perl -pi -e 's/__TMDB_API_KEY__/$ENV{TMDB_API_KEY}/g' www/index.html
-            echo "TMDB API key injected into www/index.html."
+          CLEAN_TMDB_KEY="$(printf '%s' "$TMDB_API_KEY" | tr -d '[:space:]')"; export CLEAN_TMDB_KEY
+          if [ -n "$CLEAN_TMDB_KEY" ]; then
+            perl -pi -e 's/__TMDB_API_KEY__/$ENV{CLEAN_TMDB_KEY}/g' www/index.html
+            echo "TMDB API key injected into www/index.html (whitespace stripped)."
           else
             echo "TMDB_API_KEY not set - posters use the on-brand fallback cards."
           fi
@@ -37,11 +38,12 @@ workflows:
       - name: Ensure TMDB key in iOS bundle + verify
         script: |
           BUNDLE=ios/App/App/public/index.html
-          if [ -n "$TMDB_API_KEY" ]; then
-            perl -pi -e 's/__TMDB_API_KEY__/$ENV{TMDB_API_KEY}/g' www/index.html "$BUNDLE" 2>/dev/null || true
+          CLEAN_TMDB_KEY="$(printf '%s' "$TMDB_API_KEY" | tr -d '[:space:]')"; export CLEAN_TMDB_KEY
+          if [ -n "$CLEAN_TMDB_KEY" ]; then
+            perl -pi -e 's/__TMDB_API_KEY__/$ENV{CLEAN_TMDB_KEY}/g' www/index.html "$BUNDLE" 2>/dev/null || true
           fi
-          echo "TMDB_API_KEY length: ${#TMDB_API_KEY}"
-          case "$TMDB_API_KEY" in
+          echo "TMDB_API_KEY raw length: ${#TMDB_API_KEY} | cleaned length: ${#CLEAN_TMDB_KEY}"
+          case "$CLEAN_TMDB_KEY" in
             eyJ*) echo "TMDB key type: v4 Bearer token (JWT)";;
             "")   echo "TMDB key type: EMPTY (var not set / wrong group)";;
             *)    echo "TMDB key type: v3 api_key style";;
@@ -49,6 +51,15 @@ workflows:
           if [ -f "$BUNDLE" ]; then
             if grep -q "__TMDB_API_KEY__" "$BUNDLE"; then echo "SHIPPED BUNDLE: placeholder STILL present (BAD)"; else echo "SHIPPED BUNDLE: real key present (good)"; fi
           else echo "SHIPPED BUNDLE: $BUNDLE not found"; fi
+          # Empirical live TMDB request (proves the stored key works). Key value is NOT printed.
+          if [ -n "$CLEAN_TMDB_KEY" ]; then
+            case "$CLEAN_TMDB_KEY" in
+              eyJ*) CODE=$(curl -s -o /tmp/tmdb_test.json -w '%{http_code}' -H "Authorization: Bearer $CLEAN_TMDB_KEY" "https://api.themoviedb.org/3/search/movie?query=Dune&year=2021");;
+              *)    CODE=$(curl -s -o /tmp/tmdb_test.json -w '%{http_code}' "https://api.themoviedb.org/3/search/movie?query=Dune&year=2021&api_key=$CLEAN_TMDB_KEY");;
+            esac
+            echo "TMDB live request HTTP: $CODE"
+            if grep -q '"poster_path"' /tmp/tmdb_test.json; then echo "TMDB poster_path returned: YES (images will work)"; else echo "TMDB poster_path returned: NO (key rejected or no match)"; fi
+          fi
       - name: Embed the real app icon (replace Capacitor default)
         script: |
           ICONSET="ios/App/App/Assets.xcassets/AppIcon.appiconset"
