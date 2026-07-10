@@ -419,7 +419,7 @@ const state={ services:new Set(['netflix','disney','max']), moods:new Set(), isP
    The API key is injected at BUILD TIME from the Codemagic env var TMDB_API_KEY
    (see codemagic.yaml -> "Inject TMDB API key"); it is never committed to source.
    If no key or no poster is found, the on-brand gradient card is the graceful fallback. ---------- */
-const TMDB_KEY='__TMDB_API_KEY__';
+const TMDB_KEY=('__TMDB_API_KEY__').replace(/\s+/g,'');
 const TMDB_OK=(typeof TMDB_KEY==='string' && TMDB_KEY.length>0 && TMDB_KEY.indexOf('__TMDB')!==0);
 // v4 read token (JWT, starts "eyJ") uses Authorization: Bearer; v3 key (32 hex) uses ?api_key=
 const TMDB_BEARER=(TMDB_KEY.indexOf('eyJ')===0 || TMDB_KEY.length>100);
