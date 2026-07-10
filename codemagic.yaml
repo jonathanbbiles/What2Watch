@@ -20,6 +20,14 @@ workflows:
     scripts:
       - name: Install npm dependencies
         script: npm install
+      - name: Inject TMDB API key
+        script: |
+          if [ -n "$TMDB_API_KEY" ]; then
+            perl -pi -e 's/__TMDB_API_KEY__/$ENV{TMDB_API_KEY}/g' www/index.html
+            echo "TMDB API key injected into www/index.html."
+          else
+            echo "TMDB_API_KEY not set - posters use the on-brand fallback cards."
+          fi
       - name: Add + sync iOS platform (Capacitor)
         script: |
           [ -d ios ] || npx cap add ios
