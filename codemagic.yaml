@@ -12,7 +12,7 @@ workflows:
     environment:
       vars:
         BUNDLE_ID: "com.jonathanbiles.moodie"
-        XCODE_PROJECT: "ios/App/App.xcodeproj"
+        XCODE_WORKSPACE: "ios/App/App.xcworkspace"
         XCODE_SCHEME: "App"
       node: 22
       xcode: latest
@@ -63,7 +63,7 @@ workflows:
       - name: Build signed IPA
         script: |
           xcode-project build-ipa \
-            --project "$XCODE_PROJECT" \
+            --workspace "$XCODE_WORKSPACE" \
             --scheme "$XCODE_SCHEME"
     artifacts:
       - build/ios/ipa/*.ipa
