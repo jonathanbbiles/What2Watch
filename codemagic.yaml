@@ -82,6 +82,16 @@ workflows:
           /usr/libexec/PlistBuddy -c "Add :ITSAppUsesNonExemptEncryption bool false" "$PLIST" 2>/dev/null \
             || /usr/libexec/PlistBuddy -c "Set :ITSAppUsesNonExemptEncryption false" "$PLIST"
           echo "CFBundleVersion set to $NEXT (previous TestFlight latest: $LATEST)"
+      - name: Free distribution certificate slots (stay under Apple cert cap)
+        script: |
+          set +e
+          echo "--- distribution certificates present (first 600 chars) ---"
+          app-store-connect certificates list --type IOS_DISTRIBUTION --json 2>&1 | head -c 600; echo
+          for T in IOS_DISTRIBUTION DISTRIBUTION; do
+            IDS=$(app-store-connect certificates list --type "$T" --json 2>/dev/null | python3 -c "import json,sys; d=json.load(sys.stdin); print(chr(10).join(c.get(chr(105)+chr(100),'') for c in (d if isinstance(d,list) else d.get('data',[]))))" 2>/dev/null)
+            for CID in $IDS; do echo "Revoking $T certificate $CID"; app-store-connect certificates delete "$CID" --yes </dev/null 2>/dev/null || app-store-connect certificates delete "$CID" </dev/null 2>/dev/null || true; done
+          done
+          echo "Certificate cleanup complete."
       - name: Set up code signing (create cert + profile if missing)
         script: |
           keychain initialize
