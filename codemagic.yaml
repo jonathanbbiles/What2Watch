@@ -34,6 +34,21 @@ workflows:
         script: |
           [ -d ios ] || npx cap add ios
           npx cap sync ios
+      - name: Ensure TMDB key in iOS bundle + verify
+        script: |
+          BUNDLE=ios/App/App/public/index.html
+          if [ -n "$TMDB_API_KEY" ]; then
+            perl -pi -e 's/__TMDB_API_KEY__/$ENV{TMDB_API_KEY}/g' www/index.html "$BUNDLE" 2>/dev/null || true
+          fi
+          echo "TMDB_API_KEY length: ${#TMDB_API_KEY}"
+          case "$TMDB_API_KEY" in
+            eyJ*) echo "TMDB key type: v4 Bearer token (JWT)";;
+            "")   echo "TMDB key type: EMPTY (var not set / wrong group)";;
+            *)    echo "TMDB key type: v3 api_key style";;
+          esac
+          if [ -f "$BUNDLE" ]; then
+            if grep -q "__TMDB_API_KEY__" "$BUNDLE"; then echo "SHIPPED BUNDLE: placeholder STILL present (BAD)"; else echo "SHIPPED BUNDLE: real key present (good)"; fi
+          else echo "SHIPPED BUNDLE: $BUNDLE not found"; fi
       - name: Embed the real app icon (replace Capacitor default)
         script: |
           ICONSET="ios/App/App/Assets.xcassets/AppIcon.appiconset"
