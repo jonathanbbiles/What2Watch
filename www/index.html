@@ -26,15 +26,10 @@
     align-items:center; -webkit-font-smoothing:antialiased;
   }
   .wrap{width:100%; display:flex; flex-direction:column; align-items:center}
-  .stage{position:relative; width:100%; max-width:430px}
+  .stage{position:relative; width:100%; max-width:100%}
   .phone{position:relative; width:100%; height:100dvh; max-height:100dvh;
     background:var(--bg); overflow:hidden; display:flex; flex-direction:column; user-select:none}
-  @media(min-width:480px){
-    body{padding:26px 12px 40px}
-    .phone{height:900px; max-height:90dvh; border-radius:44px; border:11px solid #05030c;
-      box-shadow:0 40px 90px rgba(0,0,0,.6), 0 0 0 2px #2a2350 inset;}
-    .stage{max-width:410px}
-  }
+  /* Large-screen / iPad layout rules are placed at the END of this stylesheet so they override the base rules above. */
 
   .screen{position:absolute; inset:0; display:none; flex-direction:column; background:var(--bg)}
   .screen.active{display:flex}
@@ -194,25 +189,13 @@
   .kv{display:flex; gap:8px; margin:4px 0}
   .kv .k{color:var(--dim); min-width:92px; font-weight:700}
 
-  /* ---- v9 features ---- */
-  .svc-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:8px}
-  .svc-tile{position:relative;background:var(--surface);border:2px solid var(--line);border-radius:16px;padding:12px 8px 9px;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;opacity:.58;transition:.15s}
-  .svc-tile img{width:38px;height:38px;border-radius:10px;object-fit:cover}
-  .svc-tile .svc-ph{width:38px;height:38px;border-radius:10px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px}
-  .svc-tile .svc-name{font-size:11.5px;font-weight:700;text-align:center;line-height:1.15;color:var(--text)}
-  .svc-tile .svc-state{font-size:9px;font-weight:800;letter-spacing:.6px;color:var(--dim);text-transform:uppercase}
-  .svc-tile .svc-check{position:absolute;top:6px;right:8px;font-weight:900;font-size:12px;color:transparent}
-  .svc-tile.on{opacity:1;border-color:#fff;background:var(--grad);box-shadow:0 10px 24px rgba(255,61,138,.28)}
-  .svc-tile.on .svc-name,.svc-tile.on .svc-state,.svc-tile.on .svc-check{color:#fff}
-  .seg{display:flex;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:4px;gap:4px;margin-top:8px}
-  .seg .opt{flex:1;text-align:center;padding:9px 4px;border-radius:11px;font-weight:800;font-size:13.5px;color:var(--muted);cursor:pointer;white-space:nowrap}
-  .seg .opt.on{background:var(--grad);color:#fff}
-  .tchips{display:flex;flex-wrap:wrap;gap:8px}
-  .tchip{padding:9px 13px;border-radius:12px;background:var(--surface);border:1.5px solid var(--line);font-weight:700;font-size:13.5px;color:var(--muted);cursor:pointer}
-  .tchip.on{border-color:transparent;background:var(--grad);color:#fff}
-  .swatches{display:flex;flex-wrap:wrap;gap:12px}
-  .swatch{width:46px;height:46px;border-radius:14px;cursor:pointer;border:2px solid transparent;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;box-shadow:0 6px 16px rgba(0,0,0,.35)}
-  .swatch.on{border-color:#fff}
+  /* ---- Large-screen / iPad: fill the screen, center a readable column, no device frame ---- */
+  @media(min-width:620px){
+    .topbar{max-width:600px; margin-left:auto; margin-right:auto; width:100%}
+    .screen-body{max-width:600px; margin-left:auto; margin-right:auto; width:100%}
+    .tabbar{justify-content:center}
+    .tabbar .tab{flex:0 1 150px}
+  }
 </style>
 </head>
 <body>
@@ -222,7 +205,7 @@
 
       <!-- ONBOARDING 1 -->
       <section class="screen active" id="ob1">
-        <div class="screen-body no-tab" style="display:flex;flex-direction:column;justify-content:center;text-align:center;padding-top:calc(env(safe-area-inset-top) + 24px);padding-bottom:calc(env(safe-area-inset-bottom) + 24px)">
+        <div class="screen-body no-tab" style="display:flex;flex-direction:column;justify-content:center;text-align:center;padding-top:40px">
           <div style="display:flex;justify-content:center;margin-bottom:24px">
             <div class="mascot" style="width:116px;height:116px">
               <div class="eye l"></div><div class="eye r"></div><div class="cheek l"></div><div class="cheek r"></div><div class="smile"></div>
@@ -230,17 +213,18 @@
           </div>
           <h1 style="font-size:33px;margin:0 0 12px;letter-spacing:-1px">Never argue about<br>what to watch again</h1>
           <p style="color:var(--muted);font-size:16px;line-height:1.5;margin:0 22px">Tell Moodie how you want to <b style="color:#fff">feel</b> tonight. Tap shuffle. Get the one thing everyone will actually watch.</p>
-          <button class="btn shuffle-btn" style="margin-top:28px" onclick="showScreen('ob2')">Let's go 🍿</button>
+          <div style="flex:1"></div>
+          <button class="btn shuffle-btn" onclick="showScreen('ob2')">Let's go 🍿</button>
           <div class="hint">Free to use solo • No account needed to start</div>
         </div>
       </section>
 
       <!-- ONBOARDING 2: services -->
       <section class="screen" id="ob2">
-        <div class="topbar"><div><h1>Tap the services you have</h1><div class="sub"><span id="svcCount">0 selected</span> · we only suggest what you can stream.</div></div></div>
+        <div class="topbar"><div><h1>Your services</h1><div class="sub">We'll only suggest what you can actually stream.</div></div></div>
         <div class="screen-body no-tab">
           <div class="chips" id="svcChips" style="margin-top:6px"></div>
-          <p class="hint" style="margin-top:14px">Selected = filled. Tap again to remove. Add more with ＋.</p>
+          <p class="hint" style="margin-top:18px">Tap the ones you have. Change anytime.</p>
         </div>
         <div style="padding:14px 18px calc(env(safe-area-inset-bottom) + 14px)">
           <button class="btn" onclick="showScreen('ob3')">Continue</button>
@@ -263,14 +247,10 @@
       <!-- HOME / MOOD PICKER (one screen) -->
       <section class="screen" id="home">
         <div class="topbar">
-          <div><h1>What are you<br>in the mood for?</h1><div class="sub">Set the vibe, then shuffle.</div></div>
+          <div><h1>How do you want<br>to feel tonight?</h1><div class="sub">Tap one or more.</div></div>
           
         </div>
-        <div class="screen-body" style="padding-bottom:calc(120px + env(safe-area-inset-bottom))">
-          <div class="section-title" style="margin-top:2px">Movies or TV · how much time</div>
-          <div class="seg" id="ctypeRow"></div>
-          <div class="tchips" id="timeRow" style="margin-top:10px"></div>
-          <div class="section-title">How do you want to feel</div>
+        <div class="screen-body no-tab">
           <div class="mood-grid" id="moodGrid"></div>
           <button class="btn shuffle-btn" style="margin-top:16px" onclick="doShuffle()">🔀 Shuffle my pick</button>
           <div class="hint">Moodie finds one perfect match across your services.</div>
@@ -316,19 +296,6 @@
           </div>
           <div class="section-title">My services</div>
           <div class="chips" id="profileSvc"></div>
-                    <div class="section-title">Content &amp; maturity</div>
-          <div class="card">
-            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px"><div><div style="font-weight:700;font-size:15px">Your age (optional)</div><div style="font-size:12px;color:var(--muted)">Sets a sensible maximum automatically.</div></div><input id="ageInput" type="number" inputmode="numeric" min="0" max="120" placeholder="—" style="width:66px;background:var(--surface2);border:1px solid var(--line);border-radius:12px;color:#fff;padding:10px;font-size:15px;text-align:center"></div>
-            <div style="font-weight:700;font-size:15px;margin:14px 0 4px">Maximum maturity</div>
-            <div class="seg" id="matSeg"></div>
-            <div class="dec"><details><summary>Choose exact ratings</summary><div class="db"><div style="font-weight:800;color:#fff;margin-bottom:6px">Movies</div><div class="tchips" id="certMovie"></div><div style="font-weight:800;color:#fff;margin:12px 0 6px">TV</div><div class="tchips" id="certTv"></div></div></details></div>
-          </div>
-          <div class="section-title">Appearance</div>
-          <div class="card">
-            <div style="font-weight:700;font-size:15px;margin-bottom:8px">Theme</div>
-            <div class="swatches" id="themeRow"></div>
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px"><div style="font-weight:700;font-size:15px">Custom accent</div><input id="accentPick" type="color" value="#FF3D8A" style="width:46px;height:34px;border:none;background:none"></div>
-          </div>
           <div class="section-title">Watch together</div>
           <div class="card" style="margin-top:6px">
             <h3 id="plusTitle">Pair up &amp; make groups</h3>
@@ -340,7 +307,6 @@
             
             <div class="rowitem" onclick="openURL('https://jonathanscribbles.com/moodie')"><div class="grow"><div class="name">Terms of Service</div></div><div style="color:var(--dim)">›</div></div>
             <div class="rowitem" onclick="openURL('https://jonathanscribbles.com/moodie')"><div class="grow"><div class="name">Privacy Policy</div></div><div style="color:var(--dim)">›</div></div>
-            <div class="rowitem" style="cursor:default"><div class="grow"><div class="name" style="font-size:12px;color:var(--dim);font-weight:600;line-height:1.4">Posters &amp; info from TMDB.<br>This product uses the TMDB API but is not endorsed or certified by TMDB.</div></div></div>
             
           </div>
           <div class="spacer"></div>
@@ -379,7 +345,6 @@
 </div>
 
 <script>
-
 /* ---------- Native bridge (Capacitor): haptics, native Share sheet, on-device storage ---------- */
 var Cap = window.Capacitor || {};
 var NP = (Cap && Cap.Plugins) || {};
@@ -388,446 +353,335 @@ var Store={
   set:function(k,v){ try{ if(NP.Preferences){ NP.Preferences.set({key:k,value:JSON.stringify(v)}); return; } }catch(e){} try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} },
   get:function(k){ return new Promise(function(res){ try{ if(NP.Preferences){ NP.Preferences.get({key:k}).then(function(r){ try{ res(r&&r.value?JSON.parse(r.value):null); }catch(e){ res(null); } }).catch(function(){ res(null); }); return; } }catch(e){} try{ var raw=localStorage.getItem(k); res(raw?JSON.parse(raw):null); }catch(e){ res(null); } }); }
 };
-function openURL(u){ try{ if(NP.Browser && NP.Browser.open){ NP.Browser.open({url:u}); return; } }catch(e){} try{ window.open(u,'_blank'); }catch(e){} }
-function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(m){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]; }); }
-function shuffleArr(a){ a=a.slice(); for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=a[i];a[i]=a[j];a[j]=t; } return a; }
-
-/* ---------- TMDB (real posters + discovery). Key injected at build time, whitespace-stripped. ---------- */
-const TMDB_KEY=('__TMDB_API_KEY__').replace(/\s+/g,'');
-const TMDB_OK=(typeof TMDB_KEY==='string' && TMDB_KEY.length>0 && TMDB_KEY.indexOf('__TMDB')!==0);
-const TMDB_BEARER=(TMDB_KEY.indexOf('eyJ')===0 || TMDB_KEY.length>100);
-const TMDB_IMG='https://image.tmdb.org/t/p/w500';
-const TMDB_LOGO='https://image.tmdb.org/t/p/w92';
-function tmdbGet(pathAndQuery){
-  var url='https://api.themoviedb.org/3/'+pathAndQuery, opts;
-  if(TMDB_BEARER){ opts={headers:{Authorization:'Bearer '+TMDB_KEY, accept:'application/json'}}; }
-  else { url += (url.indexOf('?')<0?'?':'&')+'api_key='+encodeURIComponent(TMDB_KEY); opts={}; }
-  return fetch(url,opts).then(function(r){ if(!r.ok) throw new Error('tmdb '+r.status); return r.json(); });
-}
-
-/* ---------- Genres, moods, runtime ---------- */
-var GENRE={
-  movie:{action:28,adventure:12,animation:16,comedy:35,crime:80,doc:99,drama:18,family:10751,fantasy:14,horror:27,music:10402,mystery:9648,romance:10749,scifi:878,thriller:53,tvmovie:10770,war:10752,western:37},
-  tv:{actionadv:10759,animation:16,comedy:35,crime:80,doc:99,drama:18,family:10751,kids:10762,mystery:9648,reality:10764,scifi:10765,soap:10766,western:37}
-};
-var MOODS=[
+function persistServices(){ try{ Store.set('services',[...state.services]); }catch(e){} }
+function persistSaved(){ try{ Store.set('saved',[...state.saved]); }catch(e){} }
+function openURL(u){ try{ window.open(u,'_blank'); }catch(e){} }
+function sharePick(id){ var t=TITLES.find(function(x){ return x.id===id; }); if(!t) return; var text='Moodie says watch \"'+t.t+'\" tonight \u2014 '+t.why+' (on '+svcName(t.svc)+')'; try{ if(NP.Share && NP.Share.share){ NP.Share.share({title:'Moodie',text:text,dialogTitle:'Share your pick'}); return; } }catch(e){} try{ if(navigator.share){ navigator.share({text:text}); return; } }catch(e){} toast('Shared '+t.t+' \ud83c\udf7f'); }
+function boot(){ buildTaste(true); buildMoods(); buildServiceChips(document.getElementById('svcChips')); Store.get('services').then(function(sv){ if(Array.isArray(sv)&&sv.length){ state.services=new Set(sv); buildServiceChips(document.getElementById('svcChips')); if(document.getElementById('profileSvc')) buildServiceChips(document.getElementById('profileSvc')); } }); Store.get('saved').then(function(sd){ if(Array.isArray(sd)){ state.saved=new Set(sd); } }); }
+/* ---------- Data ---------- */
+const SERVICES=[
+  {id:'netflix',name:'Netflix',c:'#E50914'},{id:'prime',name:'Prime Video',c:'#00A8E1'},
+  {id:'disney',name:'Disney+',c:'#1F5FE0'},{id:'max',name:'Max',c:'#7B2FF7'},
+  {id:'hulu',name:'Hulu',c:'#1CE783'},{id:'apple',name:'Apple TV+',c:'#6E6E73'},
+  {id:'peacock',name:'Peacock',c:'#F5A623'},{id:'paramount',name:'Paramount+',c:'#0064FF'},
+];
+const MOODS=[
   {id:'laugh',em:'😂',lbl:'Laugh',c:'#FFD23D'},{id:'cry',em:'🥲',lbl:'Cry it out',c:'#43B4FF'},
   {id:'thrill',em:'😨',lbl:'Thrills',c:'#FF5C7A'},{id:'romance',em:'❤️',lbl:'Romance',c:'#FF7AB8'},
   {id:'mindblown',em:'🤯',lbl:'Mind‑blown',c:'#A879FF'},{id:'chill',em:'😌',lbl:'Chill',c:'#34E0C4'},
   {id:'scared',em:'👻',lbl:'Spooky',c:'#7CE084'},{id:'hyped',em:'🔥',lbl:'Hyped',c:'#FF8A3D'},
   {id:'smart',em:'🧠',lbl:'Smart',c:'#6BA8FF'},{id:'family',em:'👨‍👩‍👧',lbl:'Family',c:'#9BE04A'},
-  {id:'cringe',em:'😬',lbl:'Cringe',c:'#FF6AD5'}
 ];
-var COMFORT_MOODS={chill:1};
-function anyComfortMood(){ var c=false; state.moods.forEach(function(m){ if(COMFORT_MOODS[m]) c=true; }); return c; }
-function moodGenres(moodId,media){
-  var g=GENRE[media]||GENRE.movie;
-  var M = media==='tv' ? {
-    laugh:[g.comedy],cry:[g.drama],thrill:[g.mystery,g.scifi],romance:[g.drama,g.soap],
-    mindblown:[g.scifi],chill:[g.comedy,g.family,g.doc],scared:[g.mystery,g.scifi],hyped:[g.actionadv],
-    smart:[g.drama,g.doc,g.mystery],family:[g.family,g.animation,g.kids],cringe:[g.reality,g.soap]
-  } : {
-    laugh:[g.comedy],cry:[g.drama],thrill:[g.thriller,g.mystery],romance:[g.romance],
-    mindblown:[g.scifi,g.mystery],chill:[g.comedy,g.family,g.doc],scared:[g.horror,g.thriller],hyped:[g.action,g.adventure],
-    smart:[g.drama,g.doc,g.mystery],family:[g.family,g.animation],cringe:[g.romance,g.comedy,g.tvmovie]
-  };
-  return M[moodId]||[];
-}
-var RUNTIME=[
-  {id:'any',lbl:'Any',gte:null,lte:null},
-  {id:'lt30',lbl:'<30 min',gte:1,lte:30},
-  {id:'3060',lbl:'30–60',gte:30,lte:60},
-  {id:'12h',lbl:'1–2 hr',gte:60,lte:120},
-  {id:'2h',lbl:'2 hr+',gte:120,lte:null}
-];
-
-/* ---------- Catalog (graceful fallback when TMDB unavailable) ---------- */
-var CATALOG=[
- {id:1,t:'The Good Place',em:'😄',r:'TV-14',rt:'22m',moods:['laugh','smart','chill'],g:'linear-gradient(135deg,#34E0C4,#43B4FF)',media:'tvShow',wiki:'The Good Place',why:'Feel-good and clever.'},
- {id:2,t:'Brooklyn Nine-Nine',em:'🚔',r:'TV-14',rt:'22m',moods:['laugh','chill'],g:'linear-gradient(135deg,#FF8A3D,#FFD23D)',media:'tvShow',wiki:'Brooklyn Nine-Nine',why:'A comfort-watch that never misses.'},
- {id:3,t:"Schitt's Creek",em:'🏨',r:'TV-14',rt:'22m',moods:['laugh','chill'],g:'linear-gradient(135deg,#FF7AB8,#FF8A3D)',media:'tvShow',wiki:"Schitt's Creek",why:'Warm, silly, impossible not to smile.'},
- {id:4,t:'Ted Lasso',em:'⚽️',r:'TV-MA',rt:'45m',moods:['laugh','cry','smart'],g:'linear-gradient(135deg,#43B4FF,#8B5CFF)',media:'tvShow',wiki:'Ted Lasso',why:'Kindness as a superpower.'},
- {id:5,t:'Paddington 2',em:'🐻',r:'PG',rt:'103m',moods:['family','laugh','chill'],g:'linear-gradient(135deg,#FF8A3D,#FF3D8A)',media:'movie',wiki:'Paddington 2',why:'The purest feel-good movie ever made.'},
- {id:6,t:'Bluey',em:'🐶',r:'TV-Y',rt:'8m',moods:['family','chill'],g:'linear-gradient(135deg,#43B4FF,#34E0C4)',media:'tvShow',wiki:'Bluey (2018 TV series)',why:'Sweet, tiny, secretly for grown-ups too.'},
- {id:7,t:'Spider-Man: Into the Spider-Verse',em:'🕷️',r:'PG',rt:'117m',moods:['hyped','family','mindblown'],g:'linear-gradient(135deg,#FF3D8A,#8B5CFF)',media:'movie',wiki:'Spider-Man: Into the Spider-Verse',why:'A jolt of color and joy.'},
- {id:8,t:'Everything Everywhere All at Once',em:'🥯',r:'R',rt:'139m',moods:['mindblown','cry','hyped'],g:'linear-gradient(135deg,#8B5CFF,#FF3D8A)',media:'movie',wiki:'Everything Everywhere All at Once',why:'Scrambles then mends your heart.'},
- {id:9,t:'Inception',em:'🌀',r:'PG-13',rt:'148m',moods:['mindblown','thrill'],g:'linear-gradient(135deg,#6B4CFF,#43B4FF)',media:'movie',wiki:'Inception',why:'Bend your brain, then argue the ending.'},
- {id:10,t:'Interstellar',em:'🚀',r:'PG-13',rt:'169m',moods:['cry','mindblown'],g:'linear-gradient(135deg,#151B4A,#43B4FF)',media:'movie',wiki:'Interstellar (film)',why:'Big feelings, bigger space.'},
- {id:11,t:'The Notebook',em:'💌',r:'PG-13',rt:'123m',moods:['romance','cry'],g:'linear-gradient(135deg,#FF7AB8,#FF3D8A)',media:'movie',wiki:'The Notebook',why:'The classic ugly-cry love story.'},
- {id:12,t:'Pride & Prejudice',em:'💐',r:'PG',rt:'129m',moods:['romance','chill'],g:'linear-gradient(135deg,#9BE04A,#34E0C4)',media:'movie',wiki:'Pride & Prejudice (2005 film)',why:'Longing glances and rolling hills.'},
- {id:13,t:'A Quiet Place',em:'🤫',r:'PG-13',rt:'90m',moods:['thrill','scared'],g:'linear-gradient(135deg,#2A2150,#FF5C7A)',media:'movie',wiki:'A Quiet Place',why:'Hold your breath the whole way.'},
- {id:14,t:'Hereditary',em:'🕯️',r:'R',rt:'127m',moods:['scared','thrill'],g:'linear-gradient(135deg,#1a1030,#7CE084)',media:'movie',wiki:'Hereditary (film)',why:'Genuinely terrifying. Lights on.'},
- {id:15,t:'Knives Out',em:'🔪',r:'PG-13',rt:'130m',moods:['smart','laugh','thrill'],g:'linear-gradient(135deg,#FF8A3D,#6B4CFF)',media:'movie',wiki:'Knives Out',why:'A twisty whodunit that is actually fun.'},
- {id:16,t:'Coco',em:'🎸',r:'PG',rt:'105m',moods:['family','cry'],g:'linear-gradient(135deg,#FF8A3D,#FFD23D)',media:'movie',wiki:'Coco (2017 film)',why:'Bring tissues — a gorgeous cry.'},
- {id:17,t:'Planet Earth II',em:'🌍',r:'TV-G',rt:'50m',moods:['chill','smart','family'],g:'linear-gradient(135deg,#34E0C4,#9BE04A)',media:'tvShow',wiki:'Planet Earth II',why:'Breathe out. The planet is stunning.'},
- {id:18,t:'Top Gun: Maverick',em:'✈️',r:'PG-13',rt:'130m',moods:['hyped','thrill'],g:'linear-gradient(135deg,#0064FF,#FF8A3D)',media:'movie',wiki:'Top Gun: Maverick',why:'Pure adrenaline and a grin.'},
- {id:19,t:'Fleabag',em:'🍷',r:'TV-MA',rt:'27m',moods:['smart','laugh','cry'],g:'linear-gradient(135deg,#FF3D8A,#6B4CFF)',media:'tvShow',wiki:'Fleabag',why:'Sharp, filthy, secretly devastating.'},
- {id:20,t:'Spirited Away',em:'🐉',r:'PG',rt:'125m',moods:['family','mindblown','chill'],g:'linear-gradient(135deg,#43B4FF,#8B5CFF)',media:'movie',wiki:'Spirited Away',why:'Dreamlike magic for all ages.'},
- {id:21,t:'The Office',em:'📎',r:'TV-14',rt:'22m',moods:['laugh','chill'],g:'linear-gradient(135deg,#43B4FF,#6B4CFF)',media:'tvShow',wiki:'The Office (American TV series)',why:'The endless comfort re-watch.'},
- {id:22,t:'Parks and Recreation',em:'🏞️',r:'TV-14',rt:'22m',moods:['laugh','chill'],g:'linear-gradient(135deg,#9BE04A,#43B4FF)',media:'tvShow',wiki:'Parks and Recreation',why:'Relentlessly sunny and quotable.'},
- {id:23,t:'Modern Family',em:'🏡',r:'TV-PG',rt:'22m',moods:['laugh','family'],g:'linear-gradient(135deg,#FFD23D,#FF8A3D)',media:'tvShow',wiki:'Modern Family',why:'Easy laughs the whole family gets.'},
- {id:24,t:'Stranger Things',em:'🚲',r:'TV-14',rt:'51m',moods:['thrill','hyped','scared'],g:'linear-gradient(135deg,#E50914,#151B4A)',media:'tvShow',wiki:'Stranger Things',why:'Nostalgic, spooky, binge-able.'},
- {id:25,t:'The Bear',em:'🔥',r:'TV-MA',rt:'30m',moods:['thrill','smart','hyped'],g:'linear-gradient(135deg,#FF5C7A,#FF8A3D)',media:'tvShow',wiki:'The Bear (TV series)',why:'Intense, delicious, wildly good.'},
- {id:26,t:'Wednesday',em:'🖤',r:'TV-14',rt:'50m',moods:['scared','smart','thrill'],g:'linear-gradient(135deg,#2A2150,#8B5CFF)',media:'tvShow',wiki:'Wednesday (TV series)',why:'Deadpan, gothic and fun.'},
- {id:27,t:'Encanto',em:'🦋',r:'PG',rt:'102m',moods:['family','hyped'],g:'linear-gradient(135deg,#FF7AB8,#FFD23D)',media:'movie',wiki:'Encanto',why:'Color, songs and all the feels.'},
- {id:28,t:'Moana',em:'🌊',r:'PG',rt:'107m',moods:['family','hyped','chill'],g:'linear-gradient(135deg,#34E0C4,#0064FF)',media:'movie',wiki:'Moana (2016 film)',why:'A big-hearted adventure with bangers.'},
- {id:29,t:'La La Land',em:'🎹',r:'PG-13',rt:'128m',moods:['romance','chill'],g:'linear-gradient(135deg,#6B4CFF,#FF7AB8)',media:'movie',wiki:'La La Land',why:'Dreamy, gorgeous, bittersweet.'},
- {id:30,t:'Dune',em:'🏜️',r:'PG-13',rt:'155m',moods:['mindblown','hyped'],g:'linear-gradient(135deg,#FF8A3D,#151B4A)',media:'movie',wiki:'Dune (2021 film)',why:'Epic, immersive big-screen sci-fi.'},
- {id:31,t:'Abbott Elementary',em:'🍎',r:'TV-PG',rt:'22m',moods:['laugh','chill'],g:'linear-gradient(135deg,#FFD23D,#34E0C4)',media:'tvShow',wiki:'Abbott Elementary',why:'Warm workplace comedy that lands.'},
- {id:32,t:'The Menu',em:'🍽️',r:'R',rt:'107m',moods:['thrill','smart'],g:'linear-gradient(135deg,#1a1030,#FF5C7A)',media:'movie',wiki:'The Menu (2022 film)',why:'A deliciously dark, twisty ride.'}
+const svcName=id=>(SERVICES.find(s=>s.id===id)||{}).name;
+const TITLES=[
+  {id:1,t:'The Good Place',em:'😄',svc:'netflix',r:'TV‑14',rt:'22m',moods:['laugh','smart','chill'],g:'linear-gradient(135deg,#34E0C4,#43B4FF)',why:'Feel‑good and clever without trying too hard.',media:'tvShow'},
+  {id:2,t:'Brooklyn Nine‑Nine',em:'🚔',svc:'peacock',r:'TV‑14',rt:'22m',moods:['laugh','chill'],g:'linear-gradient(135deg,#FF8A3D,#FFD23D)',why:'A comfort‑watch that never misses.',media:'tvShow'},
+  {id:3,t:"Schitt's Creek",em:'🏨',svc:'hulu',r:'TV‑14',rt:'22m',moods:['laugh','chill'],g:'linear-gradient(135deg,#FF7AB8,#FF8A3D)',why:'Warm, silly, impossible not to smile.',media:'tvShow'},
+  {id:4,t:'Ted Lasso',em:'⚽️',svc:'apple',r:'TV‑MA',rt:'45m',moods:['laugh','cry','smart'],g:'linear-gradient(135deg,#43B4FF,#8B5CFF)',why:'Kindness as a superpower — you\'ll feel better.',media:'tvShow'},
+  {id:5,t:'Paddington 2',em:'🐻',svc:'max',r:'PG',rt:'103m',moods:['family','laugh','chill'],g:'linear-gradient(135deg,#FF8A3D,#FF3D8A)',why:'The purest feel‑good movie ever made.',media:'movie'},
+  {id:6,t:'Bluey',em:'🐶',svc:'disney',r:'TV‑Y',rt:'8m',moods:['family','chill'],g:'linear-gradient(135deg,#43B4FF,#34E0C4)',why:'Sweet, tiny, secretly for the grown‑ups too.',media:'tvShow'},
+  {id:7,t:'Spider‑Man: Into the Spider‑Verse',em:'🕷️',svc:'netflix',r:'PG',rt:'117m',moods:['hyped','family','mindblown'],g:'linear-gradient(135deg,#FF3D8A,#8B5CFF)',why:'A jolt of color and joy for everyone.',media:'movie'},
+  {id:8,t:'Everything Everywhere All at Once',em:'🥯',svc:'hulu',r:'R',rt:'139m',moods:['mindblown','cry','hyped'],g:'linear-gradient(135deg,#8B5CFF,#FF3D8A)',why:'It\'ll scramble and then mend your heart.',media:'movie'},
+  {id:9,t:'Inception',em:'🌀',svc:'netflix',r:'PG‑13',rt:'148m',moods:['mindblown','thrill'],g:'linear-gradient(135deg,#6B4CFF,#43B4FF)',why:'Bend your brain, then argue the ending.',media:'movie'},
+  {id:10,t:'Interstellar',em:'🚀',svc:'paramount',r:'PG‑13',rt:'169m',moods:['cry','mindblown'],g:'linear-gradient(135deg,#151B4A,#43B4FF)',why:'Big feelings, bigger space.',media:'movie'},
+  {id:11,t:'The Notebook',em:'💌',svc:'max',r:'PG‑13',rt:'123m',moods:['romance','cry'],g:'linear-gradient(135deg,#FF7AB8,#FF3D8A)',why:'The classic ugly‑cry love story.',media:'movie'},
+  {id:12,t:'Pride & Prejudice',em:'💐',svc:'peacock',r:'PG',rt:'129m',moods:['romance','chill'],g:'linear-gradient(135deg,#9BE04A,#34E0C4)',why:'Longing glances and rolling hills.',media:'movie'},
+  {id:13,t:'A Quiet Place',em:'🤫',svc:'paramount',r:'PG‑13',rt:'90m',moods:['thrill','scared'],g:'linear-gradient(135deg,#2A2150,#FF5C7A)',why:'Hold your breath the whole way through.',media:'movie'},
+  {id:14,t:'Hereditary',em:'🕯️',svc:'max',r:'R',rt:'127m',moods:['scared','thrill'],g:'linear-gradient(135deg,#1a1030,#7CE084)',why:'Genuinely terrifying. Lights on.',media:'movie'},
+  {id:15,t:'Knives Out',em:'🔪',svc:'netflix',r:'PG‑13',rt:'130m',moods:['smart','laugh','thrill'],g:'linear-gradient(135deg,#FF8A3D,#6B4CFF)',why:'A twisty whodunit that\'s actually fun.',media:'movie'},
+  {id:16,t:'Coco',em:'🎸',svc:'disney',r:'PG',rt:'105m',moods:['family','cry'],g:'linear-gradient(135deg,#FF8A3D,#FFD23D)',why:'Bring tissues — a gorgeous cry.',media:'movie'},
+  {id:17,t:'Planet Earth II',em:'🌍',svc:'max',r:'TV‑G',rt:'50m',moods:['chill','smart','family'],g:'linear-gradient(135deg,#34E0C4,#9BE04A)',why:'Breathe out. The planet is stunning.',media:'tvShow'},
+  {id:18,t:'Top Gun: Maverick',em:'✈️',svc:'paramount',r:'PG‑13',rt:'130m',moods:['hyped','thrill'],g:'linear-gradient(135deg,#0064FF,#FF8A3D)',why:'Pure adrenaline and a grin.',media:'movie'},
+  {id:19,t:'Fleabag',em:'🍷',svc:'prime',r:'TV‑MA',rt:'27m',moods:['smart','laugh','cry'],g:'linear-gradient(135deg,#FF3D8A,#6B4CFF)',why:'Sharp, filthy, secretly devastating.',media:'tvShow'},
+  {id:20,t:'Spirited Away',em:'🐉',svc:'max',r:'PG',rt:'125m',moods:['family','mindblown','chill'],g:'linear-gradient(135deg,#43B4FF,#8B5CFF)',why:'Dreamlike magic for all ages.',media:'movie'},
+  {id:21,t:'The Office',em:'📎',svc:'peacock',r:'TV‑14',rt:'22m',moods:['laugh','chill'],g:'linear-gradient(135deg,#43B4FF,#6B4CFF)',why:'The endless comfort re‑watch.',media:'tvShow'},
+  {id:22,t:'Parks and Recreation',em:'🏞️',svc:'peacock',r:'TV‑14',rt:'22m',moods:['laugh','chill'],g:'linear-gradient(135deg,#9BE04A,#43B4FF)',why:'Relentlessly sunny and quotable.',media:'tvShow'},
+  {id:23,t:'Modern Family',em:'🏡',svc:'hulu',r:'TV‑PG',rt:'22m',moods:['laugh','family'],g:'linear-gradient(135deg,#FFD23D,#FF8A3D)',why:'Easy laughs the whole family gets.',media:'tvShow'},
+  {id:24,t:'Stranger Things',em:'🚲',svc:'netflix',r:'TV‑14',rt:'51m',moods:['thrill','hyped','scared'],g:'linear-gradient(135deg,#E50914,#151B4A)',why:'Nostalgic, spooky, totally binge‑able.',media:'tvShow'},
+  {id:25,t:'The Bear',em:'🔥',svc:'hulu',r:'TV‑MA',rt:'30m',moods:['thrill','smart','hyped'],g:'linear-gradient(135deg,#FF5C7A,#FF8A3D)',why:'Intense, delicious, wildly good.',media:'tvShow'},
+  {id:26,t:'Wednesday',em:'🖤',svc:'netflix',r:'TV‑14',rt:'50m',moods:['scared','smart','thrill'],g:'linear-gradient(135deg,#2A2150,#8B5CFF)',why:'Deadpan, gothic and fun.',media:'tvShow'},
+  {id:27,t:'Encanto',em:'🦋',svc:'disney',r:'PG',rt:'102m',moods:['family','hyped'],g:'linear-gradient(135deg,#FF7AB8,#FFD23D)',why:'Color, songs and all the feels.',media:'movie'},
+  {id:28,t:'Moana',em:'🌊',svc:'disney',r:'PG',rt:'107m',moods:['family','hyped','chill'],g:'linear-gradient(135deg,#34E0C4,#0064FF)',why:'A big‑hearted adventure with bangers.',media:'movie'},
+  {id:29,t:'La La Land',em:'🎹',svc:'max',r:'PG‑13',rt:'128m',moods:['romance','chill'],g:'linear-gradient(135deg,#6B4CFF,#FF7AB8)',why:'Dreamy, gorgeous, bittersweet.',media:'movie'},
+  {id:30,t:'Dune',em:'🏜️',svc:'max',r:'PG‑13',rt:'155m',moods:['mindblown','hyped'],g:'linear-gradient(135deg,#FF8A3D,#151B4A)',why:'Epic, immersive big‑screen sci‑fi.',media:'movie'},
+  {id:31,t:'Abbott Elementary',em:'🍎',svc:'hulu',r:'TV‑PG',rt:'22m',moods:['laugh','chill'],g:'linear-gradient(135deg,#FFD23D,#34E0C4)',why:'Warm workplace comedy that lands.',media:'tvShow'},
+  {id:32,t:'The Menu',em:'🍽️',svc:'hulu',r:'R',rt:'107m',moods:['thrill','smart'],g:'linear-gradient(135deg,#1a1030,#FF5C7A)',why:'A deliciously dark, twisty ride.',media:'movie'},
+  {id:33,t:'Palm Springs',em:'🌴',svc:'hulu',r:'R',rt:'90m',moods:['laugh','mindblown','romance'],g:'linear-gradient(135deg,#FF8A3D,#43B4FF)',why:'A time‑loop rom‑com that’s smarter than it lets on.',media:'movie'},
+  {id:34,t:'Get Out',em:'🫖',svc:'peacock',r:'R',rt:'104m',moods:['scared','mindblown','smart'],g:'linear-gradient(135deg,#1a1030,#43B4FF)',why:'Horror with a brain and a pulse.',media:'movie'},
+  {id:35,t:'The Last of Us',em:'🍄',svc:'max',r:'TV‑MA',rt:'55m',moods:['cry','thrill','scared'],g:'linear-gradient(135deg,#2A2150,#9BE04A)',why:'Gutting, tense, unforgettable.',media:'tvShow'},
+  {id:36,t:'Over the Garden Wall',em:'🌲',svc:'max',r:'TV‑PG',rt:'11m',moods:['chill','scared','family'],g:'linear-gradient(135deg,#FF8A3D,#34E0C4)',why:'Cozy, eerie and quietly perfect.',media:'tvShow'},
+  {id:37,t:'The Princess Bride',em:'⚔️',svc:'disney',r:'PG',rt:'98m',moods:['laugh','romance','family'],g:'linear-gradient(135deg,#FF7AB8,#FFD23D)',why:'Adventure, romance and endless quotes.',media:'movie'},
+  {id:38,t:'Before Sunrise',em:'🚋',svc:'max',r:'R',rt:'101m',moods:['romance','smart','chill'],g:'linear-gradient(135deg,#6B4CFF,#FF7AB8)',why:'Two strangers, one night, all talk — in the best way.',media:'movie'},
+  {id:39,t:'Jurassic Park',em:'🦖',svc:'peacock',r:'PG‑13',rt:'127m',moods:['thrill','hyped','family'],g:'linear-gradient(135deg,#9BE04A,#151B4A)',why:'Dinosaurs, wonder and screaming. Perfect.',media:'movie'},
+  {id:40,t:'Jumanji: Welcome to the Jungle',em:'🎲',svc:'netflix',r:'PG‑13',rt:'119m',moods:['laugh','hyped','family'],g:'linear-gradient(135deg,#34E0C4,#FF8A3D)',why:'A big, funny, ridiculous good time.',media:'movie'},
+  {id:41,t:'Up',em:'🎈',svc:'disney',r:'PG',rt:'96m',moods:['cry','family','chill'],g:'linear-gradient(135deg,#43B4FF,#FFD23D)',why:'The first ten minutes will wreck you. Worth it.',media:'movie'},
+  {id:42,t:'Titanic',em:'🚢',svc:'paramount',r:'PG‑13',rt:'194m',moods:['romance','cry','thrill'],g:'linear-gradient(135deg,#151B4A,#FF7AB8)',why:'Sweeping, doomed and impossible to look away.',media:'movie'},
+  {id:43,t:'Ghostbusters',em:'👻',svc:'peacock',r:'PG',rt:'105m',moods:['laugh','scared','family'],g:'linear-gradient(135deg,#7CE084,#FF8A3D)',why:'Spooky, silly and endlessly fun.',media:'movie'},
+  {id:44,t:'The Shape of Water',em:'🐟',svc:'hulu',r:'R',rt:'123m',moods:['romance','scared','mindblown'],g:'linear-gradient(135deg,#34E0C4,#6B4CFF)',why:'A strange, gorgeous love story.',media:'movie'},
+  {id:45,t:'Crazy Rich Asians',em:'💍',svc:'max',r:'PG‑13',rt:'120m',moods:['romance','laugh','hyped'],g:'linear-gradient(135deg,#FF3D8A,#FFD23D)',why:'Glamorous, funny and big‑hearted.',media:'movie'},
 ];
 
-/* ---------- Age & content-rating preferences (change 9) ---------- */
-var MOVIE_CERTS=['G','PG','PG-13','R','NC-17'];
-var TV_CERTS=['TV-Y','TV-Y7','TV-G','TV-PG','TV-14','TV-MA'];
-var MATURITY=[
-  {id:'kids',lbl:'Kids',movie:'PG',tv:'TV-G'},
-  {id:'teen',lbl:'Teen',movie:'PG-13',tv:'TV-14'},
-  {id:'mature',lbl:'Mature 17+',movie:'R',tv:'TV-MA'},
-  {id:'all',lbl:'Everything',movie:'NC-17',tv:'TV-MA'}
-];
-function matTier(){ for(var i=0;i<MATURITY.length;i++){ if(MATURITY[i].id===state.maturity) return MATURITY[i]; } return MATURITY[2]; }
-function currentMovieMax(){ if(state.certOverride&&state.certOverride.movie&&state.certOverride.movie.length){ var best='G'; for(var i=0;i<MOVIE_CERTS.length;i++){ if(state.certOverride.movie.indexOf(MOVIE_CERTS[i])>=0) best=MOVIE_CERTS[i]; } return best; } return matTier().movie; }
-function currentTvMax(){ if(state.certOverride&&state.certOverride.tv&&state.certOverride.tv.length){ var best='TV-Y'; for(var i=0;i<TV_CERTS.length;i++){ if(state.certOverride.tv.indexOf(TV_CERTS[i])>=0) best=TV_CERTS[i]; } return best; } return matTier().tv; }
-function usCertFromDetails(d,media){ try{ if(media==='movie'){ var rd=(d.release_dates&&d.release_dates.results)||[]; for(var i=0;i<rd.length;i++){ if(rd[i].iso_3166_1==='US'){ var arr=rd[i].release_dates||[]; for(var j=0;j<arr.length;j++){ if(arr[j].certification) return arr[j].certification; } } } } else { var cr=(d.content_ratings&&d.content_ratings.results)||[]; for(var k=0;k<cr.length;k++){ if(cr[k].iso_3166_1==='US'&&cr[k].rating) return cr[k].rating; } } }catch(e){} return ''; }
-function certAllowed(c){ var cert=c.cert||''; if(!cert) return true; if(c.media==='movie'){ if(state.certOverride&&state.certOverride.movie){ return state.certOverride.movie.indexOf(cert)>=0; } var mi=MOVIE_CERTS.indexOf(cert),mx=MOVIE_CERTS.indexOf(currentMovieMax()); return mi<0||mx<0||mi<=mx; } else { if(state.certOverride&&state.certOverride.tv){ return state.certOverride.tv.indexOf(cert)>=0; } var ti=TV_CERTS.indexOf(cert),tx=TV_CERTS.indexOf(currentTvMax()); return ti<0||tx<0||ti<=tx; } }
-function catalogAllowed(t){ var cert=(t.r||'').replace(/[‐‑]/g,'-'); var media=t.media==='tvShow'?'tv':'movie'; return certAllowed({cert:cert,media:media}); }
-function ageToMaturity(a){ a=parseInt(a,10); if(isNaN(a)) return null; if(a>=17) return 'all'; return 'teen'; }
-function persistMaturity(){ Store.set('maturity',{maturity:state.maturity,age:state.age,certOverride:state.certOverride}); }
-function setMaturity(id){ state.maturity=id; state.certOverride=null; persistMaturity(); buildMaturity(); haptic('LIGHT'); }
-function setAge(v){ state.age=(v===''?null:v); var m=ageToMaturity(v); if(m){ state.maturity=m; state.certOverride=null; } persistMaturity(); buildMaturity(); }
-function toggleCert(kind,val){ if(!state.certOverride){ state.certOverride={movie:[],tv:[]}; MOVIE_CERTS.forEach(function(v){ if(MOVIE_CERTS.indexOf(v)<=MOVIE_CERTS.indexOf(currentMovieMax())) state.certOverride.movie.push(v); }); TV_CERTS.forEach(function(v){ if(TV_CERTS.indexOf(v)<=TV_CERTS.indexOf(currentTvMax())) state.certOverride.tv.push(v); }); } var arr=state.certOverride[kind]; var i=arr.indexOf(val); if(i>=0) arr.splice(i,1); else arr.push(val); persistMaturity(); buildMaturity(); haptic('LIGHT'); }
-function buildMaturity(){
-  var seg=document.getElementById('matSeg'); if(seg){ seg.innerHTML=''; MATURITY.forEach(function(t){ var on=(!state.certOverride)&&state.maturity===t.id; var d=document.createElement('div'); d.className='opt'+(on?' on':''); d.textContent=t.lbl; d.onclick=function(){ setMaturity(t.id); }; seg.appendChild(d); }); }
-  var age=document.getElementById('ageInput'); if(age){ if(document.activeElement!==age) age.value=(state.age==null?'':state.age); if(!age._wired){ age._wired=true; age.oninput=function(){ setAge(age.value); }; } }
-  var mc=document.getElementById('certMovie'); if(mc){ mc.innerHTML=''; MOVIE_CERTS.forEach(function(v){ var allowed=state.certOverride?state.certOverride.movie.indexOf(v)>=0:(MOVIE_CERTS.indexOf(v)<=MOVIE_CERTS.indexOf(currentMovieMax())); var c=document.createElement('div'); c.className='tchip'+(allowed?' on':''); c.textContent=v; c.onclick=function(){ toggleCert('movie',v); }; mc.appendChild(c); }); }
-  var tc=document.getElementById('certTv'); if(tc){ tc.innerHTML=''; TV_CERTS.forEach(function(v){ var allowed=state.certOverride?state.certOverride.tv.indexOf(v)>=0:(TV_CERTS.indexOf(v)<=TV_CERTS.indexOf(currentTvMax())); var c=document.createElement('div'); c.className='tchip'+(allowed?' on':''); c.textContent=v; c.onclick=function(){ toggleCert('tv',v); }; tc.appendChild(c); }); }
-}
+/* Exact article titles so the live lookup always resolves the right show (no wrong matches) */
+const WIKI={1:'The Good Place',2:'Brooklyn Nine-Nine',3:"Schitt's Creek",4:'Ted Lasso',5:'Paddington 2',6:'Bluey (2018 TV series)',7:'Spider-Man: Into the Spider-Verse',8:'Everything Everywhere All at Once',9:'Inception',10:'Interstellar (film)',11:'The Notebook',12:'Pride & Prejudice (2005 film)',13:'A Quiet Place',14:'Hereditary (film)',15:'Knives Out',16:'Coco (2017 film)',17:'Planet Earth II',18:'Top Gun: Maverick',19:'Fleabag',20:'Spirited Away',21:'The Office (American TV series)',22:'Parks and Recreation',23:'Modern Family',24:'Stranger Things',25:'The Bear (TV series)',26:'Wednesday (TV series)',27:'Encanto',28:'Moana (2016 film)',29:'La La Land',30:'Dune (2021 film)',31:'Abbott Elementary',32:'The Menu (2022 film)',33:'Palm Springs (2020 film)',34:'Get Out',35:'The Last of Us (TV series)',36:'Over the Garden Wall',37:'The Princess Bride (film)',38:'Before Sunrise',39:'Jurassic Park (film)',40:'Jumanji: Welcome to the Jungle',41:'Up (2009 film)',42:'Titanic (1997 film)',43:'Ghostbusters',44:'The Shape of Water',45:'Crazy Rich Asians (film)'};
+TITLES.forEach(function(t){ t.wiki=WIKI[t.id]||t.t; });
 
-/* ---------- Watch providers (source of truth = TMDB) ---------- */
-var PROVIDERS=[];
-var PROVIDER_MAJOR_IDS=[8,9,337,15,1899,384,350,386,387,531,1770,73,300,283,43,37,526,151,528];
-var SERVICE_FALLBACK=[
-  {id:8,name:'Netflix'},{id:9,name:'Prime Video'},{id:337,name:'Disney+'},{id:15,name:'Hulu'},
-  {id:1899,name:'Max'},{id:350,name:'Apple TV+'},{id:386,name:'Peacock'},{id:531,name:'Paramount+'},
-  {id:73,name:'Tubi'},{id:300,name:'Pluto TV'},{id:283,name:'Crunchyroll'},{id:43,name:'Starz'},
-  {id:37,name:'Showtime'},{id:526,name:'AMC+'},{id:151,name:'BritBox'},{id:528,name:'ESPN+'}
-];
-function fallbackProviders(){ return SERVICE_FALLBACK.map(function(s){ return {id:s.id,name:s.name,logo:'',prio:0}; }); }
-function loadProviders(){
-  if(!TMDB_OK){ PROVIDERS=fallbackProviders(); return Promise.resolve(PROVIDERS); }
-  return Promise.all([
-    tmdbGet('watch/providers/movie?language=en-US&watch_region=US').catch(function(){ return {results:[]}; }),
-    tmdbGet('watch/providers/tv?language=en-US&watch_region=US').catch(function(){ return {results:[]}; })
-  ]).then(function(res){
-    var map={};
-    [res[0],res[1]].forEach(function(r){ ((r&&r.results)||[]).forEach(function(p){ if(!map[p.provider_id]) map[p.provider_id]={id:p.provider_id,name:p.provider_name,logo:p.logo_path||'',prio:(p.display_priority==null?999:p.display_priority)}; }); });
-    var arr=Object.keys(map).map(function(k){ return map[k]; });
-    arr.sort(function(a,b){ return a.prio-b.prio; });
-    PROVIDERS = arr.length ? arr : fallbackProviders();
-    return PROVIDERS;
-  }).catch(function(){ PROVIDERS=fallbackProviders(); return PROVIDERS; });
-}
-function providerById(id){ for(var i=0;i<PROVIDERS.length;i++){ if(PROVIDERS[i].id===id) return PROVIDERS[i]; } var f=SERVICE_FALLBACK.filter(function(s){ return s.id===id; })[0]; return f?{id:f.id,name:f.name,logo:''}:{id:id,name:'Service',logo:''}; }
-function selectedSvcNames(){ var out=[]; state.services.forEach(function(id){ out.push(providerById(id).name); }); return out; }
+/* ---------- State ---------- */
+const state={ services:new Set(['netflix','disney','max']), moods:new Set(), plus:false, saved:new Set([1,7]), lastMatch:null, rated:false };
 
-/* ---------- State + persistence ---------- */
-var state={ services:new Set(), moods:new Set(), ctype:'both', runtime:'any', maturity:'mature', age:null, certOverride:null,
-  saved:[], seen:[], lastMatch:null, isPlus:true, rated:false,
-  prefs:{likeG:{},dislikeG:{},liked:[],disliked:[],notes:{}}, theme:null };
-function persistServices(){ Store.set('services',[].concat.apply([],[[...state.services]])); }
-function persistSaved(){ Store.set('saved',state.saved); }
-function persistSeen(){ Store.set('seen',state.seen); }
-function persistPrefs(){ Store.set('prefs',state.prefs); }
-function persistTheme(){ Store.set('theme',state.theme); }
-
-/* ---------- Discovery engine ---------- */
-function normResult(r,media){
-  return { id:r.id, media:media, title:r.title||r.name||'Untitled',
-    poster:r.poster_path?TMDB_IMG+r.poster_path:null, overview:r.overview||'',
-    genres:r.genre_ids||[], vote:r.vote_average||0, pop:r.popularity||0,
-    year:String(r.release_date||r.first_air_date||'').slice(0,4) };
+/* ---------- Live metadata: real posters + descriptions from a public movie/TV DB.
+   Production swaps this for TMDB (consistent portrait posters) + a licensed availability feed. ---------- */
+const metaCache={};
+function fetchMeta(t){
+  if(metaCache[t.id]) return metaCache[t.id];
+  const wiki=t.wiki||t.t;
+  const rest='https://en.wikipedia.org/api/rest_v1/page/summary/'+encodeURIComponent(wiki)+'?redirect=true';
+  const api='https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&prop=extracts%7Cpageimages&exintro=1&explaintext=1&piprop=original%7Cthumbnail&pithumbsize=500&pilicense=any&redirects=1&titles='+encodeURIComponent(wiki);
+  const p=fetch(rest).then(function(r){ if(!r.ok) throw 0; return r.json(); })
+    .then(function(d){ var img=(d.originalimage&&d.originalimage.source)||(d.thumbnail&&d.thumbnail.source)||null; var desc=d.extract||''; if(!img&&!desc) throw 0; return {img:img,desc:desc}; })
+    .catch(function(){ return fetch(api).then(function(r){ if(!r.ok) throw 0; return r.json(); })
+      .then(function(d){ var pg=(d&&d.query&&d.query.pages)?Object.values(d.query.pages)[0]:{}; return {img:(pg.original&&pg.original.source)||(pg.thumbnail&&pg.thumbnail.source)||null, desc:pg.extract||''}; })
+      .catch(function(){ return {img:null,desc:''}; }); });
+  metaCache[t.id]=p; return p;
 }
-function keyOf(c){ return c.media+':'+c.id; }
-function seenHas(key){ for(var i=0;i<state.seen.length;i++){ if(keyOf(state.seen[i])===key) return true; } return false; }
-function discoverOne(media){
-  if(!TMDB_OK) return Promise.resolve([]);
-  var isCringe=state.moods.has('cringe');
-  var p=['include_adult=false','language=en-US','watch_region=US','sort_by=popularity.desc','vote_count.gte='+(isCringe?25:80)];
-  var provs=[...state.services];
-  if(provs.length){ p.push('with_watch_providers='+provs.join('|')); p.push('with_watch_monetization_types=flatrate|free|ads|rent|buy'); }
-  var genres=[]; state.moods.forEach(function(m){ genres=genres.concat(moodGenres(m,media)); });
-  genres=genres.filter(function(v,i,a){ return v && a.indexOf(v)===i; });
-  if(genres.length) p.push('with_genres='+genres.join('|'));
-  if(isCringe) p.push('vote_average.lte=6.3');
-  if(media==='movie'){ var rb=RUNTIME.filter(function(r){ return r.id===state.runtime; })[0]; if(rb){ if(rb.gte!=null) p.push('with_runtime.gte='+rb.gte); if(rb.lte!=null) p.push('with_runtime.lte='+rb.lte); } }
-  if(media==='movie'){ var mmax=currentMovieMax(); if(mmax){ p.push('certification_country=US'); p.push('certification.lte='+encodeURIComponent(mmax)); } }
-  p.push('page='+(1+Math.floor(Math.random()*3)));
-  return tmdbGet('discover/'+media+'?'+p.join('&')).then(function(d){ return ((d&&d.results)||[]).map(function(r){ return normResult(r,media); }); }).catch(function(){ return []; });
+function hydrate(el,t,onDesc){
+  fetchMeta(t).then(function(m){
+    if(m.img){ var img=el.querySelector('.pimg'); if(img){ img.onload=function(){ if(img.naturalWidth>img.naturalHeight*1.02) el.classList.add('fit-contain'); el.classList.add('has-img'); }; img.src=m.img; } }
+    if(onDesc) onDesc(m.desc||'');
+  });
 }
-function scoreCandidate(c){
-  var s=(c.pop||0)/60 + (c.vote||0)*0.3 + Math.random()*3;
-  var key=keyOf(c);
-  (c.genres||[]).forEach(function(g){ s += (state.prefs.likeG[g]||0)*1.2; s -= (state.prefs.dislikeG[g]||0)*1.4; });
-  if(state.prefs.disliked.indexOf(key)>=0) s-=100;
-  var comfort=anyComfortMood();
-  if(seenHas(key)){ s += comfort?9:-4; }
-  if(state.lastMatch===key) s-=50;
-  return s;
+function posterArt(t,cls){
+  const d=document.createElement('div'); d.className='poster'+(cls?' '+cls:''); d.style.background=t.g;
+  d.innerHTML='<div class="art">'+t.em+'</div><img class="pimg" alt="" loading="lazy"><div class="sheen"></div><div class="pmeta"><div class="ptitle">'+t.t+'</div></div>';
+  hydrate(d,t);
+  return d;
 }
-function seenToCand(sv){ return {id:sv.id,media:sv.media,title:sv.title,poster:sv.poster,overview:sv.overview||'',genres:sv.genres||[],vote:sv.vote||6,pop:sv.pop||20,year:sv.year||''}; }
-function pickAllowed(tries){ return recommend().then(function(c){ if(!c) return null; return enrich(c).then(function(cc){ if(certAllowed(cc)) return cc; if(tries>0) return pickAllowed(tries-1); return null; }); }); }
-function recommend(){
-  var medias = state.ctype==='movie'?['movie']: state.ctype==='tv'?['tv']:['movie','tv'];
-  return Promise.all(medias.map(discoverOne)).then(function(lists){
-    var cand=[]; lists.forEach(function(l){ cand=cand.concat(l); });
-    if(anyComfortMood() && state.seen.length){ shuffleArr(state.seen).slice(0,5).forEach(function(sv){ if(medias.indexOf(sv.media)>=0) cand.push(seenToCand(sv)); }); }
-    cand=cand.filter(function(c){ return c && c.poster; });
-    var seenK={}; cand=cand.filter(function(c){ var k=keyOf(c); if(seenK[k]) return false; seenK[k]=1; return true; });
-    if(!cand.length) return null;
-    cand.forEach(function(c){ c._score=scoreCandidate(c); });
-    cand.sort(function(a,b){ return b._score-a._score; });
-    var top=cand.slice(0,8);
-    return top[Math.floor(Math.random()*top.length)];
-  }).catch(function(){ return null; });
-}
-function enrich(c){
-  if(!c || !TMDB_OK) return Promise.resolve(c);
-  return tmdbGet(c.media+'/'+c.id+'?language=en-US&append_to_response=external_ids,content_ratings,release_dates').then(function(d){
-    c.imdb=(d.external_ids&&d.external_ids.imdb_id)||d.imdb_id||'';
-    c.cert=usCertFromDetails(d,c.media);
-    c.runtimeMin=d.runtime||(d.episode_run_time&&d.episode_run_time[0])||null;
-    if(!c.overview) c.overview=d.overview||'';
-    if((!c.genres||!c.genres.length)&&d.genres) c.genres=d.genres.map(function(g){ return g.id; });
-    return c;
-  }).catch(function(){ return c; });
-}
-function imdbURL(c){ return (c&&c.imdb)?('https://www.imdb.com/title/'+c.imdb+'/'):('https://www.imdb.com/find/?q='+encodeURIComponent((c&&c.title)||'')+'&s=tt'); }
-function runtimeLabel(c){ if(c&&c.runtimeMin){ var m=c.runtimeMin; if(c.media==='tv') return m+'m/ep'; var h=Math.floor(m/60), mm=m%60; return h?(h+'h'+(mm?(' '+mm+'m'):'')):(m+'m'); } return c&&c.media==='tv'?'Series':'Movie'; }
-
-/* ---------- Catalog fallback (used when TMDB unavailable or no results) ---------- */
-function catalogFallback(){
-  var p=CATALOG.filter(function(t){ return (state.moods.size===0 || t.moods.some(function(x){ return state.moods.has(x); })) && catalogAllowed(t); });
-  if(!p.length) p=CATALOG.slice();
-  var t=p[Math.floor(Math.random()*p.length)];
-  return { id:t.id, media:t.media==='tvShow'?'tv':'movie', title:t.t, poster:null, overview:'', genres:[], vote:7, pop:30, year:'', _catalog:true, g:t.g, em:t.em, wiki:t.wiki, why:t.why };
-}
-
-/* ---------- Unlimited results browser: top 25, then +25 per tap, paged from TMDB, deduped ---------- */
-var BROWSE={ list:[], seen:{}, page:{movie:0,tv:0}, exhausted:{movie:false,tv:false}, loading:false };
-function browseMedias(){ return state.ctype==='movie'?['movie']: state.ctype==='tv'?['tv']:['movie','tv']; }
-function discoverPage(media,page){
-  if(!TMDB_OK) return Promise.resolve({results:[],total:0});
-  var isCringe=state.moods.has('cringe');
-  var p=['include_adult=false','language=en-US','watch_region=US','sort_by=popularity.desc','vote_count.gte='+(isCringe?25:80)];
-  var provs=[...state.services];
-  if(provs.length){ p.push('with_watch_providers='+provs.join('|')); p.push('with_watch_monetization_types=flatrate|free|ads|rent|buy'); }
-  var genres=[]; state.moods.forEach(function(m){ genres=genres.concat(moodGenres(m,media)); });
-  genres=genres.filter(function(v,i,a){ return v && a.indexOf(v)===i; });
-  if(genres.length) p.push('with_genres='+genres.join('|'));
-  if(isCringe) p.push('vote_average.lte=6.3');
-  if(media==='movie'){ var rb=RUNTIME.filter(function(r){ return r.id===state.runtime; })[0]; if(rb){ if(rb.gte!=null) p.push('with_runtime.gte='+rb.gte); if(rb.lte!=null) p.push('with_runtime.lte='+rb.lte); } }
-  if(media==='movie'){ var mmax=currentMovieMax(); if(mmax){ p.push('certification_country=US'); p.push('certification.lte='+encodeURIComponent(mmax)); } }
-  p.push('page='+page);
-  return tmdbGet('discover/'+media+'?'+p.join('&')).then(function(d){ return { results:((d&&d.results)||[]).map(function(r){ return normResult(r,media); }), total:(d&&d.total_pages)||0 }; }).catch(function(){ return {results:[],total:0}; });
-}
-function initBrowse(hero){ BROWSE={ list:[], seen:{}, page:{movie:0,tv:0}, exhausted:{movie:false,tv:false}, loading:false }; if(hero) BROWSE.seen[keyOf(hero)]=1; }
-function browseFetchBatch(need){
-  var medias=browseMedias(); var got=[];
-  function round(){
-    var active=medias.filter(function(m){ return !BROWSE.exhausted[m]; });
-    if(!active.length || got.length>=need) return Promise.resolve(got);
-    return Promise.all(active.map(function(m){ var np=BROWSE.page[m]+1; return discoverPage(m,np).then(function(res){ BROWSE.page[m]=np; if(!res.results.length || (res.total && np>=res.total)) BROWSE.exhausted[m]=true; return res.results; }); })).then(function(lists){
-      var merged=[]; lists.forEach(function(l){ merged=merged.concat(l); });
-      merged.sort(function(a,b){ return (b.pop||0)-(a.pop||0); });
-      merged.forEach(function(c){ if(got.length>=need) return; if(!c||!c.poster) return; var k=keyOf(c); if(BROWSE.seen[k]) return; BROWSE.seen[k]=1; got.push(c); });
-      if(got.length>=need) return got;
-      if(!medias.filter(function(m){ return !BROWSE.exhausted[m]; }).length) return got;
-      return round();
-    });
-  }
-  return round();
-}
-function openCandidate(c){ haptic('LIGHT'); curPick=c; showScreen('result'); enrich(c).then(function(){ settleResult(c); }); }
-function browseMore(n){
-  var grid=document.getElementById('moreGrid'); var btn=document.getElementById('moreTitlesBtn'); if(!grid) return;
-  if(!TMDB_OK){ if(btn) btn.style.display='none'; return; }
-  if(BROWSE.loading) return; BROWSE.loading=true; if(btn){ btn.disabled=true; btn.textContent='Loading…'; }
-  browseFetchBatch(n).then(function(items){
-    items.forEach(function(c){ BROWSE.list.push(c); var d=recPoster(c,'mini'); d.style.cursor='pointer'; d.onclick=(function(cc){ return function(){ openCandidate(cc); }; })(c); grid.appendChild(d); });
-    BROWSE.loading=false;
-    var exhausted=browseMedias().every(function(m){ return BROWSE.exhausted[m]; });
-    if(btn){ btn.disabled=false; btn.textContent='More show titles'; btn.style.display=(exhausted && (items.length<n || BROWSE.list.length===0))?'none':'block'; }
-  }).catch(function(){ BROWSE.loading=false; if(btn){ btn.disabled=false; btn.textContent='More show titles'; } });
+function posterMini(t,showSvc,onClick){
+  const d=posterArt(t,'mini');
+  if(showSvc) d.querySelector('.pmeta').insertAdjacentHTML('beforeend','<div class="psub"><span class="badge svc">'+svcName(t.svc)+'</span></div>');
+  if(onClick) d.onclick=function(){ onClick(d,t); };
+  return d;
 }
 
 /* ---------- Nav ---------- */
-var APP_TABS=['home','groups','saved','profile'];
-function showScreen(id){ var els=document.querySelectorAll('.screen'); for(var i=0;i<els.length;i++) els[i].classList.remove('active'); var el=document.getElementById(id); if(el) el.classList.add('active'); document.getElementById('tabbar').style.display=APP_TABS.indexOf(id)>=0?'flex':'none'; var bodies=document.querySelectorAll('.screen-body'); for(var j=0;j<bodies.length;j++) bodies[j].scrollTop=0; }
-function setTab(name){ showScreen(name); var tabs=document.querySelectorAll('.tab'); for(var i=0;i<tabs.length;i++) tabs[i].classList.toggle('active',tabs[i].dataset.tab===name); if(name==='groups') renderGroups(); if(name==='saved') renderSaved(); if(name==='profile') renderProfile(); }
+const APP_TABS=['home','groups','saved','profile'];
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.getElementById('tabbar').style.display=APP_TABS.includes(id)?'flex':'none';
+  document.querySelectorAll('.screen-body').forEach(b=>b.scrollTop=0);
+}
+function setTab(name){
+  showScreen(name);
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===name));
+  if(name==='groups') renderGroups();
+  if(name==='saved') renderSaved();
+  if(name==='profile') renderProfile();
+}
 function finishOnboarding(){ setTab('home'); }
 
-/* ---------- Service picker (clear toggles) ---------- */
-var showAllSvc=false;
-function svcTile(p){
-  var on=state.services.has(p.id);
-  var d=document.createElement('div'); d.className='svc-tile'+(on?' on':'');
-  var logo = p.logo ? '<img src="'+TMDB_LOGO+p.logo+'" alt="">' : '<div class="svc-ph">'+esc((p.name||'?').replace(/[^A-Za-z0-9]/g,'').slice(0,2).toUpperCase())+'</div>';
-  d.innerHTML=logo+'<div class="svc-name">'+esc(p.name)+'</div><div class="svc-state">'+(on?'ON':'add')+'</div><div class="svc-check">'+(on?'✓':'')+'</div>';
-  d.onclick=function(){ haptic('LIGHT'); if(state.services.has(p.id)) state.services.delete(p.id); else state.services.add(p.id); persistServices(); buildAllServices(); };
-  return d;
+/* ---------- Builders ---------- */
+function buildServiceChips(container){
+  container.innerHTML='';
+  SERVICES.forEach(s=>{
+    const c=document.createElement('div'); c.className='chip'+(state.services.has(s.id)?' selected':'');
+    if(state.services.has(s.id)) c.style.background=s.c;
+    c.innerHTML='<span style="width:8px;height:8px;border-radius:50%;background:'+(state.services.has(s.id)?'#fff':s.c)+'"></span>'+s.name;
+    c.onclick=function(){ haptic('LIGHT'); state.services.has(s.id)?state.services.delete(s.id):state.services.add(s.id); persistServices();
+      buildServiceChips(document.getElementById('svcChips'));
+      if(document.getElementById('profileSvc')) buildServiceChips(document.getElementById('profileSvc')); };
+    container.appendChild(c);
+  });
 }
-function buildServices(container){
-  if(!container) return; container.innerHTML='';
-  var majorSet={}; PROVIDER_MAJOR_IDS.forEach(function(id){ majorSet[id]=1; });
-  var majors=PROVIDERS.filter(function(p){ return majorSet[p.id]; });
-  var rest=PROVIDERS.filter(function(p){ return !majorSet[p.id]; });
-  var list = showAllSvc ? majors.concat(rest) : majors.concat(rest.filter(function(p){ return state.services.has(p.id); }));
-  var grid=document.createElement('div'); grid.className='svc-grid';
-  list.forEach(function(p){ grid.appendChild(svcTile(p)); });
-  container.appendChild(grid);
-  var more=document.createElement('button'); more.className='btn secondary small'; more.style.marginTop='12px'; more.style.width='100%';
-  more.textContent=showAllSvc?'Show fewer':'＋ Add another service';
-  more.onclick=function(){ showAllSvc=!showAllSvc; buildServices(container); };
-  container.appendChild(more);
+let tasteShown=0;
+function buildTaste(reset){
+  const g=document.getElementById('tasteGrid');
+  if(reset){ g.innerHTML=''; tasteShown=0; }
+  const size=tasteShown===0?24:8;
+  TITLES.slice(tasteShown,tasteShown+size).forEach(t=>{
+    g.appendChild(posterMini(t,false,function(d){ d.classList.toggle('picked'); }));
+  });
+  tasteShown+=size;
+  document.getElementById('moreBtn').style.display=tasteShown>=TITLES.length?'none':'block';
 }
-function buildAllServices(){ ['svcChips','profileSvc'].forEach(function(id){ var el=document.getElementById(id); if(el) buildServices(el); }); updateSvcCount(); }
-function updateSvcCount(){ var n=state.services.size; ['svcCount','svcCount2'].forEach(function(id){ var el=document.getElementById(id); if(el) el.textContent=n+' selected'; }); }
+function buildMoods(){
+  const g=document.getElementById('moodGrid'); g.innerHTML='';
+  MOODS.forEach(m=>{
+    const d=document.createElement('div'); d.className='mood'+(state.moods.has(m.id)?' selected':'');
+    d.innerHTML='<div class="glow" style="background:'+m.c+'"></div><span class="em">'+m.em+'</span><span class="lbl">'+m.lbl+'</span>';
+    d.onclick=function(){ haptic('LIGHT'); state.moods.has(m.id)?state.moods.delete(m.id):state.moods.add(m.id); buildMoods(); };
+    g.appendChild(d);
+  });
+}
 
-/* ---------- Home controls: content type + time + moods ---------- */
-function buildCtype(){ var el=document.getElementById('ctypeRow'); if(!el) return; el.innerHTML=''; [['both','Both'],['movie','Movies'],['tv','TV']].forEach(function(o){ var d=document.createElement('div'); d.className='opt'+(state.ctype===o[0]?' on':''); d.textContent=o[1]; d.onclick=function(){ haptic('LIGHT'); state.ctype=o[0]; buildCtype(); }; el.appendChild(d); }); }
-function buildTime(){ var el=document.getElementById('timeRow'); if(!el) return; el.innerHTML=''; RUNTIME.forEach(function(r){ var c=document.createElement('div'); c.className='tchip'+(state.runtime===r.id?' on':''); c.textContent=r.lbl; c.onclick=function(){ haptic('LIGHT'); state.runtime=r.id; buildTime(); }; el.appendChild(c); }); }
-function buildMoods(){ var g=document.getElementById('moodGrid'); if(!g) return; g.innerHTML=''; MOODS.forEach(function(m){ var d=document.createElement('div'); d.className='mood'+(state.moods.has(m.id)?' selected':''); d.innerHTML='<div class="glow" style="background:'+m.c+'"></div><span class="em">'+m.em+'</span><span class="lbl">'+m.lbl+'</span>'; d.onclick=function(){ haptic('LIGHT'); if(state.moods.has(m.id)) state.moods.delete(m.id); else state.moods.add(m.id); buildMoods(); }; g.appendChild(d); }); }
-function moodPhrase(){ if(state.moods.size===0) return 'watch something great'; var arr=[...state.moods].map(function(id){ var m=MOODS.filter(function(x){return x.id===id;})[0]; return m?m.lbl.toLowerCase():''; }).filter(Boolean); return arr.slice(0,2).join(' + '); }
-
-/* ---------- Shuffle / result ---------- */
-var curPick=null;
+/* ---------- Shuffle ---------- */
+function pool(){
+  let p=TITLES.filter(t=> state.moods.size===0 || t.moods.some(x=>state.moods.has(x)));
+  const ps=p.filter(t=>state.services.has(t.svc)); if(ps.length) p=ps;
+  if(state.lastMatch && p.length>1) p=p.filter(t=>t.id!==state.lastMatch);
+  return p;
+}
+function moodPhrase(){
+  if(state.moods.size===0) return 'watch something great';
+  const m=MOODS.find(x=>x.id===[...state.moods][0]); return (m?m.lbl:'').toLowerCase();
+}
+let _pool=[];
 function doShuffle(){
-  haptic('MEDIUM'); showScreen('result');
-  var body=document.getElementById('resultBody');
-  var spinTitles=CATALOG; var n=0;
-  var spin=setInterval(function(){ var t=spinTitles[Math.floor(Math.random()*spinTitles.length)]; body.innerHTML='<div class="section-title">Finding your pick…</div><div class="poster big" style="background:'+t.g+'"><div class="art">'+t.em+'</div><div class="sheen"></div><div class="pmeta"><div class="ptitle">'+esc(t.t)+'</div></div></div>'; n++; },110);
-  pickAllowed(2).then(function(c){
-    setTimeout(function(){ clearInterval(spin); if(!c){ c=catalogFallback(); } settleResult(c); }, Math.max(0, 700-n*110));
-  }).catch(function(){ clearInterval(spin); settleResult(catalogFallback()); });
+  haptic('MEDIUM'); _pool=pool(); if(!_pool.length){ toast('Pick a mood to shuffle'); return; }
+  showScreen('result');
+  const body=document.getElementById('resultBody'); let n=0;
+  const spin=setInterval(function(){
+    const t=_pool[Math.floor(Math.random()*_pool.length)];
+    body.innerHTML='<div class="section-title">Shuffling…</div><div class="poster big" style="background:'+t.g+'"><div class="art">'+t.em+'</div><div class="sheen"></div><div class="pmeta"><div class="ptitle">'+t.t+'</div></div></div>';
+    if(++n>7){ clearInterval(spin); settleResult(_pool[Math.floor(Math.random()*_pool.length)]); }
+  },90);
 }
-function settleResult(c){
-  curPick=c; state.lastMatch=keyOf(c); haptic('HEAVY');
-  var body=document.getElementById('resultBody');
-  var svc=selectedSvcNames(); var svcBadge = svc.length ? ('▶ On '+esc(svc.slice(0,2).join(' · '))+(svc.length>2?' +'+(svc.length-2):'')) : '▶ Streaming';
-  var posterHTML = c.poster ? '<img class="pimg" src="'+esc(c.poster)+'" alt="" style="opacity:1">' : '<div class="art">'+(c.em||'🎬')+'</div>';
-  var bg = c.poster ? '#14101f' : (c.g||'linear-gradient(135deg,#2A2150,#6B4CFF)');
-  var isSaved=state.saved.some(function(x){ return keyOf(x)===keyOf(c); });
+function settleResult(t){
+  state.lastMatch=t.id; haptic('HEAVY'); const isSaved=state.saved.has(t.id);
+  const body=document.getElementById('resultBody');
   body.innerHTML=
     '<div class="section-title">Your pick</div>'
-   +'<div class="poster big pop'+(c.poster?' has-img':'')+'" style="background:'+bg+'">'+posterHTML+'<div class="sheen"></div>'
-   +'<div class="pmeta"><div class="ptitle" style="font-size:22px">'+esc(c.title)+(c.year?' <span style="font-weight:600;color:#e7e0ff;font-size:15px">('+esc(c.year)+')</span>':'')+'</div>'
-   +'<div class="psub"><span class="badge svc">'+svcBadge+'</span><span class="badge rating">'+esc(runtimeLabel(c))+'</span>'+(c.vote?'<span class="badge rating">★ '+(Math.round(c.vote*10)/10)+'</span>':'')+'</div></div></div>'
-   +'<div class="why"><b>Because you want to '+esc(moodPhrase())+':</b> a match across your services.</div>'
-   +(c.overview?'<div class="synopsis">'+esc(c.overview)+'</div>':'')
-   +'<a class="btn" style="margin-top:14px;text-decoration:none" onclick="openImdb()">▶ View on IMDb</a>'
-   +'<div style="display:flex;gap:10px;margin-top:10px"><button class="btn secondary" id="saveBtn" onclick="toggleSave()">'+(isSaved?'✓ Saved':'＋ Save')+'</button>'
+   +'<div class="poster big pop" id="rposter" style="background:'+t.g+'"><div class="art">'+t.em+'</div><img class="pimg" alt=""><div class="sheen"></div>'
+   +'<div class="pmeta"><div class="ptitle" style="font-size:22px">'+t.t+'</div><div class="psub"><span class="badge svc">▶ '+svcName(t.svc)+'</span><span class="badge rating">'+t.r+'</span><span class="badge rating">'+t.rt+'</span></div></div></div>'
+   +'<div class="why"><b>Because you want to '+moodPhrase()+':</b> '+t.why+'</div>'
+   +'<div class="synopsis" id="rsyn">Loading synopsis…</div>'
+   +'<button class="btn" style="margin-top:14px" onclick="watchNow(\''+svcName(t.svc)+'\')">▶ Watch on '+svcName(t.svc)+'</button>'
+   +'<div style="display:flex;gap:10px;margin-top:10px"><button class="btn secondary" id="saveBtn" onclick="toggleSave('+t.id+')">'+(isSaved?'✓ Saved':'＋ Save')+'</button>'
    +'<button class="btn secondary" onclick="doShuffle()">🔀 Again</button>'
-   +'<button class="btn secondary" onclick="shareCur()">↗ Share</button></div>'
-   +'<div class="section-title">Train Moodie</div>'
-   +'<div style="display:flex;gap:10px"><button class="btn secondary" onclick="likePick()">👍 More like this</button><button class="btn secondary" onclick="dislikePick()">👎 Not this</button></div>'
-   +'<button class="btn secondary" style="margin-top:10px" onclick="seenPick()">👀 I\'ve seen it</button>'
-   +'<div style="margin-top:10px"><textarea id="noteBox" placeholder="Add a note so Moodie learns (e.g. “loved the twist”, “too slow”)…" style="width:100%;min-height:52px;background:var(--surface);border:1px solid var(--line);border-radius:12px;color:#fff;padding:10px;font-family:var(--font);font-size:14px;resize:vertical"></textarea>'
-   +'<button class="btn secondary small" style="margin-top:6px;width:100%" onclick="saveNote()">Save note</button></div>'
-   +(TMDB_OK?'<div class="section-title">More show titles</div><div class="grid2" id="moreGrid"></div><button class="btn secondary small" id="moreTitlesBtn" style="margin-top:12px;width:100%" onclick="browseMore(25)">More show titles</button>':'')
-   +'<div class="spacer"></div>';
-  if(TMDB_OK){ initBrowse(c); browseMore(25); }
-  if(!state.rated) setTimeout(openRate,1200);
+   +'<button class="btn secondary" onclick="sharePick('+t.id+')">↗ Share</button></div>'
+   +'<button class="btn" style="margin-top:10px;background:var(--surface2);box-shadow:none" onclick="groupCTA()">👥 Watch this with someone →</button>';
+  hydrate(document.getElementById('rposter'),t,function(desc){ var el=document.getElementById('rsyn'); if(!el) return; if(desc){ el.textContent=desc; } else { el.style.display='none'; } });
+  if(!state.rated) setTimeout(openRate,800);
 }
-function openImdb(){ if(curPick) openURL(imdbURL(curPick)); }
-function recOf(c){ return {id:c.id,media:c.media,title:c.title,poster:c.poster,overview:c.overview,genres:c.genres,vote:c.vote,pop:c.pop,year:c.year,imdb:c.imdb||''}; }
-function toggleSave(){ if(!curPick) return; haptic('LIGHT'); var k=keyOf(curPick); var idx=-1; for(var i=0;i<state.saved.length;i++){ if(keyOf(state.saved[i])===k){ idx=i; break; } } if(idx>=0){ state.saved.splice(idx,1); } else { state.saved.push(recOf(curPick)); } persistSaved(); var b=document.getElementById('saveBtn'); if(b) b.textContent=(idx>=0?'＋ Save':'✓ Saved'); toast(idx>=0?'Removed':'Saved to your list 🔖'); }
-function shareCur(){ if(!curPick) return; var text='Moodie says watch “'+curPick.title+'” tonight 🍿'; try{ if(NP.Share && NP.Share.share){ NP.Share.share({title:'Moodie',text:text,url:imdbURL(curPick),dialogTitle:'Share your pick'}); return; } }catch(e){} try{ if(navigator.share){ navigator.share({text:text,url:imdbURL(curPick)}); return; } }catch(e){} toast('Shared 🍿'); }
-function likePick(){ if(!curPick) return; haptic('LIGHT'); var k=keyOf(curPick); if(state.prefs.liked.indexOf(k)<0) state.prefs.liked.push(k); (curPick.genres||[]).forEach(function(g){ state.prefs.likeG[g]=(state.prefs.likeG[g]||0)+1; }); persistPrefs(); toast('More like this 👍 Moodie learned.'); }
-function dislikePick(){ if(!curPick) return; haptic('LIGHT'); var k=keyOf(curPick); if(state.prefs.disliked.indexOf(k)<0) state.prefs.disliked.push(k); (curPick.genres||[]).forEach(function(g){ state.prefs.dislikeG[g]=(state.prefs.dislikeG[g]||0)+1; }); persistPrefs(); toast('Got it — less of that 👎'); setTimeout(doShuffle,450); }
-function seenPick(){ if(!curPick) return; haptic('LIGHT'); var k=keyOf(curPick); if(!seenHas(k)) state.seen.push(recOf(curPick)); persistSeen(); toast('Added to Seen 👀 — I\'ll resurface it on a Chill night.'); }
-function saveNote(){ if(!curPick) return; var el=document.getElementById('noteBox'); if(!el) return; var v=(el.value||'').trim(); if(!v){ toast('Type a note first ✍️'); return; } state.prefs.notes[keyOf(curPick)]=v; persistPrefs(); var low=v.toLowerCase(); if(/love|great|amazing|best|perfect|more/.test(low)) likePick(); else if(/hate|boring|slow|bad|worst|no/.test(low)) { (curPick.genres||[]).forEach(function(g){ state.prefs.dislikeG[g]=(state.prefs.dislikeG[g]||0)+0.5; }); persistPrefs(); } toast('Saved your note ✍️ Moodie will use it.'); }
+function toggleSave(id){
+  haptic('LIGHT'); state.saved.has(id)?state.saved.delete(id):state.saved.add(id); persistSaved();
+  const b=document.getElementById('saveBtn'); if(b) b.textContent=state.saved.has(id)?'✓ Saved':'＋ Save';
+  toast(state.saved.has(id)?'Saved to your list 🔖':'Removed');
+}
+function watchNow(s){ toast('Opening '+s+'… 🍿'); }
+function groupCTA(){ setTab('groups'); }
 
-/* ---------- Groups (blended demo, catalog-based) ---------- */
-function renderGroups(){
+/* ---------- Together: pass-the-phone mood overlap (serverless) ---------- */
+var RATING_RANK={'TV-Y':1,'TV-Y7':1,'TV-G':1,'G':1,'TV-PG':2,'PG':2,'PG-13':3,'TV-14':3,'R':4,'TV-MA':4,'NC-17':5};
+function ratingRank(r){ return RATING_RANK[String(r||'').replace(/\u2011/g,'-')]||3; }
+function hasPlus(){ return state.plus===true; } /* flips true when Moodie+ (StoreKit) ships */
+function esc(x){ return String(x==null?'':x).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+var pair=null;
+function renderGroups(){ pairSetup(); }
+function pairSetup(){
+  pair={ count:(pair&&pair.count)||2, cap:(pair&&pair.cap)||0, names:(pair&&pair.names)||[], people:[], idx:0, result:null };
   var b=document.getElementById('groupsBody');
-  b.innerHTML='<div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><div><h3 style="font-size:19px">🍿 Movie Night</h3><p>3 members · blended</p></div><div class="lock-pill" style="background:var(--pink)">Code: PZQK4T</div></div>'
-   +'<div style="margin-top:12px">'+grpRow('#FF3D8A','J','You',selectedSvcNames().slice(0,3).join(' · ')||'Your services')+grpRow('#FFD23D','S','Sam','Netflix · Max · loves thrillers')+grpRow('#34E0C4','K','Kids','Max rating: PG‑13 🧒')+'</div>'
-   +'<button class="btn secondary small" style="margin-top:12px" onclick="toast(\'Code copied — send it to anyone 📋\')">＋ Invite someone (share code)</button></div>'
-   +'<div class="section-title">Shuffle for the group</div>'
-   +'<div class="card"><p>Blends everyone\'s services & keeps it kid‑safe.</p><button class="btn shuffle-btn" style="margin-top:12px" onclick="groupShuffle()">🔀 Shuffle for everyone</button><div id="groupPick"></div></div>';
+  var caps=[['0','No limit'],['2','Kid‑safe · up to PG'],['3','Family · up to PG‑13']];
+  var capOpts=caps.map(function(c){ return '<option value="'+c[0]+'"'+(String(pair.cap)===c[0]?' selected':'')+'>'+c[1]+'</option>'; }).join('');
+  var names='';
+  for(var i=0;i<pair.count;i++){ names+='<input class="nm" data-i="'+i+'" placeholder="Person '+(i+1)+' (optional)" value="'+esc(pair.names[i]||'')+'" style="width:100%;margin-top:8px;padding:12px 14px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);color:#fff;font-size:15px;font-family:var(--font)">'; }
+  b.innerHTML=
+    '<div class="card"><h3 style="font-size:19px">Everyone picks their mood</h3>'
+   +'<p>Pass the phone around — each person taps how they want to feel, then Moodie finds the one thing you’ll all enjoy. No accounts, works offline.</p></div>'
+   +'<div class="section-title">Who’s watching?</div>'
+   +'<div class="card"><div style="display:flex;align-items:center;justify-content:space-between">'
+   +'<div class="name" style="font-size:16px">Number of people</div>'
+   +'<div style="display:flex;align-items:center;gap:14px"><button class="icon-btn" onclick="pairCount(-1)">–</button>'
+   +'<span style="font-weight:800;font-size:20px;min-width:22px;text-align:center">'+pair.count+'</span>'
+   +'<button class="icon-btn" onclick="pairCount(1)">+</button></div></div>'
+   +'<div id="pairNames">'+names+'</div></div>'
+   +'<div class="section-title">Content limit (optional)</div>'
+   +'<div class="card"><select id="pairCap" style="width:100%;padding:12px 14px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);color:#fff;font-size:15px;font-family:var(--font)">'+capOpts+'</select>'
+   +'<p style="margin-top:8px">Keeps picks appropriate when kids are watching.</p></div>'
+   +'<button class="btn shuffle-btn" style="margin-top:16px" onclick="pairBegin()">Start picking →</button>';
 }
-function grpRow(c,ini,name,desc){ return '<div class="rowitem" style="cursor:default"><div class="av" style="background:'+c+'">'+ini+'</div><div class="grow"><div class="name">'+esc(name)+'</div><div class="desc">'+esc(desc)+'</div></div></div>'; }
-function groupShuffle(){
-  var p=CATALOG.filter(function(t){ return ['R','TV‑MA'].indexOf(t.r)<0; });
-  var t=p[Math.floor(Math.random()*p.length)];
-  var holder=document.getElementById('groupPick'); holder.innerHTML='';
-  var node=catalogPoster(t,'pop'); node.style.aspectRatio='16/11'; node.style.marginTop='14px';
-  node.querySelector('.pmeta').innerHTML='<div class="ptitle" style="font-size:18px">'+esc(t.t)+'</div><div class="psub"><span class="badge">👍 everyone can watch</span></div>';
-  holder.appendChild(node);
+function pairReadInputs(){ var ns=document.querySelectorAll('#pairNames .nm'); if(ns.length){ pair.names=[]; ns.forEach(function(el){ pair.names[+el.dataset.i]=el.value.trim(); }); } var c=document.getElementById('pairCap'); if(c) pair.cap=+c.value; }
+function pairCount(d){ pairReadInputs(); pair.count=Math.max(2,Math.min(6,pair.count+d)); pairSetup(); }
+function pairBegin(){ pairReadInputs(); haptic('LIGHT'); pair.people=[]; pair.idx=0; pairPerson(); }
+function pairPerson(){
+  var i=pair.idx, nm=(pair.names[i]||('Person '+(i+1)));
+  var b=document.getElementById('groupsBody');
+  var grid=MOODS.map(function(m){ return '<div class="mood" onclick="pairToggle(this,\''+m.id+'\')"><div class="glow" style="background:'+m.c+'"></div><span class="em">'+m.em+'</span><span class="lbl">'+m.lbl+'</span></div>'; }).join('');
+  b.innerHTML=
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin:2px 2px 8px"><div class="section-title" style="margin:0">Person '+(i+1)+' of '+pair.count+'</div><div style="font-size:13px;color:var(--dim)">Pass the phone 📲</div></div>'
+   +'<div class="card" style="text-align:center"><div style="font-weight:800;font-size:20px">'+esc(nm)+', how do you want to feel?</div><div style="font-size:13px;color:var(--muted);margin-top:4px">Tap a couple — the more you pick, the better the match.</div></div>'
+   +'<div class="mood-grid" style="margin-top:12px">'+grid+'</div>'
+   +'<div id="pairSel" style="text-align:center;font-size:13px;color:var(--dim);margin-top:12px">No moods picked — open to anything.</div>'
+   +'<button class="btn" style="margin-top:10px" onclick="pairNext()">'+(i+1<pair.count?'Next person →':'See our pick →')+'</button>';
+  pair._cur=new Set();
+}
+function pairToggle(el,id){ haptic('LIGHT'); if(pair._cur.has(id)){ pair._cur.delete(id); el.classList.remove('selected'); } else { pair._cur.add(id); el.classList.add('selected'); } var ssel=document.getElementById('pairSel'); if(ssel) ssel.textContent = pair._cur.size ? (pair._cur.size+' picked') : 'No moods picked — open to anything.'; }
+function pairNext(){ pair.people.push({ name:(pair.names[pair.idx]||('Person '+(pair.idx+1))), moods:new Set(pair._cur) }); pair.idx++; if(pair.idx<pair.count){ pairPerson(); } else { pairCompute(false); } }
+function personSat(t,moods){ return moods.size===0 || t.moods.some(function(m){ return moods.has(m); }); }
+function moodById(id){ return MOODS.find(function(x){ return x.id===id; }); }
+function matchedMood(t,moods){ for(var i=0;i<t.moods.length;i++){ if(moods.has(t.moods[i])) return moodById(t.moods[i]); } return null; }
+function pairScore(titles){
+  return titles.map(function(t){
+    var who=pair.people.map(function(p){
+      var ok=personSat(t,p.moods), any=p.moods.size===0;
+      var want=null; if(p.moods.size){ want=moodById([].concat.apply([],[Array.from(p.moods)])[0]); }
+      return { name:p.name, ok:ok, any:any, mood:ok?matchedMood(t,p.moods):null, want:want };
+    });
+    return { t:t, who:who, n:who.filter(function(w){return w.ok;}).length };
+  });
+}
+function pairCompute(widen){
+  var cap=pair.cap;
+  var pool=TITLES.filter(function(t){ return (widen || state.services.has(t.svc)); });
+  if(cap) pool=pool.filter(function(t){ return ratingRank(t.r)<=cap; });
+  if(!pool.length) pool=TITLES.filter(function(t){ return !cap || ratingRank(t.r)<=cap; });
+  if(!pool.length) pool=TITLES.slice();
+  var scored=pairScore(pool);
+  var best=Math.max.apply(null,scored.map(function(x){return x.n;}));
+  var top=scored.filter(function(x){return x.n===best;});
+  if(pair._last && top.length>1) top=top.filter(function(x){return x.t.id!==pair._last;});
+  var pick=top[Math.floor(Math.random()*top.length)]; pair._last=pick.t.id;
+  pair.result={ pick:pick, best:best, widened:!!widen };
+  pairReveal();
+}
+function pairReveal(){
+  var res=pair.result; if(!res){ pairSetup(); return; }
+  haptic('HEAVY');
+  var pick=res.pick, best=res.best, N=pair.count, t=pick.t, svc=svcName(t.svc);
+  var head = best===N ? ('All '+N+' of you get what you wanted 🎉') : (best+' of '+N+' happy — closest match tonight');
+  var rows=pick.who.map(function(w){
+    var label = w.any ? '🤝 up for anything' : (w.ok ? (w.mood.em+' '+w.mood.lbl) : (w.want ? (w.want.em+' '+w.want.lbl) : '—'));
+    return '<div class="rowitem" style="cursor:default;padding:10px 0"><div class="av" style="background:'+(w.ok?'#9BE04A':'#3a2f60')+';color:#151024">'+(w.ok?'✓':'·')+'</div><div class="grow"><div class="name">'+esc(w.name)+'</div><div class="desc">'+label+(w.ok?'':' · not tonight')+'</div></div></div>';
+  }).join('');
+  var b=document.getElementById('groupsBody');
+  b.innerHTML=
+    '<div class="section-title">Your shared pick</div>'
+   +'<div class="poster big pop" id="prposter" style="background:'+t.g+'"><div class="art">'+t.em+'</div><img class="pimg" alt=""><div class="sheen"></div>'
+   +'<div class="pmeta"><div class="ptitle" style="font-size:22px">'+t.t+'</div><div class="psub"><span class="badge svc">▶ '+svc+'</span><span class="badge rating">'+t.r+'</span><span class="badge rating">'+t.rt+'</span></div></div></div>'
+   +'<div class="why"><b>'+head+'</b></div>'
+   +'<div class="card" style="margin-top:12px"><div class="section-title" style="margin:0 0 4px">Why this one</div>'+rows+'</div>'
+   +(best<N ? '<div class="card"><p>'+(res.widened?'Even across every service, ':'')+'no single title lands with everyone tonight.</p>'+(res.widened?'':'<button class="btn secondary small" style="margin-top:10px" onclick="pairCompute(true)">🌐 Widen to all services</button>')+'</div>' : '')
+   +'<div class="synopsis" id="prsyn">Loading synopsis…</div>'
+   +'<button class="btn" style="margin-top:14px" onclick="watchNow(\''+svc+'\')">▶ Watch on '+svc+'</button>'
+   +'<div style="display:flex;gap:10px;margin-top:10px"><button class="btn secondary" onclick="pairCompute('+(res.widened?'true':'false')+')">🔀 Another pick</button>'
+   +'<button class="btn secondary" onclick="pairSetup()">↺ New round</button></div>';
+  hydrate(document.getElementById('prposter'),t,function(desc){ var el=document.getElementById('prsyn'); if(!el) return; if(desc){ el.textContent=desc; } else { el.style.display='none'; } });
 }
 
 /* ---------- Saved ---------- */
 function renderSaved(){
-  var g=document.getElementById('savedGrid'); var empty=document.getElementById('savedEmpty');
-  g.innerHTML=''; empty.style.display=state.saved.length?'none':'block';
-  state.saved.forEach(function(c){ var d=recPoster(c,'mini'); d.onclick=function(){ curPick=c; enrich(c).then(function(){ settleResult(c); setTab('home'); showScreen('result'); }); }; g.appendChild(d); });
-}
-function recPoster(c,cls){ var d=document.createElement('div'); d.className='poster'+(cls?' '+cls:'')+(c.poster?' has-img':''); if(!c.poster) d.style.background='linear-gradient(135deg,#2A2150,#6B4CFF)'; d.innerHTML=(c.poster?'<img class="pimg" src="'+esc(c.poster)+'" alt="" style="opacity:1">':'<div class="art">🎬</div>')+'<div class="sheen"></div><div class="pmeta"><div class="ptitle">'+esc(c.title)+'</div></div>'; return d; }
-
-/* ---------- Profile + theme ---------- */
-function renderProfile(){ buildServices(document.getElementById('profileSvc')); updateSvcCount(); buildThemePicker(); buildMaturity(); var pl=document.getElementById('planLabel'); if(pl) pl.textContent='Moodie+ • Watch together'; }
-var THEMES=[
-  {id:'moodie',name:'Moodie',a:'#FF3D8A',b:'#8B5CFF',c:'#6B4CFF'},
-  {id:'ocean',name:'Ocean',a:'#34E0C4',b:'#43B4FF',c:'#6B4CFF'},
-  {id:'sunset',name:'Sunset',a:'#FFD23D',b:'#FF8A3D',c:'#FF3D8A'},
-  {id:'forest',name:'Forest',a:'#9BE04A',b:'#34E0C4',c:'#43B4FF'},
-  {id:'grape',name:'Grape',a:'#A879FF',b:'#6B4CFF',c:'#2A2150'},
-  {id:'rose',name:'Rose',a:'#FF7AB8',b:'#FF3D8A',c:'#8B5CFF'}
-];
-function applyTheme(t){
-  var r=document.documentElement.style;
-  if(!t){ r.removeProperty('--grad'); r.removeProperty('--grad2'); r.removeProperty('--pink'); r.removeProperty('--purple'); r.removeProperty('--violet'); return; }
-  var a=t.a, b=t.b||t.a, c=t.c||b;
-  r.setProperty('--pink',a); r.setProperty('--purple',b); r.setProperty('--violet',c);
-  r.setProperty('--grad','linear-gradient(135deg,'+a+' 0%,'+c+' 100%)');
-  r.setProperty('--grad2','linear-gradient(135deg,'+a+' 0%,'+b+' 55%,'+c+' 100%)');
-}
-function setTheme(t){ state.theme=t; persistTheme(); applyTheme(t); buildThemePicker(); haptic('LIGHT'); }
-function buildThemePicker(){
-  var el=document.getElementById('themeRow'); if(!el) return; el.innerHTML='';
-  THEMES.forEach(function(t){ var on=(state.theme&&state.theme.id===t.id)||(!state.theme&&t.id==='moodie'); var d=document.createElement('div'); d.className='swatch'+(on?' on':''); d.style.background='linear-gradient(135deg,'+t.a+','+t.c+')'; d.title=t.name; d.innerHTML=on?'<span>✓</span>':''; d.onclick=function(){ setTheme(t.id==='moodie'?null:t); }; el.appendChild(d); });
-  var custom=document.getElementById('accentPick'); if(custom && !custom._wired){ custom._wired=true; custom.onchange=function(){ setTheme({id:'custom',name:'Custom',a:custom.value,b:custom.value,c:'#6B4CFF'}); }; }
+  const g=document.getElementById('savedGrid'); const empty=document.getElementById('savedEmpty');
+  const items=[...state.saved].map(id=>TITLES.find(t=>t.id===id)).filter(Boolean);
+  g.innerHTML=''; empty.style.display=items.length?'none':'block';
+  items.forEach(t=>{ g.appendChild(posterMini(t,true,function(d,tt){ watchNow(svcName(tt.svc)); })); });
 }
 
-/* ---------- Onboarding taste grid (catalog) ---------- */
-var tasteShown=0;
-function buildTaste(reset){ var g=document.getElementById('tasteGrid'); if(!g) return; if(reset){ g.innerHTML=''; tasteShown=0; } var size=tasteShown===0?24:8; CATALOG.slice(tasteShown,tasteShown+size).forEach(function(t){ var d=catalogPoster(t,'mini'); d.onclick=function(){ d.classList.toggle('picked'); haptic('LIGHT'); }; g.appendChild(d); }); tasteShown+=size; var mb=document.getElementById('moreBtn'); if(mb) mb.style.display=tasteShown>=CATALOG.length?'none':'block'; }
-function catalogPoster(t,cls){ var d=document.createElement('div'); d.className='poster'+(cls?' '+cls:''); d.style.background=t.g; d.innerHTML='<div class="art">'+t.em+'</div><img class="pimg" alt="" loading="lazy"><div class="sheen"></div><div class="pmeta"><div class="ptitle">'+esc(t.t)+'</div></div>'; catalogHydrate(d,t); return d; }
-function catalogHydrate(el,t){ if(!TMDB_OK) return; var wm=(t.wiki||'').match(/\b(19|20)\d{2}\b/); var q=(t.t||'').replace(/[‐‑]/g,'-'); var kind=t.media==='tvShow'?'tv':'movie'; var url='search/'+kind+'?include_adult=false&language=en-US&query='+encodeURIComponent(q)+(wm?('&'+(kind==='tv'?'first_air_date_year':'year')+'='+wm[0]):''); tmdbGet(url).then(function(d){ var r=((d&&d.results)||[])[0]; if(r&&r.poster_path){ var img=el.querySelector('.pimg'); if(img){ img.onload=function(){ el.classList.add('has-img'); }; img.src=TMDB_IMG+r.poster_path; } } }).catch(function(){}); }
+/* ---------- Profile ---------- */
+function renderProfile(){
+  buildServiceChips(document.getElementById('profileSvc'));
+  document.getElementById('planLabel').textContent=hasPlus()?'Moodie+ member':'Free — pairing included';
+  var pt=document.getElementById('plusTitle'); if(pt) pt.textContent='Pair up & make groups';
+}
 
-/* ---------- toast / rating ---------- */
-var toastT; function toast(m){ var t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(function(){ t.classList.remove('show'); },2100); }
+/* ---------- Paywall / toast / rating ---------- */
+function openPaywall(){ setTab('groups'); }
+function closePaywall(){ setTab('home'); }
+let toastT; function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(function(){ t.classList.remove('show'); },1900); }
 function openRate(){ document.getElementById('rateModal').classList.add('show'); }
 function closeRate(){ state.rated=true; document.getElementById('rateModal').classList.remove('show'); }
 function rate(){ state.rated=true; document.getElementById('rateModal').classList.remove('show'); toast('Thank you! ⭐️⭐️⭐️⭐️⭐️'); }
 
-/* ---------- boot ---------- */
-function boot(){
-  buildMoods(); buildCtype(); buildTime(); buildTaste(true);
-  Store.get('theme').then(function(th){ state.theme=th||null; applyTheme(state.theme); buildThemePicker(); });
-  Store.get('prefs').then(function(pf){ if(pf&&pf.likeG){ state.prefs=pf; } });
-  Store.get('saved').then(function(sd){ if(Array.isArray(sd)) state.saved=sd; });
-  Store.get('seen').then(function(sn){ if(Array.isArray(sn)) state.seen=sn; });
-  Store.get('maturity').then(function(m){ if(m){ if(m.maturity) state.maturity=m.maturity; state.age=(m.age==null?null:m.age); state.certOverride=m.certOverride||null; } buildMaturity(); });
-  Store.get('services').then(function(sv){
-    if(Array.isArray(sv)&&sv.length){ state.services=new Set(sv); }
-    else { state.services=new Set([8,337,1899]); }
-    loadProviders().then(function(){ buildAllServices(); });
-  });
-}
+/* ---------- init ---------- */
 boot();
-
 </script>
 </body>
 </html>
