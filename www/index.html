@@ -49,7 +49,6 @@
   .btn:active{transform:scale(.98)}
   .btn.secondary{background:var(--surface); box-shadow:none; border:1px solid var(--line); color:var(--text)}
   .btn.small{font-size:15px; padding:13px 16px; border-radius:14px}
-  .btn.ghost{background:transparent; box-shadow:none; color:var(--muted); font-weight:700}
   .shuffle-btn{background:var(--grad2); box-shadow:0 16px 40px rgba(255,138,61,.4); font-size:18px; padding:18px}
 
   .mascot{position:relative; border-radius:30%; background:var(--grad2); flex:none;
@@ -131,63 +130,14 @@
   .tab .ti{font-size:22px; line-height:1}
   .tab.active{color:#fff}
 
-  .pw-hero{text-align:center; padding:24px 6px 6px}
-  .pw-benefit{display:flex; gap:13px; align-items:flex-start; padding:10px 0}
-  .pw-benefit .pi{width:34px; height:34px; border-radius:11px; background:var(--surface2); display:flex; align-items:center; justify-content:center; font-size:18px; flex:none}
-  .pw-benefit .bt{font-weight:700; font-size:15.5px}
-  .pw-benefit .bd{font-size:13px; color:var(--muted); margin-top:1px}
-  .plan{border:2px solid var(--line); border-radius:18px; padding:15px 16px; margin-top:12px; display:flex; align-items:center; justify-content:space-between; cursor:pointer; background:var(--surface)}
-  .plan.best{border-color:var(--pink); background:linear-gradient(135deg,rgba(255,61,138,.14),rgba(139,92,255,.14))}
-  .plan .pl-name{font-weight:800; font-size:16px}
-  .plan .pl-sub{font-size:12.5px; color:var(--muted); margin-top:3px}
-  .plan .pl-price{font-weight:800; font-size:17px; text-align:right}
-  .plan .pl-price small{display:block; font-size:11px; color:var(--muted); font-weight:600}
-  .tag{display:inline-block; background:var(--pink); color:#fff; font-size:10px; font-weight:800; padding:3px 8px; border-radius:6px; letter-spacing:.4px; margin-bottom:6px}
-  .fineprint{font-size:11px; color:var(--dim); text-align:center; line-height:1.6; margin-top:14px}
-  .fineprint a{color:var(--muted)}
-
-  .as-head{display:flex; gap:16px; align-items:center; padding:4px 2px 6px}
-  .as-head .meta{flex:1}
-  .as-head .title{font-size:22px; font-weight:800; letter-spacing:-.4px}
-  .as-head .subtitle{font-size:14px; color:var(--muted); margin-top:2px}
-  .as-get{background:var(--grad); border:none; color:#fff; font-weight:800; padding:9px 20px; border-radius:20px; font-size:15px; cursor:pointer}
-  .as-stats{display:flex; margin:16px 0; border-radius:16px; overflow:hidden; background:var(--surface); border:1px solid var(--line)}
-  .as-stat{flex:1; text-align:center; padding:12px 6px; border-right:1px solid var(--line)}
-  .as-stat:last-child{border-right:none}
-  .as-stat .n{font-weight:800; font-size:15px}
-  .as-stat .l{font-size:10px; color:var(--dim); text-transform:uppercase; letter-spacing:.5px; margin-top:3px}
-  .shots{display:flex; gap:14px; overflow-x:auto; padding:6px 2px 12px; scroll-snap-type:x mandatory}
-  .shot{flex:none; width:200px; scroll-snap-align:center}
-  .shot .cap{font-weight:800; font-size:15px; margin-bottom:9px; line-height:1.25; min-height:38px}
-  .shot .frame{border-radius:22px; overflow:hidden; border:1px solid var(--line); background:var(--bg2); aspect-ratio:9/17; position:relative}
-  .stars{color:var(--yellow); letter-spacing:2px; font-size:15px}
-
   .toast{position:absolute; left:50%; bottom:104px; transform:translateX(-50%) translateY(20px); background:#000; color:#fff;
     padding:12px 18px; border-radius:14px; font-weight:700; font-size:14px; opacity:0; pointer-events:none; transition:.25s; z-index:60; border:1px solid #3a2f60; white-space:nowrap}
   .toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
-  .modal{position:absolute; inset:0; background:rgba(6,4,14,.72); backdrop-filter:blur(6px); display:none; align-items:center; justify-content:center; z-index:70; padding:24px}
-  .modal.show{display:flex}
-  .modal .box{background:var(--surface); border:1px solid var(--line); border-radius:24px; padding:24px; text-align:center; width:100%; max-width:320px}
-  .modal .box .bigstars{font-size:30px; letter-spacing:4px; margin:10px 0 4px}
 
-  .lock-pill{display:inline-flex; align-items:center; gap:6px; background:var(--surface2); color:#fff; font-size:12px; font-weight:800; padding:6px 12px; border-radius:20px}
   .hint{font-size:13px; color:var(--dim); text-align:center; margin-top:10px}
-  .blurred{filter:blur(5px); opacity:.5; pointer-events:none}
   .pop{animation:pop .35s cubic-bezier(.2,1.3,.5,1)}
   @keyframes pop{0%{transform:scale(.9);opacity:.5}100%{transform:scale(1);opacity:1}}
   .spacer{height:14px}
-
-  .dec details{background:var(--surface); border:1px solid var(--line); border-radius:16px; margin-top:12px; overflow:hidden}
-  .dec summary{padding:15px 16px; font-weight:800; font-size:15px; cursor:pointer; list-style:none; display:flex; justify-content:space-between; align-items:center}
-  .dec summary::-webkit-details-marker{display:none}
-  .dec summary::after{content:"＋"; color:var(--muted)}
-  .dec details[open] summary::after{content:"–"}
-  .dec .db{padding:0 16px 16px; font-size:14px; color:#d9d3ef; line-height:1.55}
-  .dec .db b{color:#fff}
-  .dec .db ul{margin:8px 0 0; padding-left:18px}
-  .dec .db li{margin:5px 0}
-  .kv{display:flex; gap:8px; margin:4px 0}
-  .kv .k{color:var(--dim); min-width:92px; font-weight:700}
 
   /* ---- Large-screen / iPad: fill the screen, center a readable column, no device frame ---- */
   @media(min-width:620px){
@@ -221,7 +171,7 @@
 
       <!-- ONBOARDING 2: services -->
       <section class="screen" id="ob2">
-        <div class="topbar"><div><h1>Your services</h1><div class="sub">We'll only suggest what you can actually stream.</div></div></div>
+        <div class="topbar"><div><h1>Your services</h1><div class="sub">We'll favor picks on the services you use.</div></div></div>
         <div class="screen-body no-tab">
           <div class="chips" id="svcChips" style="margin-top:6px"></div>
           <p class="hint" style="margin-top:18px">Tap the ones you have. Change anytime.</p>
@@ -233,7 +183,7 @@
 
       <!-- ONBOARDING 3: taste -->
       <section class="screen" id="ob3">
-        <div class="topbar"><div><h1>Quick vibe check</h1><div class="sub">Tap a few you love — Moodie learns your taste. Or skip.</div></div></div>
+        <div class="topbar"><div><h1>A peek at the catalog</h1><div class="sub">Some of what Moodie picks from. Have a browse, or skip straight in.</div></div></div>
         <div class="screen-body no-tab">
           <div class="grid3" id="tasteGrid"></div>
           <button class="btn secondary small" id="moreBtn" style="margin-top:14px" onclick="buildTaste(false)">Show more titles</button>
@@ -253,7 +203,7 @@
         <div class="screen-body no-tab">
           <div class="mood-grid" id="moodGrid"></div>
           <button class="btn shuffle-btn" style="margin-top:16px" onclick="doShuffle()">🔀 Shuffle my pick</button>
-          <div class="hint">Moodie finds one perfect match across your services.</div>
+          <div class="hint">Moodie picks one thing, then shows you where to watch it.</div>
         </div>
       </section>
 
@@ -265,7 +215,7 @@
 
       <!-- GROUPS -->
       <section class="screen" id="groups">
-        <div class="topbar"><div><h1>Watch together</h1><div class="sub">Blend everyone's services, tastes & ratings.</div></div></div>
+        <div class="topbar"><div><h1>Watch together</h1><div class="sub">Everyone picks a mood. Moodie finds the overlap.</div></div></div>
         <div class="screen-body" id="groupsBody"></div>
       </section>
 
@@ -290,37 +240,28 @@
               <div class="eye l"></div><div class="eye r"></div><div class="smile"></div>
             </div>
             <div style="flex:1">
-              <div style="font-weight:800;font-size:18px">Jonathan</div>
-              <div id="planLabel" style="font-size:13px;color:var(--muted)">Free plan • Solo shuffle</div>
+              <div style="font-weight:800;font-size:18px">Moodie</div>
+              <div id="planLabel" style="font-size:13px;color:var(--muted)">Free — no account, no purchases</div>
             </div>
           </div>
           <div class="section-title">My services</div>
           <div class="chips" id="profileSvc"></div>
           <div class="section-title">Watch together</div>
           <div class="card" style="margin-top:6px">
-            <h3 id="plusTitle">Pair up &amp; make groups</h3>
-            <p>Share a code, blend everyone's services &amp; tastes, and set kid-safe rating limits.</p>
+            <h3>Pair up &amp; make groups</h3>
+            <p>Pass the phone around — everyone picks how they want to feel, and Moodie finds the one title that works for the room. Optional kid-safe rating limit.</p>
             <button class="btn small" style="margin-top:12px" onclick="setTab('groups')">Open Together</button>
           </div>
           <div class="section-title">Settings</div>
           <div class="card">
             
-            <div class="rowitem" onclick="openURL('https://jonathanscribbles.com/moodie')"><div class="grow"><div class="name">Terms of Service</div></div><div style="color:var(--dim)">›</div></div>
-            <div class="rowitem" onclick="openURL('https://jonathanscribbles.com/moodie')"><div class="grow"><div class="name">Privacy Policy</div></div><div style="color:var(--dim)">›</div></div>
+            <div class="rowitem" onclick="openURL('https://jonathanscribbles.com/moodie#privacy')"><div class="grow"><div class="name">Privacy Policy</div></div><div style="color:var(--dim)">›</div></div>
+            <div class="rowitem" onclick="openURL('https://jonathanscribbles.com/moodie#support')"><div class="grow"><div class="name">Support</div></div><div style="color:var(--dim)">›</div></div>
             
           </div>
           <div class="spacer"></div>
         </div>
       </section>
-
-      <!-- PAYWALL -->
-      
-
-      <!-- APP STORE LISTING -->
-      
-
-      <!-- DECISIONS -->
-      
 
       <nav class="tabbar" id="tabbar" style="display:none">
         <div class="tab" data-tab="home" onclick="setTab('home')"><div class="ti">🔀</div>Shuffle</div>
@@ -330,15 +271,6 @@
       </nav>
 
       <div class="toast" id="toast"></div>
-      <div class="modal" id="rateModal">
-        <div class="box">
-          <div style="font-size:15px;color:var(--muted)">Nice pick! 🎉</div>
-          <div style="font-weight:800;font-size:19px;margin-top:6px">Enjoying Moodie?</div>
-          <div class="bigstars stars">★★★★★</div>
-          <button class="btn" style="margin-top:14px" onclick="rate()">Rate Moodie</button>
-          <button class="btn ghost" style="margin-top:6px" onclick="closeRate()">Not now</button>
-        </div>
-      </div>
 
     </div>
   </div>
@@ -348,6 +280,8 @@
 /* ---------- Native bridge (Capacitor): haptics, native Share sheet, on-device storage ---------- */
 var Cap = window.Capacitor || {};
 var NP = (Cap && Cap.Plugins) || {};
+function capNative(){ try{ return !!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform()); }catch(e){ return false; } }
+function capPlugin(name){ try{ return (window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins[name])||null; }catch(e){ return null; } }
 function haptic(style){ try{ if(NP.Haptics && NP.Haptics.impact) NP.Haptics.impact({style:style||'MEDIUM'}); }catch(e){} }
 var Store={
   set:function(k,v){ try{ if(NP.Preferences){ NP.Preferences.set({key:k,value:JSON.stringify(v)}); return; } }catch(e){} try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} },
@@ -355,7 +289,19 @@ var Store={
 };
 function persistServices(){ try{ Store.set('services',[...state.services]); }catch(e){} }
 function persistSaved(){ try{ Store.set('saved',[...state.saved]); }catch(e){} }
-function openURL(u){ try{ window.open(u,'_blank'); }catch(e){} }
+/* EXTERNAL LINKS — Capacitor Browser.open with a window.open fallback, so links
+   really open in the system browser instead of dead-navigating inside the native
+   WKWebView. (Same openSite() pattern used in Permission / Slow Burn / the App
+   Builder Template.) */
+function openURL(url){
+  if(!url) return;
+  var B=capPlugin('Browser');
+  if(capNative()&&B){
+    try{ Promise.resolve(B.open({url:url})).catch(function(){ window.open(url,'_system'); }); return; }catch(e){}
+  }
+  try{ window.open(url,'_system'); }
+  catch(e){ try{ window.open(url,'_blank','noopener'); }catch(e2){ location.href=url; } }
+}
 function sharePick(id){ var t=TITLES.find(function(x){ return x.id===id; }); if(!t) return; var text='Moodie says watch \"'+t.t+'\" tonight \u2014 '+t.why+' (on '+svcName(t.svc)+')'; try{ if(NP.Share && NP.Share.share){ NP.Share.share({title:'Moodie',text:text,dialogTitle:'Share your pick'}); return; } }catch(e){} try{ if(navigator.share){ navigator.share({text:text}); return; } }catch(e){} toast('Shared '+t.t+' \ud83c\udf7f'); }
 function boot(){ buildTaste(true); buildMoods(); buildServiceChips(document.getElementById('svcChips')); Store.get('services').then(function(sv){ if(Array.isArray(sv)&&sv.length){ state.services=new Set(sv); buildServiceChips(document.getElementById('svcChips')); if(document.getElementById('profileSvc')) buildServiceChips(document.getElementById('profileSvc')); } }); Store.get('saved').then(function(sd){ if(Array.isArray(sd)){ state.saved=new Set(sd); } }); }
 /* ---------- Data ---------- */
@@ -426,7 +372,7 @@ const WIKI={1:'The Good Place',2:'Brooklyn Nine-Nine',3:"Schitt's Creek",4:'Ted 
 TITLES.forEach(function(t){ t.wiki=WIKI[t.id]||t.t; });
 
 /* ---------- State ---------- */
-const state={ services:new Set(['netflix','disney','max']), moods:new Set(), plus:false, saved:new Set([1,7]), lastMatch:null, rated:false };
+const state={ services:new Set(['netflix','disney','max']), moods:new Set(), saved:new Set([1,7]), lastMatch:null };
 
 /* ---------- Live metadata: real posters + descriptions from a public movie/TV DB.
    Production swaps this for TMDB (consistent portrait posters) + a licensed availability feed. ---------- */
@@ -445,6 +391,12 @@ function fetchMeta(t){
 }
 function hydrate(el,t,onDesc){
   fetchMeta(t).then(function(m){
+    /* The poster element is thrown away and rebuilt every time the screen re-renders
+       ("Again" / "Another pick"). A slow lookup for the PREVIOUS title must not paint
+       its art or synopsis over the one now on screen, so bail out once our own element
+       has been detached from the document. (Posters are appended synchronously right
+       after this runs, so a cache hit still hydrates normally.) */
+    if(!el || !el.isConnected) return;
     if(m.img){ var img=el.querySelector('.pimg'); if(img){ img.onload=function(){ if(img.naturalWidth>img.naturalHeight*1.02) el.classList.add('fit-contain'); el.classList.add('has-img'); }; img.src=m.img; } }
     if(onDesc) onDesc(m.desc||'');
   });
@@ -541,29 +493,46 @@ function settleResult(t){
   body.innerHTML=
     '<div class="section-title">Your pick</div>'
    +'<div class="poster big pop" id="rposter" style="background:'+t.g+'"><div class="art">'+t.em+'</div><img class="pimg" alt=""><div class="sheen"></div>'
-   +'<div class="pmeta"><div class="ptitle" style="font-size:22px">'+t.t+'</div><div class="psub"><span class="badge svc">▶ '+svcName(t.svc)+'</span><span class="badge rating">'+t.r+'</span><span class="badge rating">'+t.rt+'</span></div></div></div>'
+   +'<div class="pmeta"><div class="ptitle" style="font-size:22px">'+t.t+'</div><div class="psub"><span class="badge svc">'+svcName(t.svc)+'</span><span class="badge rating">'+t.r+'</span><span class="badge rating">'+t.rt+'</span></div></div></div>'
    +'<div class="why"><b>Because you want to '+moodPhrase()+':</b> '+t.why+'</div>'
    +'<div class="synopsis" id="rsyn">Loading synopsis…</div>'
-   +'<button class="btn" style="margin-top:14px" onclick="watchNow(\''+svcName(t.svc)+'\')">▶ Watch on '+svcName(t.svc)+'</button>'
+   +'<button class="btn" style="margin-top:14px" onclick="watchNow('+t.id+')">🍿 Where to watch</button>'
+   +'<div class="hint" style="margin-top:8px">Opens a live availability search — streaming rights change often.</div>'
    +'<div style="display:flex;gap:10px;margin-top:10px"><button class="btn secondary" id="saveBtn" onclick="toggleSave('+t.id+')">'+(isSaved?'✓ Saved':'＋ Save')+'</button>'
    +'<button class="btn secondary" onclick="doShuffle()">🔀 Again</button>'
    +'<button class="btn secondary" onclick="sharePick('+t.id+')">↗ Share</button></div>'
    +'<button class="btn" style="margin-top:10px;background:var(--surface2);box-shadow:none" onclick="groupCTA()">👥 Watch this with someone →</button>';
   hydrate(document.getElementById('rposter'),t,function(desc){ var el=document.getElementById('rsyn'); if(!el) return; if(desc){ el.textContent=desc; } else { el.style.display='none'; } });
-  if(!state.rated) setTimeout(openRate,800);
 }
 function toggleSave(id){
   haptic('LIGHT'); state.saved.has(id)?state.saved.delete(id):state.saved.add(id); persistSaved();
   const b=document.getElementById('saveBtn'); if(b) b.textContent=state.saved.has(id)?'✓ Saved':'＋ Save';
   toast(state.saved.has(id)?'Saved to your list 🔖':'Removed');
 }
-function watchNow(s){ toast('Opening '+s+'… 🍿'); }
+/* ---------- Where to watch ----------
+   Moodie ships a curated catalog, not a licensed availability feed, so it must never
+   claim a title is streaming on a particular service right now — licensing moves
+   constantly. The button hands off to JustWatch, which lists every service the title
+   is actually on today (stream / rent / buy) for the user's region. */
+function searchTitle(t){
+  return String((t&&t.t)||'')
+    .replace(/[‐‑‒–—]/g,'-')
+    .replace(/[‘’]/g,"'")
+    .replace(/[“”]/g,'"')
+    .trim();
+}
+function whereToWatchURL(t){ return 'https://www.justwatch.com/us/search?q='+encodeURIComponent(searchTitle(t)); }
+function watchNow(id){
+  var t=TITLES.find(function(x){ return x.id===id; });
+  if(!t) return;
+  haptic('MEDIUM');
+  openURL(whereToWatchURL(t));
+}
 function groupCTA(){ setTab('groups'); }
 
 /* ---------- Together: pass-the-phone mood overlap (serverless) ---------- */
 var RATING_RANK={'TV-Y':1,'TV-Y7':1,'TV-G':1,'G':1,'TV-PG':2,'PG':2,'PG-13':3,'TV-14':3,'R':4,'TV-MA':4,'NC-17':5};
 function ratingRank(r){ return RATING_RANK[String(r||'').replace(/\u2011/g,'-')]||3; }
-function hasPlus(){ return state.plus===true; } /* flips true when Moodie+ (StoreKit) ships */
 function esc(x){ return String(x==null?'':x).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
 var pair=null;
 function renderGroups(){ pairSetup(); }
@@ -646,12 +615,13 @@ function pairReveal(){
   b.innerHTML=
     '<div class="section-title">Your shared pick</div>'
    +'<div class="poster big pop" id="prposter" style="background:'+t.g+'"><div class="art">'+t.em+'</div><img class="pimg" alt=""><div class="sheen"></div>'
-   +'<div class="pmeta"><div class="ptitle" style="font-size:22px">'+t.t+'</div><div class="psub"><span class="badge svc">▶ '+svc+'</span><span class="badge rating">'+t.r+'</span><span class="badge rating">'+t.rt+'</span></div></div></div>'
+   +'<div class="pmeta"><div class="ptitle" style="font-size:22px">'+t.t+'</div><div class="psub"><span class="badge svc">'+svc+'</span><span class="badge rating">'+t.r+'</span><span class="badge rating">'+t.rt+'</span></div></div></div>'
    +'<div class="why"><b>'+head+'</b></div>'
    +'<div class="card" style="margin-top:12px"><div class="section-title" style="margin:0 0 4px">Why this one</div>'+rows+'</div>'
    +(best<N ? '<div class="card"><p>'+(res.widened?'Even across every service, ':'')+'no single title lands with everyone tonight.</p>'+(res.widened?'':'<button class="btn secondary small" style="margin-top:10px" onclick="pairCompute(true)">🌐 Widen to all services</button>')+'</div>' : '')
    +'<div class="synopsis" id="prsyn">Loading synopsis…</div>'
-   +'<button class="btn" style="margin-top:14px" onclick="watchNow(\''+svc+'\')">▶ Watch on '+svc+'</button>'
+   +'<button class="btn" style="margin-top:14px" onclick="watchNow('+t.id+')">🍿 Where to watch</button>'
+   +'<div class="hint" style="margin-top:8px">Opens a live availability search — streaming rights change often.</div>'
    +'<div style="display:flex;gap:10px;margin-top:10px"><button class="btn secondary" onclick="pairCompute('+(res.widened?'true':'false')+')">🔀 Another pick</button>'
    +'<button class="btn secondary" onclick="pairSetup()">↺ New round</button></div>';
   hydrate(document.getElementById('prposter'),t,function(desc){ var el=document.getElementById('prsyn'); if(!el) return; if(desc){ el.textContent=desc; } else { el.style.display='none'; } });
@@ -662,23 +632,16 @@ function renderSaved(){
   const g=document.getElementById('savedGrid'); const empty=document.getElementById('savedEmpty');
   const items=[...state.saved].map(id=>TITLES.find(t=>t.id===id)).filter(Boolean);
   g.innerHTML=''; empty.style.display=items.length?'none':'block';
-  items.forEach(t=>{ g.appendChild(posterMini(t,true,function(d,tt){ watchNow(svcName(tt.svc)); })); });
+  items.forEach(t=>{ g.appendChild(posterMini(t,true,function(d,tt){ watchNow(tt.id); })); });
 }
 
 /* ---------- Profile ---------- */
 function renderProfile(){
   buildServiceChips(document.getElementById('profileSvc'));
-  document.getElementById('planLabel').textContent=hasPlus()?'Moodie+ member':'Free — pairing included';
-  var pt=document.getElementById('plusTitle'); if(pt) pt.textContent='Pair up & make groups';
 }
 
-/* ---------- Paywall / toast / rating ---------- */
-function openPaywall(){ setTab('groups'); }
-function closePaywall(){ setTab('home'); }
+/* ---------- Toast ---------- */
 let toastT; function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(function(){ t.classList.remove('show'); },1900); }
-function openRate(){ document.getElementById('rateModal').classList.add('show'); }
-function closeRate(){ state.rated=true; document.getElementById('rateModal').classList.remove('show'); }
-function rate(){ state.rated=true; document.getElementById('rateModal').classList.remove('show'); toast('Thank you! ⭐️⭐️⭐️⭐️⭐️'); }
 
 /* ---------- init ---------- */
 boot();

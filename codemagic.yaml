@@ -32,8 +32,6 @@ workflows:
           - Moodie_AppStore_SharedDist
         certificates:
           - JB_Shared_Distribution
-      groups:
-        - tmdb
       vars:
         BUNDLE_ID: "com.jonathanbiles.moodie"
         XCODE_WORKSPACE: "ios/App/App.xcworkspace"
@@ -44,44 +42,10 @@ workflows:
     scripts:
       - name: Install npm dependencies
         script: npm install
-      - name: Inject TMDB API key
-        script: |
-          CLEAN_TMDB_KEY="$(printf '%s' "$TMDB_API_KEY" | tr -d '[:space:]')"; export CLEAN_TMDB_KEY
-          if [ -n "$CLEAN_TMDB_KEY" ]; then
-            perl -pi -e 's/__TMDB_API_KEY__/$ENV{CLEAN_TMDB_KEY}/g' www/index.html
-            echo "TMDB API key injected into www/index.html (whitespace stripped)."
-          else
-            echo "TMDB_API_KEY not set - posters use the on-brand fallback cards."
-          fi
       - name: Add + sync iOS platform (Capacitor)
         script: |
           [ -d ios ] || npx cap add ios
           npx cap sync ios
-      - name: Ensure TMDB key in iOS bundle + verify
-        script: |
-          BUNDLE=ios/App/App/public/index.html
-          CLEAN_TMDB_KEY="$(printf '%s' "$TMDB_API_KEY" | tr -d '[:space:]')"; export CLEAN_TMDB_KEY
-          if [ -n "$CLEAN_TMDB_KEY" ]; then
-            perl -pi -e 's/__TMDB_API_KEY__/$ENV{CLEAN_TMDB_KEY}/g' www/index.html "$BUNDLE" 2>/dev/null || true
-          fi
-          echo "TMDB_API_KEY raw length: ${#TMDB_API_KEY} | cleaned length: ${#CLEAN_TMDB_KEY}"
-          case "$CLEAN_TMDB_KEY" in
-            eyJ*) echo "TMDB key type: v4 Bearer token (JWT)";;
-            "")   echo "TMDB key type: EMPTY (var not set / wrong group)";;
-            *)    echo "TMDB key type: v3 api_key style";;
-          esac
-          if [ -f "$BUNDLE" ]; then
-            if grep -q "__TMDB_API_KEY__" "$BUNDLE"; then echo "SHIPPED BUNDLE: placeholder STILL present (BAD)"; else echo "SHIPPED BUNDLE: real key present (good)"; fi
-          else echo "SHIPPED BUNDLE: $BUNDLE not found"; fi
-          # Empirical live TMDB request (proves the stored key works). Key value is NOT printed.
-          if [ -n "$CLEAN_TMDB_KEY" ]; then
-            case "$CLEAN_TMDB_KEY" in
-              eyJ*) CODE=$(curl -s -o /tmp/tmdb_test.json -w '%{http_code}' -H "Authorization: Bearer $CLEAN_TMDB_KEY" "https://api.themoviedb.org/3/search/movie?query=Dune&year=2021");;
-              *)    CODE=$(curl -s -o /tmp/tmdb_test.json -w '%{http_code}' "https://api.themoviedb.org/3/search/movie?query=Dune&year=2021&api_key=$CLEAN_TMDB_KEY");;
-            esac
-            echo "TMDB live request HTTP: $CODE"
-            if grep -q '"poster_path"' /tmp/tmdb_test.json; then echo "TMDB poster_path returned: YES (images will work)"; else echo "TMDB poster_path returned: NO (key rejected or no match)"; fi
-          fi
       - name: Embed the real app icon (replace Capacitor default)
         script: |
           ICONSET="ios/App/App/Assets.xcassets/AppIcon.appiconset"
@@ -95,15 +59,23 @@ workflows:
           else
             echo "No appicon-1024.png found — using Capacitor default icon."
           fi
-      - name: Set build number + export-compliance flag
+      - name: Set marketing version + build number + export-compliance flag
         script: |
-          LATEST=$(app-store-connect get-latest-testflight-build-number "6788245223" 2>/dev/null || echo 0)
-          NEXT=$(( LATEST + 1 ))
           PLIST=ios/App/App/Info.plist
-          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $NEXT" "$PLIST"
+          # Marketing version (CFBundleShortVersionString) is set deliberately here rather than
+          # left at the Capacitor template default, so App Store Connect shows the intended 1.0.0.
+          MARKETING_VERSION="1.0.0"
+          # Build number is a UTC timestamp: always increases, never collides, and needs no
+          # network round-trip to App Store Connect to work out "the last one plus one".
+          BUILD_NUMBER="$(date -u +%Y%m%d%H%M)"
+          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $MARKETING_VERSION" "$PLIST" \
+            || /usr/libexec/PlistBuddy -c "Add :CFBundleShortVersionString string $MARKETING_VERSION" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD_NUMBER" "$PLIST" \
+            || /usr/libexec/PlistBuddy -c "Add :CFBundleVersion string $BUILD_NUMBER" "$PLIST"
           /usr/libexec/PlistBuddy -c "Add :ITSAppUsesNonExemptEncryption bool false" "$PLIST" 2>/dev/null \
             || /usr/libexec/PlistBuddy -c "Set :ITSAppUsesNonExemptEncryption false" "$PLIST"
-          echo "CFBundleVersion set to $NEXT (previous TestFlight latest: $LATEST)"
+          echo "CFBundleShortVersionString = $MARKETING_VERSION"
+          echo "CFBundleVersion            = $BUILD_NUMBER"
       - name: Set up code signing — apply the stored profile + the ONE shared cert (no mint, no revoke)
         script: |
           security find-identity -v -p codesigning || true
