@@ -6,7 +6,10 @@ workflows:
   ios-testflight:
     name: Moodie -> TestFlight
     instance_type: mac_mini_m2
-    max_build_duration: 60
+    # 120, not 60: when this workflow submits for review, `fastlane deliver` has to sit and
+    # wait for App Store Connect to finish processing the build it just uploaded before it
+    # can attach it to the version. That wait is Apple's, and it is routinely 15-45 minutes.
+    max_build_duration: 120
     # --- Auto-build on push to main -----------------------------------------
     # A push to main starts this workflow automatically: no browser, no "Start
     # build" click. See PLAYBOOK.md "Shipping without the browser".
@@ -34,6 +37,13 @@ workflows:
           - JB_Shared_Distribution
       vars:
         BUNDLE_ID: "com.jonathanbiles.moodie"
+        # --- REVIEW-SUBMIT TOGGLE ---------------------------------------------
+        # "true"  = after the build lands in TestFlight, push the store listing and
+        #           submit this version for App Store review (fastlane deliver).
+        # anything else = build + TestFlight only; the submit step no-ops.
+        # Flip this back to "false" once 1.0.0 is approved, or every later push to
+        # main will try to submit itself for review.
+        SUBMIT_FOR_REVIEW: "true"
         XCODE_WORKSPACE: "ios/App/App.xcworkspace"
         XCODE_SCHEME: "App"
       node: 22
@@ -93,17 +103,55 @@ workflows:
         auth: integration
         submit_to_testflight: true
 
-        # --- REVIEW-SUBMIT TOGGLE — deliberately OFF ---------------------------
-        # As written, every green build goes to TestFlight and stops there.
-        # Uncommenting submit_to_app_store makes EVERY subsequent green build
-        # submit itself for App Store review, so flip it on with intent and flip
-        # it back off after the release.
-        # Prerequisites in App Store Connect, or the submit step fails the build:
-        #   - screenshots for every required device size
-        #   - description, keywords, promotional text, support + marketing URLs
-        #   - privacy policy URL and the App Privacy answers
-        #   - age rating, category, and export-compliance answers
-        #   - a "What's New" note for this version string
-        # See PLAYBOOK.md "Submitting for review without the browser".
+        # submit_to_app_store is deliberately NOT used. It submits whatever listing is
+        # already in App Store Connect and fails if anything is missing; it cannot supply
+        # the screenshots, description or review notes itself. The post-publish step below
+        # uses `fastlane deliver`, which uploads the listing AND submits, from files in
+        # this repo. Turning both on would submit the same version twice.
         # submit_to_app_store: true
-        # release_type: MANUAL      # MANUAL | AFTER_APPROVAL | SCHEDULED
+
+      # --- Post-publish: store listing + submit for review ----------------------
+      # Ordering is the whole point: this runs after the block above has uploaded the signed
+      # IPA to App Store Connect, so the build exists for deliver to attach to the version.
+      scripts:
+        - name: Submit for App Store review (fastlane deliver)
+          script: |
+            set -euo pipefail
+
+            if [ "${SUBMIT_FOR_REVIEW:-false}" != "true" ]; then
+              echo "SUBMIT_FOR_REVIEW is not 'true' — TestFlight only, not submitting for review."
+              exit 0
+            fi
+
+            # Publishing scripts run regardless of build status, so check before submitting.
+            if [ "${CM_BUILD_STEP_STATUS:-success}" != "success" ]; then
+              echo "Previous step reported '${CM_BUILD_STEP_STATUS}' — refusing to submit a bad build."
+              exit 1
+            fi
+
+            # Confirm Codemagic injected the App Store Connect key, reporting variable NAMES
+            # only. Never echo a value — these are secrets and the build log is not private.
+            missing=0
+            for v in APP_STORE_CONNECT_KEY_IDENTIFIER APP_STORE_CONNECT_ISSUER_ID APP_STORE_CONNECT_PRIVATE_KEY; do
+              if [ -z "${!v:-}" ]; then
+                echo "MISSING: $v"
+                missing=1
+              else
+                echo "present: $v"
+              fi
+            done
+            if [ "$missing" -ne 0 ]; then
+              echo "Those variables come from 'integrations: app_store_connect: ChordLoopAPIKey'."
+              echo "Fix the integration in Codemagic — do not hardcode a key in the repo."
+              exit 1
+            fi
+
+            # fastlane aborts on a non-UTF-8 locale, and the listing text contains em dashes.
+            export LC_ALL=en_US.UTF-8
+            export LANG=en_US.UTF-8
+            export FASTLANE_SKIP_UPDATE_CHECK=1
+            export FASTLANE_HIDE_CHANGELOG=1
+            export FASTLANE_DISABLE_COLORS=1
+
+            fastlane --version
+            fastlane ios submit_review

@@ -5,3 +5,8 @@ build/
 *.log
 _transform.py
 _*.py
+
+# fastlane run output, not configuration
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/test_output/
