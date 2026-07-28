@@ -41,7 +41,7 @@ workflows:
         # "true"  = after the build lands in TestFlight, push the store listing and
         #           submit this version for App Store review (fastlane deliver).
         # anything else = build + TestFlight only; the submit step no-ops.
-        # Flip this back to "false" once 1.0.0 is approved, or every later push to
+        # Flip this back to "false" once 1.0 is approved, or every later push to
         # main will try to submit itself for review.
         SUBMIT_FOR_REVIEW: "true"
         XCODE_WORKSPACE: "ios/App/App.xcworkspace"
@@ -73,8 +73,11 @@ workflows:
         script: |
           PLIST=ios/App/App/Info.plist
           # Marketing version (CFBundleShortVersionString) is set deliberately here rather than
-          # left at the Capacitor template default, so App Store Connect shows the intended 1.0.0.
-          MARKETING_VERSION="1.0.0"
+          # left at the Capacitor template default. It MUST match the version string that is
+          # currently editable in App Store Connect — which is literally "1.0", not "1.0.0".
+          # deliver attaches the build to that editable version; a build stamped 1.0.0 can never
+          # attach to ASC version 1.0, and the submit step would just wait until it times out.
+          MARKETING_VERSION="1.0"
           # Build number is a UTC timestamp: always increases, never collides, and needs no
           # network round-trip to App Store Connect to work out "the last one plus one".
           BUILD_NUMBER="$(date -u +%Y%m%d%H%M)"
