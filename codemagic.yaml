@@ -43,7 +43,12 @@ workflows:
         # anything else = build + TestFlight only; the submit step no-ops.
         # Flip this back to "false" once 1.0 is approved, or every later push to
         # main will try to submit itself for review.
-        SUBMIT_FOR_REVIEW: "true"
+        #
+        # 2026-08-01: set to "false" for the 4.1(a) remediation build. The listing
+        # (metadata + screenshots) is being applied by hand in App Store Connect, and
+        # this build must land in TestFlight WITHOUT submitting itself for review.
+        # Flip back to "true" only when the lane should own the submit again.
+        SUBMIT_FOR_REVIEW: "false"
         XCODE_WORKSPACE: "ios/App/App.xcworkspace"
         XCODE_SCHEME: "App"
       node: 22

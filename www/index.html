@@ -82,10 +82,6 @@
     justify-content:flex-end; color:#fff; aspect-ratio:2/3; box-shadow:0 16px 40px rgba(0,0,0,.4)}
   .poster .art{position:absolute; inset:0; z-index:0; display:flex; align-items:center; justify-content:center;
     font-size:68px; opacity:.30; transform:translateY(-9%); transition:opacity .3s}
-  .poster .pimg{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0; transition:opacity .45s; z-index:1}
-  .poster.has-img .pimg{opacity:1}
-  .poster.has-img .art{opacity:0}
-  .poster.fit-contain .pimg{object-fit:contain}
   .poster .sheen{position:absolute; inset:0; z-index:2; pointer-events:none;
     background:radial-gradient(120% 80% at 22% 10%, rgba(255,255,255,.30), transparent 52%),
       linear-gradient(to top, rgba(0,0,0,.62), rgba(0,0,0,.05) 58%, transparent)}
@@ -106,8 +102,6 @@
 
   .why{background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:13px 15px; margin-top:14px; font-size:15px; color:#e9e4ff; line-height:1.4}
   .why b{color:#fff}
-  .synopsis{font-size:13.5px; color:var(--muted); line-height:1.5; margin-top:12px}
-  .synopsis:before{content:"SYNOPSIS"; display:block; font-size:10px; letter-spacing:1.2px; color:var(--dim); font-weight:800; margin-bottom:5px}
 
   .card{background:var(--surface); border:1px solid var(--line); border-radius:20px; padding:16px; margin-top:14px}
   .card h3{margin:0 0 4px; font-size:17px}
@@ -302,7 +296,7 @@ function openURL(url){
   try{ window.open(url,'_system'); }
   catch(e){ try{ window.open(url,'_blank','noopener'); }catch(e2){ location.href=url; } }
 }
-function sharePick(id){ var t=TITLES.find(function(x){ return x.id===id; }); if(!t) return; var text='Moodie says watch \"'+t.t+'\" tonight \u2014 '+t.why+' (on '+svcName(t.svc)+')'; try{ if(NP.Share && NP.Share.share){ NP.Share.share({title:'Moodie',text:text,dialogTitle:'Share your pick'}); return; } }catch(e){} try{ if(navigator.share){ navigator.share({text:text}); return; } }catch(e){} toast('Shared '+t.t+' \ud83c\udf7f'); }
+function sharePick(id){ var t=TITLES.find(function(x){ return x.id===id; }); if(!t) return; var text='Moodie says watch \"'+t.t+'\" tonight \u2014 '+t.why; try{ if(NP.Share && NP.Share.share){ NP.Share.share({title:'Moodie',text:text,dialogTitle:'Share your pick'}); return; } }catch(e){} try{ if(navigator.share){ navigator.share({text:text}); return; } }catch(e){} toast('Shared '+t.t+' \ud83c\udf7f'); }
 function boot(){ buildTaste(true); buildMoods(); buildServiceChips(document.getElementById('svcChips')); Store.get('services').then(function(sv){ if(Array.isArray(sv)&&sv.length){ state.services=new Set(sv); buildServiceChips(document.getElementById('svcChips')); if(document.getElementById('profileSvc')) buildServiceChips(document.getElementById('profileSvc')); } }); Store.get('saved').then(function(sd){ if(Array.isArray(sd)){ state.saved=new Set(sd); } }); }
 /* ---------- Data ---------- */
 const SERVICES=[
@@ -318,7 +312,6 @@ const MOODS=[
   {id:'scared',em:'👻',lbl:'Spooky',c:'#7CE084'},{id:'hyped',em:'🔥',lbl:'Hyped',c:'#FF8A3D'},
   {id:'smart',em:'🧠',lbl:'Smart',c:'#6BA8FF'},{id:'family',em:'👨‍👩‍👧',lbl:'Family',c:'#9BE04A'},
 ];
-const svcName=id=>(SERVICES.find(s=>s.id===id)||{}).name;
 const TITLES=[
   {id:1,t:'The Good Place',em:'😄',svc:'netflix',r:'TV‑14',rt:'22m',moods:['laugh','smart','chill'],g:'linear-gradient(135deg,#34E0C4,#43B4FF)',why:'Feel‑good and clever without trying too hard.',media:'tvShow'},
   {id:2,t:'Brooklyn Nine‑Nine',em:'🚔',svc:'peacock',r:'TV‑14',rt:'22m',moods:['laugh','chill'],g:'linear-gradient(135deg,#FF8A3D,#FFD23D)',why:'A comfort‑watch that never misses.',media:'tvShow'},
@@ -367,49 +360,29 @@ const TITLES=[
   {id:45,t:'Crazy Rich Asians',em:'💍',svc:'max',r:'PG‑13',rt:'120m',moods:['romance','laugh','hyped'],g:'linear-gradient(135deg,#FF3D8A,#FFD23D)',why:'Glamorous, funny and big‑hearted.',media:'movie'},
 ];
 
-/* Exact article titles so the live lookup always resolves the right show (no wrong matches) */
-const WIKI={1:'The Good Place',2:'Brooklyn Nine-Nine',3:"Schitt's Creek",4:'Ted Lasso',5:'Paddington 2',6:'Bluey (2018 TV series)',7:'Spider-Man: Into the Spider-Verse',8:'Everything Everywhere All at Once',9:'Inception',10:'Interstellar (film)',11:'The Notebook',12:'Pride & Prejudice (2005 film)',13:'A Quiet Place',14:'Hereditary (film)',15:'Knives Out',16:'Coco (2017 film)',17:'Planet Earth II',18:'Top Gun: Maverick',19:'Fleabag',20:'Spirited Away',21:'The Office (American TV series)',22:'Parks and Recreation',23:'Modern Family',24:'Stranger Things',25:'The Bear (TV series)',26:'Wednesday (TV series)',27:'Encanto',28:'Moana (2016 film)',29:'La La Land',30:'Dune (2021 film)',31:'Abbott Elementary',32:'The Menu (2022 film)',33:'Palm Springs (2020 film)',34:'Get Out',35:'The Last of Us (TV series)',36:'Over the Garden Wall',37:'The Princess Bride (film)',38:'Before Sunrise',39:'Jurassic Park (film)',40:'Jumanji: Welcome to the Jungle',41:'Up (2009 film)',42:'Titanic (1997 film)',43:'Ghostbusters',44:'The Shape of Water',45:'Crazy Rich Asians (film)'};
-TITLES.forEach(function(t){ t.wiki=WIKI[t.id]||t.t; });
 
 /* ---------- State ---------- */
 const state={ services:new Set(['netflix','disney','max']), moods:new Set(), saved:new Set([1,7]), lastMatch:null };
 
-/* ---------- Live metadata: real posters + descriptions from a public movie/TV DB.
-   Production swaps this for TMDB (consistent portrait posters) + a licensed availability feed. ---------- */
-const metaCache={};
-function fetchMeta(t){
-  if(metaCache[t.id]) return metaCache[t.id];
-  const wiki=t.wiki||t.t;
-  const rest='https://en.wikipedia.org/api/rest_v1/page/summary/'+encodeURIComponent(wiki)+'?redirect=true';
-  const api='https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&prop=extracts%7Cpageimages&exintro=1&explaintext=1&piprop=original%7Cthumbnail&pithumbsize=500&pilicense=any&redirects=1&titles='+encodeURIComponent(wiki);
-  const p=fetch(rest).then(function(r){ if(!r.ok) throw 0; return r.json(); })
-    .then(function(d){ var img=(d.originalimage&&d.originalimage.source)||(d.thumbnail&&d.thumbnail.source)||null; var desc=d.extract||''; if(!img&&!desc) throw 0; return {img:img,desc:desc}; })
-    .catch(function(){ return fetch(api).then(function(r){ if(!r.ok) throw 0; return r.json(); })
-      .then(function(d){ var pg=(d&&d.query&&d.query.pages)?Object.values(d.query.pages)[0]:{}; return {img:(pg.original&&pg.original.source)||(pg.thumbnail&&pg.thumbnail.source)||null, desc:pg.extract||''}; })
-      .catch(function(){ return {img:null,desc:''}; }); });
-  metaCache[t.id]=p; return p;
-}
-function hydrate(el,t,onDesc){
-  fetchMeta(t).then(function(m){
-    /* The poster element is thrown away and rebuilt every time the screen re-renders
-       ("Again" / "Another pick"). A slow lookup for the PREVIOUS title must not paint
-       its art or synopsis over the one now on screen, so bail out once our own element
-       has been detached from the document. (Posters are appended synchronously right
-       after this runs, so a cache hit still hydrates normally.) */
-    if(!el || !el.isConnected) return;
-    if(m.img){ var img=el.querySelector('.pimg'); if(img){ img.onload=function(){ if(img.naturalWidth>img.naturalHeight*1.02) el.classList.add('fit-contain'); el.classList.add('has-img'); }; img.src=m.img; } }
-    if(onDesc) onDesc(m.desc||'');
-  });
-}
+/* ---------- Card art ----------
+   Moodie ships NO third-party artwork and fetches none at runtime. Every card is drawn
+   from the title's own gradient + glyph, defined in TITLES above. An earlier build pulled
+   poster images and synopsis text from the Wikipedia API; that was removed so the app
+   carries no copyrighted media and makes no third-party media request. ---------- */
+/* Streaming services are a private, on-device preference: the user tells Moodie which ones
+   they pay for, and Moodie matches against them. A pick therefore carries a neutral
+   'on your services' badge rather than a provider's name or mark — Moodie has no licensed
+   availability feed and no relationship with any provider. */
+const SVC_BADGE='On your services';
+
 function posterArt(t,cls){
   const d=document.createElement('div'); d.className='poster'+(cls?' '+cls:''); d.style.background=t.g;
-  d.innerHTML='<div class="art">'+t.em+'</div><img class="pimg" alt="" loading="lazy"><div class="sheen"></div><div class="pmeta"><div class="ptitle">'+t.t+'</div></div>';
-  hydrate(d,t);
+  d.innerHTML='<div class="art">'+t.em+'</div><div class="sheen"></div><div class="pmeta"><div class="ptitle">'+t.t+'</div></div>';
   return d;
 }
 function posterMini(t,showSvc,onClick){
   const d=posterArt(t,'mini');
-  if(showSvc) d.querySelector('.pmeta').insertAdjacentHTML('beforeend','<div class="psub"><span class="badge svc">'+svcName(t.svc)+'</span></div>');
+  if(showSvc) d.querySelector('.pmeta').insertAdjacentHTML('beforeend','<div class="psub"><span class="badge svc">'+SVC_BADGE+'</span></div>');
   if(onClick) d.onclick=function(){ onClick(d,t); };
   return d;
 }
@@ -492,17 +465,15 @@ function settleResult(t){
   const body=document.getElementById('resultBody');
   body.innerHTML=
     '<div class="section-title">Your pick</div>'
-   +'<div class="poster big pop" id="rposter" style="background:'+t.g+'"><div class="art">'+t.em+'</div><img class="pimg" alt=""><div class="sheen"></div>'
-   +'<div class="pmeta"><div class="ptitle" style="font-size:22px">'+t.t+'</div><div class="psub"><span class="badge svc">'+svcName(t.svc)+'</span><span class="badge rating">'+t.r+'</span><span class="badge rating">'+t.rt+'</span></div></div></div>'
+   +'<div class="poster big pop" id="rposter" style="background:'+t.g+'"><div class="art">'+t.em+'</div><div class="sheen"></div>'
+   +'<div class="pmeta"><div class="ptitle" style="font-size:22px">'+t.t+'</div><div class="psub"><span class="badge svc">'+SVC_BADGE+'</span><span class="badge rating">'+t.r+'</span><span class="badge rating">'+t.rt+'</span></div></div></div>'
    +'<div class="why"><b>Because you want to '+moodPhrase()+':</b> '+t.why+'</div>'
-   +'<div class="synopsis" id="rsyn">Loading synopsis…</div>'
    +'<button class="btn" style="margin-top:14px" onclick="watchNow('+t.id+')">🍿 Where to watch</button>'
    +'<div class="hint" style="margin-top:8px">Opens a live availability search — streaming rights change often.</div>'
    +'<div style="display:flex;gap:10px;margin-top:10px"><button class="btn secondary" id="saveBtn" onclick="toggleSave('+t.id+')">'+(isSaved?'✓ Saved':'＋ Save')+'</button>'
    +'<button class="btn secondary" onclick="doShuffle()">🔀 Again</button>'
    +'<button class="btn secondary" onclick="sharePick('+t.id+')">↗ Share</button></div>'
    +'<button class="btn" style="margin-top:10px;background:var(--surface2);box-shadow:none" onclick="groupCTA()">👥 Watch this with someone →</button>';
-  hydrate(document.getElementById('rposter'),t,function(desc){ var el=document.getElementById('rsyn'); if(!el) return; if(desc){ el.textContent=desc; } else { el.style.display='none'; } });
 }
 function toggleSave(id){
   haptic('LIGHT'); state.saved.has(id)?state.saved.delete(id):state.saved.add(id); persistSaved();
@@ -605,7 +576,7 @@ function pairCompute(widen){
 function pairReveal(){
   var res=pair.result; if(!res){ pairSetup(); return; }
   haptic('HEAVY');
-  var pick=res.pick, best=res.best, N=pair.count, t=pick.t, svc=svcName(t.svc);
+  var pick=res.pick, best=res.best, N=pair.count, t=pick.t;
   var head = best===N ? ('All '+N+' of you get what you wanted 🎉') : (best+' of '+N+' happy — closest match tonight');
   var rows=pick.who.map(function(w){
     var label = w.any ? '🤝 up for anything' : (w.ok ? (w.mood.em+' '+w.mood.lbl) : (w.want ? (w.want.em+' '+w.want.lbl) : '—'));
@@ -614,17 +585,15 @@ function pairReveal(){
   var b=document.getElementById('groupsBody');
   b.innerHTML=
     '<div class="section-title">Your shared pick</div>'
-   +'<div class="poster big pop" id="prposter" style="background:'+t.g+'"><div class="art">'+t.em+'</div><img class="pimg" alt=""><div class="sheen"></div>'
-   +'<div class="pmeta"><div class="ptitle" style="font-size:22px">'+t.t+'</div><div class="psub"><span class="badge svc">'+svc+'</span><span class="badge rating">'+t.r+'</span><span class="badge rating">'+t.rt+'</span></div></div></div>'
+   +'<div class="poster big pop" id="prposter" style="background:'+t.g+'"><div class="art">'+t.em+'</div><div class="sheen"></div>'
+   +'<div class="pmeta"><div class="ptitle" style="font-size:22px">'+t.t+'</div><div class="psub"><span class="badge svc">'+SVC_BADGE+'</span><span class="badge rating">'+t.r+'</span><span class="badge rating">'+t.rt+'</span></div></div></div>'
    +'<div class="why"><b>'+head+'</b></div>'
    +'<div class="card" style="margin-top:12px"><div class="section-title" style="margin:0 0 4px">Why this one</div>'+rows+'</div>'
    +(best<N ? '<div class="card"><p>'+(res.widened?'Even across every service, ':'')+'no single title lands with everyone tonight.</p>'+(res.widened?'':'<button class="btn secondary small" style="margin-top:10px" onclick="pairCompute(true)">🌐 Widen to all services</button>')+'</div>' : '')
-   +'<div class="synopsis" id="prsyn">Loading synopsis…</div>'
    +'<button class="btn" style="margin-top:14px" onclick="watchNow('+t.id+')">🍿 Where to watch</button>'
    +'<div class="hint" style="margin-top:8px">Opens a live availability search — streaming rights change often.</div>'
    +'<div style="display:flex;gap:10px;margin-top:10px"><button class="btn secondary" onclick="pairCompute('+(res.widened?'true':'false')+')">🔀 Another pick</button>'
    +'<button class="btn secondary" onclick="pairSetup()">↺ New round</button></div>';
-  hydrate(document.getElementById('prposter'),t,function(desc){ var el=document.getElementById('prsyn'); if(!el) return; if(desc){ el.textContent=desc; } else { el.style.display='none'; } });
 }
 
 /* ---------- Saved ---------- */
