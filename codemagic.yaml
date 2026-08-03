@@ -30,6 +30,12 @@ workflows:
     integrations:
       app_store_connect: ChordLoopAPIKey
     environment:
+      # Imports the Codemagic variable group `tmdb`, which holds the SECURE TMDB_API_KEY.
+      # Without this import the variable is simply not present in the build environment —
+      # the "Inject the TMDB API key" step below would then abort the build rather than
+      # ship an app that quietly has no posters.
+      groups:
+        - tmdb
       ios_signing:
         provisioning_profiles:
           - Moodie_AppStore_SharedDist
