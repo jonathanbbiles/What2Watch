@@ -1,1 +1,1 @@
-Moodie now draws every card with its own artwork, so the app carries no third-party media and makes no outside requests while you use it. Plus the same one-tap mood picking, pass-the-phone group picks, and a lighter, faster feel throughout.
+Posters and synopses are back — now sourced properly from TMDB, with where-to-watch links powered by JustWatch. No streaming-service logos, no scraped artwork. Plus the same one-tap mood picking and pass-the-phone group picks.

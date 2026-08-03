@@ -1,10 +1,10 @@
 Can't decide what to watch? Moodie picks for you — by how you want to feel.
 
 PICK BY MOOD
-Tap a mood or two — Laugh, Chill, Thrills, Romance, Mind-blown, Spooky and more — and Moodie shuffles you one great match, with a one-line reason why. Tell Moodie which streaming services you use and it matches against those first, then "Where to watch" opens a live web search so you can see who actually has it tonight.
+Tap a mood or two — Laugh, Chill, Thrills, Romance, Mind-blown, Spooky and more — and Moodie shuffles you one great match, with a one-line reason why. Tell Moodie which streaming services you use and it matches against those first, then "Where to watch" opens a live availability search so you can see who actually has it tonight.
 
 DECIDE TOGETHER (no accounts, no server)
-This is the part nobody else does. Pass the phone around: everyone taps how THEY want to feel, and Moodie finds the one title that works for the whole room — then shows you why each person is happy with it. Two people on the couch or the whole family. If nobody overlaps, Moodie is honest about it and finds the closest match instead. It all runs on your device.
+This is the part nobody else does. Pass the phone around: everyone taps how THEY want to feel, and Moodie finds the one title that works for the whole room — then shows you why each person is happy with it. Two people on the couch or the whole family. If nobody overlaps, Moodie is honest about it and finds the closest match instead. The matching all runs on your device.
 
 KID-SAFE WHEN YOU NEED IT
 Set an optional content limit so family picks stay appropriate.
@@ -13,8 +13,10 @@ SAVE FOR LATER
 Keep a lightweight watch-later list.
 
 PRIVATE BY DEFAULT
-Your moods, saved titles and settings stay on your device. No tracking, no ads, no analytics, no data sold.
+There's no account and nothing to sign up for. Your moods, your saved list and your chosen services stay on your device — Moodie has no profile of you and syncs nothing. To show you a poster and a synopsis, it asks TMDB about the title on screen; that lookup is the only thing Moodie ever sends anywhere. No tracking, no ads, no analytics, no data sold.
 
 Free. No sign-up. Nothing to configure. Just open it and decide.
 
 Moodie is an independent app. It is not affiliated with, endorsed by, or connected to any streaming service or media company, and it does not stream or play any video. Titles and artwork shown in App Store images are illustrative samples.
+
+This product uses the TMDB API but is not endorsed or certified by TMDB.

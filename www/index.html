@@ -82,6 +82,10 @@
     justify-content:flex-end; color:#fff; aspect-ratio:2/3; box-shadow:0 16px 40px rgba(0,0,0,.4)}
   .poster .art{position:absolute; inset:0; z-index:0; display:flex; align-items:center; justify-content:center;
     font-size:68px; opacity:.30; transform:translateY(-9%); transition:opacity .3s}
+  .poster .pimg{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0; transition:opacity .45s; z-index:1}
+  .poster.has-img .pimg{opacity:1}
+  .poster.has-img .art{opacity:0}
+  .poster.fit-contain .pimg{object-fit:contain}
   .poster .sheen{position:absolute; inset:0; z-index:2; pointer-events:none;
     background:radial-gradient(120% 80% at 22% 10%, rgba(255,255,255,.30), transparent 52%),
       linear-gradient(to top, rgba(0,0,0,.62), rgba(0,0,0,.05) 58%, transparent)}
@@ -128,6 +132,9 @@
     padding:12px 18px; border-radius:14px; font-weight:700; font-size:14px; opacity:0; pointer-events:none; transition:.25s; z-index:60; border:1px solid #3a2f60; white-space:nowrap}
   .toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
 
+  .synopsis{font-size:13.5px; color:var(--muted); line-height:1.5; margin-top:12px}
+  .synopsis:before{content:"SYNOPSIS"; display:block; font-size:10px; letter-spacing:1.2px; color:var(--dim); font-weight:800; margin-bottom:5px}
+  .credit{font-size:11.5px; color:var(--dim); line-height:1.45; margin-top:10px}
   .hint{font-size:13px; color:var(--dim); text-align:center; margin-top:10px}
   .pop{animation:pop .35s cubic-bezier(.2,1.3,.5,1)}
   @keyframes pop{0%{transform:scale(.9);opacity:.5}100%{transform:scale(1);opacity:1}}
@@ -251,6 +258,7 @@
             
             <div class="rowitem" onclick="openURL('https://jonathanscribbles.com/moodie#privacy')"><div class="grow"><div class="name">Privacy Policy</div></div><div style="color:var(--dim)">›</div></div>
             <div class="rowitem" onclick="openURL('https://jonathanscribbles.com/moodie#support')"><div class="grow"><div class="name">Support</div></div><div style="color:var(--dim)">›</div></div>
+            <p class="credit" id="attribution"></p>
             
           </div>
           <div class="spacer"></div>
@@ -297,7 +305,7 @@ function openURL(url){
   catch(e){ try{ window.open(url,'_blank','noopener'); }catch(e2){ location.href=url; } }
 }
 function sharePick(id){ var t=TITLES.find(function(x){ return x.id===id; }); if(!t) return; var text='Moodie says watch \"'+t.t+'\" tonight \u2014 '+t.why; try{ if(NP.Share && NP.Share.share){ NP.Share.share({title:'Moodie',text:text,dialogTitle:'Share your pick'}); return; } }catch(e){} try{ if(navigator.share){ navigator.share({text:text}); return; } }catch(e){} toast('Shared '+t.t+' \ud83c\udf7f'); }
-function boot(){ buildTaste(true); buildMoods(); buildServiceChips(document.getElementById('svcChips')); Store.get('services').then(function(sv){ if(Array.isArray(sv)&&sv.length){ state.services=new Set(sv); buildServiceChips(document.getElementById('svcChips')); if(document.getElementById('profileSvc')) buildServiceChips(document.getElementById('profileSvc')); } }); Store.get('saved').then(function(sd){ if(Array.isArray(sd)){ state.saved=new Set(sd); } }); }
+function boot(){ var at=document.getElementById('attribution'); if(at) at.textContent=ATTRIBUTION+' '+JW_CREDIT; buildTaste(true); buildMoods(); buildServiceChips(document.getElementById('svcChips')); Store.get('services').then(function(sv){ if(Array.isArray(sv)&&sv.length){ state.services=new Set(sv); buildServiceChips(document.getElementById('svcChips')); if(document.getElementById('profileSvc')) buildServiceChips(document.getElementById('profileSvc')); } }); Store.get('saved').then(function(sd){ if(Array.isArray(sd)){ state.saved=new Set(sd); } }); }
 /* ---------- Data ---------- */
 const SERVICES=[
   {id:'netflix',name:'Netflix',c:'#E50914'},{id:'prime',name:'Prime Video',c:'#00A8E1'},
@@ -313,71 +321,161 @@ const MOODS=[
   {id:'smart',em:'🧠',lbl:'Smart',c:'#6BA8FF'},{id:'family',em:'👨‍👩‍👧',lbl:'Family',c:'#9BE04A'},
 ];
 const TITLES=[
-  {id:1,t:'The Good Place',em:'😄',svc:'netflix',r:'TV‑14',rt:'22m',moods:['laugh','smart','chill'],g:'linear-gradient(135deg,#34E0C4,#43B4FF)',why:'Feel‑good and clever without trying too hard.',media:'tvShow'},
-  {id:2,t:'Brooklyn Nine‑Nine',em:'🚔',svc:'peacock',r:'TV‑14',rt:'22m',moods:['laugh','chill'],g:'linear-gradient(135deg,#FF8A3D,#FFD23D)',why:'A comfort‑watch that never misses.',media:'tvShow'},
-  {id:3,t:"Schitt's Creek",em:'🏨',svc:'hulu',r:'TV‑14',rt:'22m',moods:['laugh','chill'],g:'linear-gradient(135deg,#FF7AB8,#FF8A3D)',why:'Warm, silly, impossible not to smile.',media:'tvShow'},
-  {id:4,t:'Ted Lasso',em:'⚽️',svc:'apple',r:'TV‑MA',rt:'45m',moods:['laugh','cry','smart'],g:'linear-gradient(135deg,#43B4FF,#8B5CFF)',why:'Kindness as a superpower — you\'ll feel better.',media:'tvShow'},
-  {id:5,t:'Paddington 2',em:'🐻',svc:'max',r:'PG',rt:'103m',moods:['family','laugh','chill'],g:'linear-gradient(135deg,#FF8A3D,#FF3D8A)',why:'The purest feel‑good movie ever made.',media:'movie'},
-  {id:6,t:'Bluey',em:'🐶',svc:'disney',r:'TV‑Y',rt:'8m',moods:['family','chill'],g:'linear-gradient(135deg,#43B4FF,#34E0C4)',why:'Sweet, tiny, secretly for the grown‑ups too.',media:'tvShow'},
-  {id:7,t:'Spider‑Man: Into the Spider‑Verse',em:'🕷️',svc:'netflix',r:'PG',rt:'117m',moods:['hyped','family','mindblown'],g:'linear-gradient(135deg,#FF3D8A,#8B5CFF)',why:'A jolt of color and joy for everyone.',media:'movie'},
-  {id:8,t:'Everything Everywhere All at Once',em:'🥯',svc:'hulu',r:'R',rt:'139m',moods:['mindblown','cry','hyped'],g:'linear-gradient(135deg,#8B5CFF,#FF3D8A)',why:'It\'ll scramble and then mend your heart.',media:'movie'},
-  {id:9,t:'Inception',em:'🌀',svc:'netflix',r:'PG‑13',rt:'148m',moods:['mindblown','thrill'],g:'linear-gradient(135deg,#6B4CFF,#43B4FF)',why:'Bend your brain, then argue the ending.',media:'movie'},
-  {id:10,t:'Interstellar',em:'🚀',svc:'paramount',r:'PG‑13',rt:'169m',moods:['cry','mindblown'],g:'linear-gradient(135deg,#151B4A,#43B4FF)',why:'Big feelings, bigger space.',media:'movie'},
-  {id:11,t:'The Notebook',em:'💌',svc:'max',r:'PG‑13',rt:'123m',moods:['romance','cry'],g:'linear-gradient(135deg,#FF7AB8,#FF3D8A)',why:'The classic ugly‑cry love story.',media:'movie'},
-  {id:12,t:'Pride & Prejudice',em:'💐',svc:'peacock',r:'PG',rt:'129m',moods:['romance','chill'],g:'linear-gradient(135deg,#9BE04A,#34E0C4)',why:'Longing glances and rolling hills.',media:'movie'},
-  {id:13,t:'A Quiet Place',em:'🤫',svc:'paramount',r:'PG‑13',rt:'90m',moods:['thrill','scared'],g:'linear-gradient(135deg,#2A2150,#FF5C7A)',why:'Hold your breath the whole way through.',media:'movie'},
-  {id:14,t:'Hereditary',em:'🕯️',svc:'max',r:'R',rt:'127m',moods:['scared','thrill'],g:'linear-gradient(135deg,#1a1030,#7CE084)',why:'Genuinely terrifying. Lights on.',media:'movie'},
-  {id:15,t:'Knives Out',em:'🔪',svc:'netflix',r:'PG‑13',rt:'130m',moods:['smart','laugh','thrill'],g:'linear-gradient(135deg,#FF8A3D,#6B4CFF)',why:'A twisty whodunit that\'s actually fun.',media:'movie'},
-  {id:16,t:'Coco',em:'🎸',svc:'disney',r:'PG',rt:'105m',moods:['family','cry'],g:'linear-gradient(135deg,#FF8A3D,#FFD23D)',why:'Bring tissues — a gorgeous cry.',media:'movie'},
-  {id:17,t:'Planet Earth II',em:'🌍',svc:'max',r:'TV‑G',rt:'50m',moods:['chill','smart','family'],g:'linear-gradient(135deg,#34E0C4,#9BE04A)',why:'Breathe out. The planet is stunning.',media:'tvShow'},
-  {id:18,t:'Top Gun: Maverick',em:'✈️',svc:'paramount',r:'PG‑13',rt:'130m',moods:['hyped','thrill'],g:'linear-gradient(135deg,#0064FF,#FF8A3D)',why:'Pure adrenaline and a grin.',media:'movie'},
-  {id:19,t:'Fleabag',em:'🍷',svc:'prime',r:'TV‑MA',rt:'27m',moods:['smart','laugh','cry'],g:'linear-gradient(135deg,#FF3D8A,#6B4CFF)',why:'Sharp, filthy, secretly devastating.',media:'tvShow'},
-  {id:20,t:'Spirited Away',em:'🐉',svc:'max',r:'PG',rt:'125m',moods:['family','mindblown','chill'],g:'linear-gradient(135deg,#43B4FF,#8B5CFF)',why:'Dreamlike magic for all ages.',media:'movie'},
-  {id:21,t:'The Office',em:'📎',svc:'peacock',r:'TV‑14',rt:'22m',moods:['laugh','chill'],g:'linear-gradient(135deg,#43B4FF,#6B4CFF)',why:'The endless comfort re‑watch.',media:'tvShow'},
-  {id:22,t:'Parks and Recreation',em:'🏞️',svc:'peacock',r:'TV‑14',rt:'22m',moods:['laugh','chill'],g:'linear-gradient(135deg,#9BE04A,#43B4FF)',why:'Relentlessly sunny and quotable.',media:'tvShow'},
-  {id:23,t:'Modern Family',em:'🏡',svc:'hulu',r:'TV‑PG',rt:'22m',moods:['laugh','family'],g:'linear-gradient(135deg,#FFD23D,#FF8A3D)',why:'Easy laughs the whole family gets.',media:'tvShow'},
-  {id:24,t:'Stranger Things',em:'🚲',svc:'netflix',r:'TV‑14',rt:'51m',moods:['thrill','hyped','scared'],g:'linear-gradient(135deg,#E50914,#151B4A)',why:'Nostalgic, spooky, totally binge‑able.',media:'tvShow'},
-  {id:25,t:'The Bear',em:'🔥',svc:'hulu',r:'TV‑MA',rt:'30m',moods:['thrill','smart','hyped'],g:'linear-gradient(135deg,#FF5C7A,#FF8A3D)',why:'Intense, delicious, wildly good.',media:'tvShow'},
-  {id:26,t:'Wednesday',em:'🖤',svc:'netflix',r:'TV‑14',rt:'50m',moods:['scared','smart','thrill'],g:'linear-gradient(135deg,#2A2150,#8B5CFF)',why:'Deadpan, gothic and fun.',media:'tvShow'},
-  {id:27,t:'Encanto',em:'🦋',svc:'disney',r:'PG',rt:'102m',moods:['family','hyped'],g:'linear-gradient(135deg,#FF7AB8,#FFD23D)',why:'Color, songs and all the feels.',media:'movie'},
-  {id:28,t:'Moana',em:'🌊',svc:'disney',r:'PG',rt:'107m',moods:['family','hyped','chill'],g:'linear-gradient(135deg,#34E0C4,#0064FF)',why:'A big‑hearted adventure with bangers.',media:'movie'},
-  {id:29,t:'La La Land',em:'🎹',svc:'max',r:'PG‑13',rt:'128m',moods:['romance','chill'],g:'linear-gradient(135deg,#6B4CFF,#FF7AB8)',why:'Dreamy, gorgeous, bittersweet.',media:'movie'},
-  {id:30,t:'Dune',em:'🏜️',svc:'max',r:'PG‑13',rt:'155m',moods:['mindblown','hyped'],g:'linear-gradient(135deg,#FF8A3D,#151B4A)',why:'Epic, immersive big‑screen sci‑fi.',media:'movie'},
-  {id:31,t:'Abbott Elementary',em:'🍎',svc:'hulu',r:'TV‑PG',rt:'22m',moods:['laugh','chill'],g:'linear-gradient(135deg,#FFD23D,#34E0C4)',why:'Warm workplace comedy that lands.',media:'tvShow'},
-  {id:32,t:'The Menu',em:'🍽️',svc:'hulu',r:'R',rt:'107m',moods:['thrill','smart'],g:'linear-gradient(135deg,#1a1030,#FF5C7A)',why:'A deliciously dark, twisty ride.',media:'movie'},
-  {id:33,t:'Palm Springs',em:'🌴',svc:'hulu',r:'R',rt:'90m',moods:['laugh','mindblown','romance'],g:'linear-gradient(135deg,#FF8A3D,#43B4FF)',why:'A time‑loop rom‑com that’s smarter than it lets on.',media:'movie'},
-  {id:34,t:'Get Out',em:'🫖',svc:'peacock',r:'R',rt:'104m',moods:['scared','mindblown','smart'],g:'linear-gradient(135deg,#1a1030,#43B4FF)',why:'Horror with a brain and a pulse.',media:'movie'},
-  {id:35,t:'The Last of Us',em:'🍄',svc:'max',r:'TV‑MA',rt:'55m',moods:['cry','thrill','scared'],g:'linear-gradient(135deg,#2A2150,#9BE04A)',why:'Gutting, tense, unforgettable.',media:'tvShow'},
-  {id:36,t:'Over the Garden Wall',em:'🌲',svc:'max',r:'TV‑PG',rt:'11m',moods:['chill','scared','family'],g:'linear-gradient(135deg,#FF8A3D,#34E0C4)',why:'Cozy, eerie and quietly perfect.',media:'tvShow'},
-  {id:37,t:'The Princess Bride',em:'⚔️',svc:'disney',r:'PG',rt:'98m',moods:['laugh','romance','family'],g:'linear-gradient(135deg,#FF7AB8,#FFD23D)',why:'Adventure, romance and endless quotes.',media:'movie'},
-  {id:38,t:'Before Sunrise',em:'🚋',svc:'max',r:'R',rt:'101m',moods:['romance','smart','chill'],g:'linear-gradient(135deg,#6B4CFF,#FF7AB8)',why:'Two strangers, one night, all talk — in the best way.',media:'movie'},
-  {id:39,t:'Jurassic Park',em:'🦖',svc:'peacock',r:'PG‑13',rt:'127m',moods:['thrill','hyped','family'],g:'linear-gradient(135deg,#9BE04A,#151B4A)',why:'Dinosaurs, wonder and screaming. Perfect.',media:'movie'},
-  {id:40,t:'Jumanji: Welcome to the Jungle',em:'🎲',svc:'netflix',r:'PG‑13',rt:'119m',moods:['laugh','hyped','family'],g:'linear-gradient(135deg,#34E0C4,#FF8A3D)',why:'A big, funny, ridiculous good time.',media:'movie'},
-  {id:41,t:'Up',em:'🎈',svc:'disney',r:'PG',rt:'96m',moods:['cry','family','chill'],g:'linear-gradient(135deg,#43B4FF,#FFD23D)',why:'The first ten minutes will wreck you. Worth it.',media:'movie'},
-  {id:42,t:'Titanic',em:'🚢',svc:'paramount',r:'PG‑13',rt:'194m',moods:['romance','cry','thrill'],g:'linear-gradient(135deg,#151B4A,#FF7AB8)',why:'Sweeping, doomed and impossible to look away.',media:'movie'},
-  {id:43,t:'Ghostbusters',em:'👻',svc:'peacock',r:'PG',rt:'105m',moods:['laugh','scared','family'],g:'linear-gradient(135deg,#7CE084,#FF8A3D)',why:'Spooky, silly and endlessly fun.',media:'movie'},
-  {id:44,t:'The Shape of Water',em:'🐟',svc:'hulu',r:'R',rt:'123m',moods:['romance','scared','mindblown'],g:'linear-gradient(135deg,#34E0C4,#6B4CFF)',why:'A strange, gorgeous love story.',media:'movie'},
-  {id:45,t:'Crazy Rich Asians',em:'💍',svc:'max',r:'PG‑13',rt:'120m',moods:['romance','laugh','hyped'],g:'linear-gradient(135deg,#FF3D8A,#FFD23D)',why:'Glamorous, funny and big‑hearted.',media:'movie'},
+  {id:1,t:'The Good Place',em:'😄',svc:'netflix',r:'TV‑14',rt:'22m',moods:['laugh','smart','chill'],g:'linear-gradient(135deg,#34E0C4,#43B4FF)',why:'Feel‑good and clever without trying too hard.',media:'tvShow',y:2016},
+  {id:2,t:'Brooklyn Nine‑Nine',em:'🚔',svc:'peacock',r:'TV‑14',rt:'22m',moods:['laugh','chill'],g:'linear-gradient(135deg,#FF8A3D,#FFD23D)',why:'A comfort‑watch that never misses.',media:'tvShow',y:2013},
+  {id:3,t:"Schitt's Creek",em:'🏨',svc:'hulu',r:'TV‑14',rt:'22m',moods:['laugh','chill'],g:'linear-gradient(135deg,#FF7AB8,#FF8A3D)',why:'Warm, silly, impossible not to smile.',media:'tvShow',y:2015},
+  {id:4,t:'Ted Lasso',em:'⚽️',svc:'apple',r:'TV‑MA',rt:'45m',moods:['laugh','cry','smart'],g:'linear-gradient(135deg,#43B4FF,#8B5CFF)',why:'Kindness as a superpower — you\'ll feel better.',media:'tvShow',y:2020},
+  {id:5,t:'Paddington 2',em:'🐻',svc:'max',r:'PG',rt:'103m',moods:['family','laugh','chill'],g:'linear-gradient(135deg,#FF8A3D,#FF3D8A)',why:'The purest feel‑good movie ever made.',media:'movie',y:2017},
+  {id:6,t:'Bluey',em:'🐶',svc:'disney',r:'TV‑Y',rt:'8m',moods:['family','chill'],g:'linear-gradient(135deg,#43B4FF,#34E0C4)',why:'Sweet, tiny, secretly for the grown‑ups too.',media:'tvShow',y:2018},
+  {id:7,t:'Spider‑Man: Into the Spider‑Verse',em:'🕷️',svc:'netflix',r:'PG',rt:'117m',moods:['hyped','family','mindblown'],g:'linear-gradient(135deg,#FF3D8A,#8B5CFF)',why:'A jolt of color and joy for everyone.',media:'movie',y:2018},
+  {id:8,t:'Everything Everywhere All at Once',em:'🥯',svc:'hulu',r:'R',rt:'139m',moods:['mindblown','cry','hyped'],g:'linear-gradient(135deg,#8B5CFF,#FF3D8A)',why:'It\'ll scramble and then mend your heart.',media:'movie',y:2022},
+  {id:9,t:'Inception',em:'🌀',svc:'netflix',r:'PG‑13',rt:'148m',moods:['mindblown','thrill'],g:'linear-gradient(135deg,#6B4CFF,#43B4FF)',why:'Bend your brain, then argue the ending.',media:'movie',y:2010},
+  {id:10,t:'Interstellar',em:'🚀',svc:'paramount',r:'PG‑13',rt:'169m',moods:['cry','mindblown'],g:'linear-gradient(135deg,#151B4A,#43B4FF)',why:'Big feelings, bigger space.',media:'movie',y:2014},
+  {id:11,t:'The Notebook',em:'💌',svc:'max',r:'PG‑13',rt:'123m',moods:['romance','cry'],g:'linear-gradient(135deg,#FF7AB8,#FF3D8A)',why:'The classic ugly‑cry love story.',media:'movie',y:2004},
+  {id:12,t:'Pride & Prejudice',em:'💐',svc:'peacock',r:'PG',rt:'129m',moods:['romance','chill'],g:'linear-gradient(135deg,#9BE04A,#34E0C4)',why:'Longing glances and rolling hills.',media:'movie',y:2005},
+  {id:13,t:'A Quiet Place',em:'🤫',svc:'paramount',r:'PG‑13',rt:'90m',moods:['thrill','scared'],g:'linear-gradient(135deg,#2A2150,#FF5C7A)',why:'Hold your breath the whole way through.',media:'movie',y:2018},
+  {id:14,t:'Hereditary',em:'🕯️',svc:'max',r:'R',rt:'127m',moods:['scared','thrill'],g:'linear-gradient(135deg,#1a1030,#7CE084)',why:'Genuinely terrifying. Lights on.',media:'movie',y:2018},
+  {id:15,t:'Knives Out',em:'🔪',svc:'netflix',r:'PG‑13',rt:'130m',moods:['smart','laugh','thrill'],g:'linear-gradient(135deg,#FF8A3D,#6B4CFF)',why:'A twisty whodunit that\'s actually fun.',media:'movie',y:2019},
+  {id:16,t:'Coco',em:'🎸',svc:'disney',r:'PG',rt:'105m',moods:['family','cry'],g:'linear-gradient(135deg,#FF8A3D,#FFD23D)',why:'Bring tissues — a gorgeous cry.',media:'movie',y:2017},
+  {id:17,t:'Planet Earth II',em:'🌍',svc:'max',r:'TV‑G',rt:'50m',moods:['chill','smart','family'],g:'linear-gradient(135deg,#34E0C4,#9BE04A)',why:'Breathe out. The planet is stunning.',media:'tvShow',y:2016},
+  {id:18,t:'Top Gun: Maverick',em:'✈️',svc:'paramount',r:'PG‑13',rt:'130m',moods:['hyped','thrill'],g:'linear-gradient(135deg,#0064FF,#FF8A3D)',why:'Pure adrenaline and a grin.',media:'movie',y:2022},
+  {id:19,t:'Fleabag',em:'🍷',svc:'prime',r:'TV‑MA',rt:'27m',moods:['smart','laugh','cry'],g:'linear-gradient(135deg,#FF3D8A,#6B4CFF)',why:'Sharp, filthy, secretly devastating.',media:'tvShow',y:2016},
+  {id:20,t:'Spirited Away',em:'🐉',svc:'max',r:'PG',rt:'125m',moods:['family','mindblown','chill'],g:'linear-gradient(135deg,#43B4FF,#8B5CFF)',why:'Dreamlike magic for all ages.',media:'movie',y:2001},
+  {id:21,t:'The Office',em:'📎',svc:'peacock',r:'TV‑14',rt:'22m',moods:['laugh','chill'],g:'linear-gradient(135deg,#43B4FF,#6B4CFF)',why:'The endless comfort re‑watch.',media:'tvShow',y:2005},
+  {id:22,t:'Parks and Recreation',em:'🏞️',svc:'peacock',r:'TV‑14',rt:'22m',moods:['laugh','chill'],g:'linear-gradient(135deg,#9BE04A,#43B4FF)',why:'Relentlessly sunny and quotable.',media:'tvShow',y:2009},
+  {id:23,t:'Modern Family',em:'🏡',svc:'hulu',r:'TV‑PG',rt:'22m',moods:['laugh','family'],g:'linear-gradient(135deg,#FFD23D,#FF8A3D)',why:'Easy laughs the whole family gets.',media:'tvShow',y:2009},
+  {id:24,t:'Stranger Things',em:'🚲',svc:'netflix',r:'TV‑14',rt:'51m',moods:['thrill','hyped','scared'],g:'linear-gradient(135deg,#E50914,#151B4A)',why:'Nostalgic, spooky, totally binge‑able.',media:'tvShow',y:2016},
+  {id:25,t:'The Bear',em:'🔥',svc:'hulu',r:'TV‑MA',rt:'30m',moods:['thrill','smart','hyped'],g:'linear-gradient(135deg,#FF5C7A,#FF8A3D)',why:'Intense, delicious, wildly good.',media:'tvShow',y:2022},
+  {id:26,t:'Wednesday',em:'🖤',svc:'netflix',r:'TV‑14',rt:'50m',moods:['scared','smart','thrill'],g:'linear-gradient(135deg,#2A2150,#8B5CFF)',why:'Deadpan, gothic and fun.',media:'tvShow',y:2022},
+  {id:27,t:'Encanto',em:'🦋',svc:'disney',r:'PG',rt:'102m',moods:['family','hyped'],g:'linear-gradient(135deg,#FF7AB8,#FFD23D)',why:'Color, songs and all the feels.',media:'movie',y:2021},
+  {id:28,t:'Moana',em:'🌊',svc:'disney',r:'PG',rt:'107m',moods:['family','hyped','chill'],g:'linear-gradient(135deg,#34E0C4,#0064FF)',why:'A big‑hearted adventure with bangers.',media:'movie',y:2016},
+  {id:29,t:'La La Land',em:'🎹',svc:'max',r:'PG‑13',rt:'128m',moods:['romance','chill'],g:'linear-gradient(135deg,#6B4CFF,#FF7AB8)',why:'Dreamy, gorgeous, bittersweet.',media:'movie',y:2016},
+  {id:30,t:'Dune',em:'🏜️',svc:'max',r:'PG‑13',rt:'155m',moods:['mindblown','hyped'],g:'linear-gradient(135deg,#FF8A3D,#151B4A)',why:'Epic, immersive big‑screen sci‑fi.',media:'movie',y:2021},
+  {id:31,t:'Abbott Elementary',em:'🍎',svc:'hulu',r:'TV‑PG',rt:'22m',moods:['laugh','chill'],g:'linear-gradient(135deg,#FFD23D,#34E0C4)',why:'Warm workplace comedy that lands.',media:'tvShow',y:2021},
+  {id:32,t:'The Menu',em:'🍽️',svc:'hulu',r:'R',rt:'107m',moods:['thrill','smart'],g:'linear-gradient(135deg,#1a1030,#FF5C7A)',why:'A deliciously dark, twisty ride.',media:'movie',y:2022},
+  {id:33,t:'Palm Springs',em:'🌴',svc:'hulu',r:'R',rt:'90m',moods:['laugh','mindblown','romance'],g:'linear-gradient(135deg,#FF8A3D,#43B4FF)',why:'A time‑loop rom‑com that’s smarter than it lets on.',media:'movie',y:2020},
+  {id:34,t:'Get Out',em:'🫖',svc:'peacock',r:'R',rt:'104m',moods:['scared','mindblown','smart'],g:'linear-gradient(135deg,#1a1030,#43B4FF)',why:'Horror with a brain and a pulse.',media:'movie',y:2017},
+  {id:35,t:'The Last of Us',em:'🍄',svc:'max',r:'TV‑MA',rt:'55m',moods:['cry','thrill','scared'],g:'linear-gradient(135deg,#2A2150,#9BE04A)',why:'Gutting, tense, unforgettable.',media:'tvShow',y:2023},
+  {id:36,t:'Over the Garden Wall',em:'🌲',svc:'max',r:'TV‑PG',rt:'11m',moods:['chill','scared','family'],g:'linear-gradient(135deg,#FF8A3D,#34E0C4)',why:'Cozy, eerie and quietly perfect.',media:'tvShow',y:2014},
+  {id:37,t:'The Princess Bride',em:'⚔️',svc:'disney',r:'PG',rt:'98m',moods:['laugh','romance','family'],g:'linear-gradient(135deg,#FF7AB8,#FFD23D)',why:'Adventure, romance and endless quotes.',media:'movie',y:1987},
+  {id:38,t:'Before Sunrise',em:'🚋',svc:'max',r:'R',rt:'101m',moods:['romance','smart','chill'],g:'linear-gradient(135deg,#6B4CFF,#FF7AB8)',why:'Two strangers, one night, all talk — in the best way.',media:'movie',y:1995},
+  {id:39,t:'Jurassic Park',em:'🦖',svc:'peacock',r:'PG‑13',rt:'127m',moods:['thrill','hyped','family'],g:'linear-gradient(135deg,#9BE04A,#151B4A)',why:'Dinosaurs, wonder and screaming. Perfect.',media:'movie',y:1993},
+  {id:40,t:'Jumanji: Welcome to the Jungle',em:'🎲',svc:'netflix',r:'PG‑13',rt:'119m',moods:['laugh','hyped','family'],g:'linear-gradient(135deg,#34E0C4,#FF8A3D)',why:'A big, funny, ridiculous good time.',media:'movie',y:2017},
+  {id:41,t:'Up',em:'🎈',svc:'disney',r:'PG',rt:'96m',moods:['cry','family','chill'],g:'linear-gradient(135deg,#43B4FF,#FFD23D)',why:'The first ten minutes will wreck you. Worth it.',media:'movie',y:2009},
+  {id:42,t:'Titanic',em:'🚢',svc:'paramount',r:'PG‑13',rt:'194m',moods:['romance','cry','thrill'],g:'linear-gradient(135deg,#151B4A,#FF7AB8)',why:'Sweeping, doomed and impossible to look away.',media:'movie',y:1997},
+  {id:43,t:'Ghostbusters',em:'👻',svc:'peacock',r:'PG',rt:'105m',moods:['laugh','scared','family'],g:'linear-gradient(135deg,#7CE084,#FF8A3D)',why:'Spooky, silly and endlessly fun.',media:'movie',y:1984},
+  {id:44,t:'The Shape of Water',em:'🐟',svc:'hulu',r:'R',rt:'123m',moods:['romance','scared','mindblown'],g:'linear-gradient(135deg,#34E0C4,#6B4CFF)',why:'A strange, gorgeous love story.',media:'movie',y:2017},
+  {id:45,t:'Crazy Rich Asians',em:'💍',svc:'max',r:'PG‑13',rt:'120m',moods:['romance','laugh','hyped'],g:'linear-gradient(135deg,#FF3D8A,#FFD23D)',why:'Glamorous, funny and big‑hearted.',media:'movie',y:2018},
 ];
 
 
 /* ---------- State ---------- */
 const state={ services:new Set(['netflix','disney','max']), moods:new Set(), saved:new Set([1,7]), lastMatch:null };
 
-/* ---------- Card art ----------
-   Moodie ships NO third-party artwork and fetches none at runtime. Every card is drawn
-   from the title's own gradient + glyph, defined in TITLES above. An earlier build pulled
-   poster images and synopsis text from the Wikipedia API; that was removed so the app
-   carries no copyrighted media and makes no third-party media request. ---------- */
-/* Streaming services are a private, on-device preference: the user tells Moodie which ones
-   they pay for, and Moodie matches against them. A pick therefore carries a neutral
-   'on your services' badge rather than a provider's name or mark — Moodie has no licensed
-   availability feed and no relationship with any provider. */
+/* ---------- Artwork + synopsis + availability: TMDB ----------
+   Posters, backdrops and synopses come from TMDB, whose terms permit displaying them in
+   an app like this; the "where to watch" hand-off uses TMDB's /watch/providers endpoint,
+   which is powered by JustWatch. Both are credited in the UI (see ATTRIBUTION below) —
+   that credit is a licence condition, not decoration, so do not remove it.
+
+   Nothing here is scraped: an earlier build pulled key art and article text from the
+   Wikipedia API, which is what drew the 4.1(a)/IP problem. That code is gone.
+
+   THE KEY IS NOT IN THIS REPO. TMDB_API_KEY below holds a placeholder token; the Codemagic
+   build substitutes the secure TMDB_API_KEY variable into it before `npx cap sync`. That
+   token must appear EXACTLY ONCE in this file, so do not repeat it in prose. If the
+   substitution has not run (a local checkout, or a missing CI variable) TMDB_ON is false
+   and the app degrades to its own gradient card art with no network calls at all —
+   the same behaviour it shipped with before TMDB was wired in. ---------- */
+const TMDB_API_KEY='__TMDB_API_KEY__';
+const TMDB_ON=TMDB_API_KEY.indexOf('__')!==0;
+const TMDB_IMG='https://image.tmdb.org/t/p/';
+const TMDB_REGION='US';
+
+/* Streaming services stay a private, on-device preference: the user says which ones they
+   pay for and Moodie matches against them. A pick carries a neutral 'on your services'
+   badge rather than a provider's name or logo — Moodie has no licensed availability feed
+   of its own, and provider marks in our own UI are exactly what 4.1(a) flagged. */
 const SVC_BADGE='On your services';
+const ATTRIBUTION='This product uses the TMDB API but is not endorsed or certified by TMDB.';
+const JW_CREDIT='Where-to-watch data provided by JustWatch.';
+
+const tmdbCache={};
+/* The catalog grid paints 24 cards at once, so a naive implementation fires ~50 requests in
+   one burst on first launch and TMDB starts throttling — the user sees a screen of blank
+   cards. Everything therefore goes through a small in-flight cap: the same total number of
+   requests, just never more than TMDB_MAX_INFLIGHT of them at a time. */
+var TMDB_MAX_INFLIGHT=4, tmdbQueue=[], tmdbActive=0;
+function tmdbRawFetch(path,params){
+  var q=Object.keys(params||{}).map(function(k){ return k+'='+encodeURIComponent(params[k]); }).join('&');
+  var url='https://api.themoviedb.org/3'+path+'?api_key='+encodeURIComponent(TMDB_API_KEY)+(q?'&'+q:'');
+  return fetch(url).then(function(r){ if(!r.ok) throw 0; return r.json(); });
+}
+function tmdbPump(){
+  while(tmdbActive<TMDB_MAX_INFLIGHT && tmdbQueue.length){
+    var job=tmdbQueue.shift(); tmdbActive++;
+    var p=tmdbRawFetch(job.path,job.params);
+    p.then(job.resolve,job.reject);
+    p.catch(function(){}).then(function(){ tmdbActive--; tmdbPump(); });
+  }
+}
+function tmdbFetch(path,params){
+  return new Promise(function(resolve,reject){
+    tmdbQueue.push({path:path,params:params,resolve:resolve,reject:reject});
+    tmdbPump();
+  });
+}
+/* One lookup per title, cached for the session. Resolves to a plain object; every failure
+   path resolves (never rejects) to empty fields so callers only need one branch. */
+function tmdbLookup(t){
+  if(!TMDB_ON) return Promise.resolve({});
+  if(tmdbCache[t.id]) return tmdbCache[t.id];
+  var kind=t.media==='tvShow'?'tv':'movie';
+  var yearKey=kind==='tv'?'first_air_date_year':'year';
+  var query=searchTitle(t);
+  var byYear={query:query,include_adult:'false'}; if(t.y) byYear[yearKey]=t.y;
+  var p=tmdbFetch('/search/'+kind,byYear)
+    .then(function(d){
+      /* A wrong or missing year must not cost us the poster — retry unfiltered. */
+      if(d&&d.results&&d.results.length) return d;
+      return tmdbFetch('/search/'+kind,{query:query,include_adult:'false'});
+    })
+    .then(function(d){
+      var hit=d&&d.results&&d.results[0]; if(!hit) return {};
+      var out={ img: hit.poster_path?TMDB_IMG+'w500'+hit.poster_path:null,
+                backdrop: hit.backdrop_path?TMDB_IMG+'w1280'+hit.backdrop_path:null,
+                desc: hit.overview||'' };
+      return tmdbFetch('/'+kind+'/'+hit.id+'/watch/providers',{})
+        .then(function(w){
+          var reg=w&&w.results&&w.results[TMDB_REGION];
+          /* Only the JustWatch deep link is used. Provider names and logos are
+             deliberately NOT rendered — see SVC_BADGE above. */
+          if(reg&&reg.link) out.link=reg.link;
+          return out;
+        })
+        .catch(function(){ return out; });
+    })
+    .catch(function(){ return {}; });
+  tmdbCache[t.id]=p; return p;
+}
+/* Paint a card once its lookup lands. The poster element is rebuilt on every re-render
+   ("Again" / "Another pick"), so a slow lookup for the PREVIOUS title must not paint over
+   the one now on screen — bail out once our own element has left the document. */
+function hydrate(el,t,onDesc){
+  tmdbLookup(t).then(function(m){
+    if(m.link) t._link=m.link;
+    if(el&&el.isConnected&&m.img){
+      var img=el.querySelector('.pimg');
+      if(img){ img.onload=function(){ if(img.naturalWidth>img.naturalHeight*1.02) el.classList.add('fit-contain'); el.classList.add('has-img'); }; img.src=m.img; }
+    }
+    if(onDesc) onDesc(m.desc||'');
+  });
+}
 
 function posterArt(t,cls){
   const d=document.createElement('div'); d.className='poster'+(cls?' '+cls:''); d.style.background=t.g;
-  d.innerHTML='<div class="art">'+t.em+'</div><div class="sheen"></div><div class="pmeta"><div class="ptitle">'+t.t+'</div></div>';
+  d.innerHTML='<div class="art">'+t.em+'</div><img class="pimg" alt="" loading="lazy"><div class="sheen"></div><div class="pmeta"><div class="ptitle">'+t.t+'</div></div>';
+  hydrate(d,t);
   return d;
 }
 function posterMini(t,showSvc,onClick){
@@ -465,15 +563,18 @@ function settleResult(t){
   const body=document.getElementById('resultBody');
   body.innerHTML=
     '<div class="section-title">Your pick</div>'
-   +'<div class="poster big pop" id="rposter" style="background:'+t.g+'"><div class="art">'+t.em+'</div><div class="sheen"></div>'
+   +'<div class="poster big pop" id="rposter" style="background:'+t.g+'"><div class="art">'+t.em+'</div><img class="pimg" alt=""><div class="sheen"></div>'
    +'<div class="pmeta"><div class="ptitle" style="font-size:22px">'+t.t+'</div><div class="psub"><span class="badge svc">'+SVC_BADGE+'</span><span class="badge rating">'+t.r+'</span><span class="badge rating">'+t.rt+'</span></div></div></div>'
    +'<div class="why"><b>Because you want to '+moodPhrase()+':</b> '+t.why+'</div>'
+   +'<div class="synopsis" id="rsyn" style="display:none"></div>'
    +'<button class="btn" style="margin-top:14px" onclick="watchNow('+t.id+')">🍿 Where to watch</button>'
    +'<div class="hint" style="margin-top:8px">Opens a live availability search — streaming rights change often.</div>'
+   +'<div class="credit">'+JW_CREDIT+' Artwork and synopsis from TMDB.</div>'
    +'<div style="display:flex;gap:10px;margin-top:10px"><button class="btn secondary" id="saveBtn" onclick="toggleSave('+t.id+')">'+(isSaved?'✓ Saved':'＋ Save')+'</button>'
    +'<button class="btn secondary" onclick="doShuffle()">🔀 Again</button>'
    +'<button class="btn secondary" onclick="sharePick('+t.id+')">↗ Share</button></div>'
    +'<button class="btn" style="margin-top:10px;background:var(--surface2);box-shadow:none" onclick="groupCTA()">👥 Watch this with someone →</button>';
+  hydrate(document.getElementById('rposter'),t,function(desc){ var el=document.getElementById('rsyn'); if(!el) return; if(desc){ el.textContent=desc; el.style.display=''; } });
 }
 function toggleSave(id){
   haptic('LIGHT'); state.saved.has(id)?state.saved.delete(id):state.saved.add(id); persistSaved();
@@ -492,12 +593,15 @@ function searchTitle(t){
     .replace(/[“”]/g,'"')
     .trim();
 }
+/* Fallback only: used when the TMDB /watch/providers lookup has not landed or returned
+   no regional link (offline, rate-limited, or the title has no US availability entry). */
 function whereToWatchURL(t){ return 'https://www.justwatch.com/us/search?q='+encodeURIComponent(searchTitle(t)); }
 function watchNow(id){
   var t=TITLES.find(function(x){ return x.id===id; });
   if(!t) return;
   haptic('MEDIUM');
-  openURL(whereToWatchURL(t));
+  /* t._link is TMDB's JustWatch deep link for this exact title, cached by hydrate(). */
+  openURL(t._link||whereToWatchURL(t));
 }
 function groupCTA(){ setTab('groups'); }
 
@@ -585,15 +689,18 @@ function pairReveal(){
   var b=document.getElementById('groupsBody');
   b.innerHTML=
     '<div class="section-title">Your shared pick</div>'
-   +'<div class="poster big pop" id="prposter" style="background:'+t.g+'"><div class="art">'+t.em+'</div><div class="sheen"></div>'
+   +'<div class="poster big pop" id="prposter" style="background:'+t.g+'"><div class="art">'+t.em+'</div><img class="pimg" alt=""><div class="sheen"></div>'
    +'<div class="pmeta"><div class="ptitle" style="font-size:22px">'+t.t+'</div><div class="psub"><span class="badge svc">'+SVC_BADGE+'</span><span class="badge rating">'+t.r+'</span><span class="badge rating">'+t.rt+'</span></div></div></div>'
    +'<div class="why"><b>'+head+'</b></div>'
    +'<div class="card" style="margin-top:12px"><div class="section-title" style="margin:0 0 4px">Why this one</div>'+rows+'</div>'
    +(best<N ? '<div class="card"><p>'+(res.widened?'Even across every service, ':'')+'no single title lands with everyone tonight.</p>'+(res.widened?'':'<button class="btn secondary small" style="margin-top:10px" onclick="pairCompute(true)">🌐 Widen to all services</button>')+'</div>' : '')
+   +'<div class="synopsis" id="prsyn" style="display:none"></div>'
    +'<button class="btn" style="margin-top:14px" onclick="watchNow('+t.id+')">🍿 Where to watch</button>'
    +'<div class="hint" style="margin-top:8px">Opens a live availability search — streaming rights change often.</div>'
+   +'<div class="credit">'+JW_CREDIT+' Artwork and synopsis from TMDB.</div>'
    +'<div style="display:flex;gap:10px;margin-top:10px"><button class="btn secondary" onclick="pairCompute('+(res.widened?'true':'false')+')">🔀 Another pick</button>'
    +'<button class="btn secondary" onclick="pairSetup()">↺ New round</button></div>';
+  hydrate(document.getElementById('prposter'),t,function(desc){ var el=document.getElementById('prsyn'); if(!el) return; if(desc){ el.textContent=desc; el.style.display=''; } });
 }
 
 /* ---------- Saved ---------- */

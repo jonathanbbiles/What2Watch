@@ -56,6 +56,40 @@ workflows:
     scripts:
       - name: Install npm dependencies
         script: npm install
+      - name: Inject the TMDB API key (secure var -> placeholder; never in git)
+        # www/index.html ships the literal placeholder __TMDB_API_KEY__. What2Watch is a
+        # PUBLIC repo, so the key is only ever in Codemagic: add TMDB_API_KEY as a SECURE
+        # environment variable on this workflow. This step must run BEFORE `npx cap sync`,
+        # because sync is what copies www/ into the iOS app bundle.
+        #
+        # It fails the build when the variable is missing rather than shipping silently: the
+        # app would still run (it degrades to its own gradient art with no network calls),
+        # but it would reach TestFlight with no posters while claiming to have them.
+        #
+        # The key value is never echoed. Python reads it from the environment, so it never
+        # appears in the build log, in `ps`, or in a shell history.
+        script: |
+          set -euo pipefail
+          if [ -z "${TMDB_API_KEY:-}" ]; then
+            echo "MISSING: TMDB_API_KEY"
+            echo "Add it as a SECURE environment variable on the ios-testflight workflow"
+            echo "(Codemagic -> app -> Environment variables). Do not hardcode it in the repo."
+            exit 1
+          fi
+          python3 - <<'PY'
+          import os, sys, pathlib
+          f = pathlib.Path("www/index.html")
+          src = f.read_text(encoding="utf-8")
+          if "__TMDB_API_KEY__" not in src:
+              sys.exit("www/index.html has no __TMDB_API_KEY__ placeholder — did someone hardcode a key?")
+          f.write_text(src.replace("__TMDB_API_KEY__", os.environ["TMDB_API_KEY"]), encoding="utf-8")
+          PY
+          # Confirm the swap happened without printing the key itself.
+          if grep -q '__TMDB_API_KEY__' www/index.html; then
+            echo "placeholder still present after substitution"; exit 1
+          fi
+          echo "TMDB key injected (value not logged)."
+
       - name: Add + sync iOS platform (Capacitor)
         script: |
           [ -d ios ] || npx cap add ios
