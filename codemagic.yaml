@@ -37,18 +37,17 @@ workflows:
           - JB_Shared_Distribution
       vars:
         BUNDLE_ID: "com.jonathanbiles.moodie"
-        # --- REVIEW-SUBMIT TOGGLE ---------------------------------------------
-        # "true"  = after the build lands in TestFlight, push the store listing and
-        #           submit this version for App Store review (fastlane deliver).
-        # anything else = build + TestFlight only; the submit step no-ops.
-        # Flip this back to "false" once 1.0 is approved, or every later push to
-        # main will try to submit itself for review.
+        # Apple's numeric App ID. An identifier, not a secret.
+        ASC_APP_ID: "6788245223"
+        # SUBMIT_FOR_REVIEW is intentionally NOT declared here.
         #
-        # 2026-08-01: set to "false" for the 4.1(a) remediation build. The listing
-        # (metadata + screenshots) is being applied by hand in App Store Connect, and
-        # this build must land in TestFlight WITHOUT submitting itself for review.
-        # Flip back to "true" only when the lane should own the submit again.
-        SUBMIT_FOR_REVIEW: "false"
+        # The post-publish `fastlane ios submit_review` step below runs only when
+        # SUBMIT_FOR_REVIEW=true, and that can now only arrive as a per-build override
+        # from the Codemagic REST API:
+        #     scripts/cm-build.sh --submit --watch
+        # Previously this was a yaml value that had to be flipped back to "false" after
+        # a release; forgetting meant the next push to main submitted itself. Undeclared
+        # means the safe state is the default, not something to remember.
         XCODE_WORKSPACE: "ios/App/App.xcworkspace"
         XCODE_SCHEME: "App"
       node: 22
@@ -163,3 +162,23 @@ workflows:
 
             fastlane --version
             fastlane ios submit_review
+
+  # ---------------------------------------------------------------------------
+  # On-demand, READ-ONLY check that the App Store Connect key stored in Codemagic
+  # can actually drive a submission. Submits nothing, signs nothing, builds nothing.
+  # Deliberately has no `triggering:` block, so a push can never run it.
+  #     scripts/cm-build.sh -w asc-auth-check --watch
+  # ---------------------------------------------------------------------------
+  asc-auth-check:
+    name: Moodie — ASC auth check (read-only)
+    instance_type: mac_mini_m2
+    max_build_duration: 15
+    integrations:
+      app_store_connect: ChordLoopAPIKey
+    environment:
+      vars:
+        ASC_APP_ID: "6788245223"
+      xcode: latest
+    scripts:
+      - name: Prove the ASC key authenticates for a submission (submits nothing)
+        script: bash scripts/asc-auth-check.sh
