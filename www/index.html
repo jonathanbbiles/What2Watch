@@ -305,7 +305,7 @@ function openURL(url){
   catch(e){ try{ window.open(url,'_blank','noopener'); }catch(e2){ location.href=url; } }
 }
 function sharePick(id){ var t=TITLES.find(function(x){ return x.id===id; }); if(!t) return; var text='Moodie says watch \"'+t.t+'\" tonight \u2014 '+t.why; try{ if(NP.Share && NP.Share.share){ NP.Share.share({title:'Moodie',text:text,dialogTitle:'Share your pick'}); return; } }catch(e){} try{ if(navigator.share){ navigator.share({text:text}); return; } }catch(e){} toast('Shared '+t.t+' \ud83c\udf7f'); }
-function boot(){ var at=document.getElementById('attribution'); if(at) at.textContent=ATTRIBUTION+' '+JW_CREDIT; buildTaste(true); buildMoods(); buildServiceChips(document.getElementById('svcChips')); Store.get('services').then(function(sv){ if(Array.isArray(sv)&&sv.length){ state.services=new Set(sv); buildServiceChips(document.getElementById('svcChips')); if(document.getElementById('profileSvc')) buildServiceChips(document.getElementById('profileSvc')); } }); Store.get('saved').then(function(sd){ if(Array.isArray(sd)){ state.saved=new Set(sd); } }); }
+function boot(){ var at=document.getElementById('attribution'); if(at) at.textContent=tmdbNote()+' '+ATTRIBUTION+' '+JW_CREDIT; buildTaste(true); buildMoods(); buildServiceChips(document.getElementById('svcChips')); Store.get('services').then(function(sv){ if(Array.isArray(sv)&&sv.length){ state.services=new Set(sv); buildServiceChips(document.getElementById('svcChips')); if(document.getElementById('profileSvc')) buildServiceChips(document.getElementById('profileSvc')); } }); Store.get('saved').then(function(sd){ if(Array.isArray(sd)){ state.saved=new Set(sd); } }); }
 /* ---------- Data ---------- */
 const SERVICES=[
   {id:'netflix',name:'Netflix',c:'#E50914'},{id:'prime',name:'Prime Video',c:'#00A8E1'},
@@ -388,7 +388,21 @@ const state={ services:new Set(['netflix','disney','max']), moods:new Set(), sav
    and the app degrades to its own gradient card art with no network calls at all —
    the same behaviour it shipped with before TMDB was wired in. ---------- */
 const TMDB_API_KEY='__TMDB_API_KEY__';
-const TMDB_ON=TMDB_API_KEY.indexOf('__')!==0;
+/* An EMPTY substitution used to satisfy the old check (''.indexOf('__') is -1, not 0), so
+   the app believed TMDB was live, sent key-less requests, took 401s, and fell back to
+   gradient art on every single title — indistinguishable on screen from "TMDB has no
+   poster for this one". Require a key that could plausibly be real. */
+const TMDB_ON=!!TMDB_API_KEY && TMDB_API_KEY.indexOf('__')!==0 && TMDB_API_KEY.length>=16;
+/* Artwork status, shown on the You screen. Without it every failure — bad key, blocked
+   network, changed API shape, genuinely missing poster — collapses into the same silent
+   gradient card, so a tester looking at a screenshot cannot tell which one happened. */
+var tmdbStatus=TMDB_ON?'pending':'nokey', tmdbDetail='';
+function tmdbNote(){
+  if(tmdbStatus==='ok') return 'Artwork: connected to TMDB.';
+  if(tmdbStatus==='nokey') return "Artwork: showing Moodie's own art (TMDB is not configured in this build).";
+  if(tmdbStatus==='error') return 'Artwork: TMDB unreachable'+(tmdbDetail?' ('+tmdbDetail+')':'')+" — showing Moodie's own art.";
+  return 'Artwork: contacting TMDB\u2026';
+}
 const TMDB_IMG='https://image.tmdb.org/t/p/';
 const TMDB_REGION='US';
 
@@ -409,7 +423,11 @@ var TMDB_MAX_INFLIGHT=4, tmdbQueue=[], tmdbActive=0;
 function tmdbRawFetch(path,params){
   var q=Object.keys(params||{}).map(function(k){ return k+'='+encodeURIComponent(params[k]); }).join('&');
   var url='https://api.themoviedb.org/3'+path+'?api_key='+encodeURIComponent(TMDB_API_KEY)+(q?'&'+q:'');
-  return fetch(url).then(function(r){ if(!r.ok) throw 0; return r.json(); });
+  return fetch(url).then(function(r){
+    if(!r.ok){ tmdbStatus='error'; tmdbDetail='HTTP '+r.status; throw 0; }
+    tmdbStatus='ok'; tmdbDetail='';
+    return r.json();
+  },function(e){ tmdbStatus='error'; tmdbDetail='no network'; throw e; });
 }
 function tmdbPump(){
   while(tmdbActive<TMDB_MAX_INFLIGHT && tmdbQueue.length){
@@ -714,6 +732,8 @@ function renderSaved(){
 /* ---------- Profile ---------- */
 function renderProfile(){
   buildServiceChips(document.getElementById('profileSvc'));
+  var at=document.getElementById('attribution');
+  if(at) at.textContent=tmdbNote()+' '+ATTRIBUTION+' '+JW_CREDIT;
 }
 
 /* ---------- Toast ---------- */

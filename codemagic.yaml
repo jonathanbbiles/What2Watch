@@ -96,6 +96,14 @@ workflows:
           fi
           echo "TMDB key injected (value not logged)."
 
+      - name: Verify the TMDB poster pipeline against the live API (fails the build if broken)
+        # Guards the failure this build exists to fix. In the app every TMDB failure degrades
+        # to Moodie's own gradient art, so a bad key, a blocked network and a changed API
+        # shape all look identical on a tester's screen. This resolves a real poster for a
+        # title that unquestionably has one (Dune) and fails the build if it cannot — so a
+        # poster-less IPA can never reach TestFlight again. The key is never printed.
+        script: bash scripts/tmdb-live-check.sh
+
       - name: Add + sync iOS platform (Capacitor)
         script: |
           [ -d ios ] || npx cap add ios
