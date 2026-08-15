@@ -28,9 +28,12 @@ where you tell Moodie which services you subscribe to so it can match against th
 plain text describing the user's own subscriptions, with no logos or marks. Moodie is not
 affiliated with, endorsed by, or connected to any of them.
 
-App Store images: the screenshots deliberately use original placeholder titles and the
-app's own generated card art, not TMDB artwork — so no studio key art appears in our store
-listing. Layout and UI are otherwise identical to the shipped app.
+App Store images: the screenshots are rendered from the shipping build itself, showing the
+app's OWN generated gradient card art — no TMDB artwork, no studio key art and no provider
+logos appear anywhere in our store listing. Title names appear only as plain text, exactly as
+the on-device catalog stores them. The screenshots were regenerated for this build: the
+previous set predated the 4.1(a) remediation and still showed downloaded key art and copied
+encyclopedic synopsis text, which no longer matched the app.
 
 Network use
 Moodie calls the TMDB API to fetch a poster and synopsis for the title on screen, and to

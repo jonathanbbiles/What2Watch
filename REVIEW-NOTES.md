@@ -30,9 +30,15 @@ where you tell Moodie which services you subscribe to so it can match against th
 plain text describing the user's own subscriptions, with no logos or marks. Moodie is not
 affiliated with, endorsed by, or connected to any of them.
 
-**App Store images:** the screenshots deliberately use original placeholder titles and the
-app's own generated card art, not TMDB artwork — so no studio key art appears in our store
-listing. Layout and UI are otherwise identical to the shipped app.
+**App Store images:** the screenshots are rendered from the shipping build itself (see
+`store-assets/render_screenshots.mjs`), showing the app's **own generated gradient card
+art** — no TMDB artwork, no studio key art, no provider logos anywhere in the store listing.
+Title names appear only as plain text, exactly as the on-device catalog stores them.
+
+  > Regenerated for this build. The previous set predated the 4.1(a) remediation and still
+  > showed downloaded theatrical key art and verbatim encyclopedic synopsis text — i.e. the
+  > listing still carried the very content the notes said had been removed. Screenshots are
+  > metadata, so that mismatch is a 4.1(a)/2.3.3 exposure on its own.
 
 ## Network use
 Moodie calls the TMDB API to fetch a poster and synopsis for the title on screen, and to

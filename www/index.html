@@ -17,6 +17,19 @@
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{margin:0;padding:0}
+  /* EVERY tappable control in this app is a real <button>, never a div+onclick.
+     Apple reviews this build on an iPad Air (M3) — and an iPhone-only build is still
+     reviewed in the scaled compatibility window — where a bare div+onclick can simply
+     fail to fire. That is exactly how Bull or Bust took its 2.1(a) "the pick doesn't
+     respond". A <button> is activated by touch, pointer, keyboard and VoiceOver alike.
+     border:none belongs in this reset, not on each rule: .chip/.mood/.rowitem re-declare
+     the border they want further down the sheet (and win, being later), while .tab and
+     .back get no border instead of the UA button outline. */
+  button{font-family:inherit; color:inherit; -webkit-appearance:none; appearance:none}
+  .chip,.mood,.tab,.back,.rowitem,.poster-btn{
+    font-family:inherit; font-size:inherit; text-align:left; margin:0; border:none;
+    -webkit-appearance:none; appearance:none; background:none}
+  .poster-btn{border:none; padding:0; width:100%; color:#fff}
   body{
     font-family:var(--font); background:
       radial-gradient(1200px 600px at 50% -10%, #241a44 0%, transparent 60%),
@@ -29,6 +42,11 @@
   .stage{position:relative; width:100%; max-width:100%}
   .phone{position:relative; width:100%; height:100dvh; max-height:100dvh;
     background:var(--bg); overflow:hidden; display:flex; flex-direction:column; user-select:none}
+  /* .phone sets user-select:none so the UI does not select like a web page. On iOS that
+     inherits into form controls and breaks the caret and selection in a text field —
+     which made the "name each person" inputs in Together feel broken. Put it back for
+     anything the user actually types into. */
+  input,textarea,select{-webkit-user-select:text; user-select:text}
   /* Large-screen / iPad layout rules are placed at the END of this stylesheet so they override the base rules above. */
 
   .screen{position:absolute; inset:0; display:none; flex-direction:column; background:var(--bg)}
@@ -41,7 +59,10 @@
   .topbar .sub{font-size:13px; color:var(--muted); margin-top:3px}
   .icon-btn{width:40px; height:40px; border-radius:50%; background:var(--surface); border:1px solid var(--line);
     display:flex; align-items:center; justify-content:center; font-size:18px; color:var(--text); cursor:pointer}
-  .back{display:flex; align-items:center; gap:5px; color:var(--blue); font-weight:700; cursor:pointer; font-size:16px}
+  /* min 44x44pt: Apple's minimum touch target. This is the way off the result screen, so
+     it is the last control that should be fiddly to hit on an iPad. */
+  .back{display:flex; align-items:center; gap:5px; color:var(--blue); font-weight:700; cursor:pointer;
+    font-size:16px; min-height:44px; min-width:44px; padding:0 8px 0 0}
 
   .btn{display:flex; align-items:center; justify-content:center; gap:8px; width:100%; border:none; cursor:pointer;
     font-family:var(--font); font-weight:800; font-size:17px; color:#fff; background:var(--grad);
@@ -166,7 +187,11 @@
           <p style="color:var(--muted);font-size:16px;line-height:1.5;margin:0 22px">Tell Moodie how you want to <b style="color:#fff">feel</b> tonight. Tap shuffle. Get the one thing everyone will actually watch.</p>
           <div style="flex:1"></div>
           <button class="btn shuffle-btn" onclick="showScreen('ob2')">Let's go 🍿</button>
-          <div class="hint">Free to use solo • No account needed to start</div>
+          <!-- Copy audit: this read "Free to use SOLO - no account needed to START". Both
+               halves imply a tier that does not exist (paid groups, a later sign-up), and
+               Moodie's earlier 2.3 rejection was exactly "advertises a paid tier with no IAP
+               present". State the flat truth and nothing more. -->
+          <div class="hint">Completely free • No account, no in-app purchases</div>
         </div>
       </section>
 
@@ -210,8 +235,11 @@
 
       <!-- RESULT -->
       <section class="screen" id="result">
-        <div class="topbar"><div class="back" onclick="setTab('home')">‹ Moods</div><div class="sub">Your pick</div><div style="width:20px"></div></div>
-        <div class="screen-body no-tab" id="resultBody"></div>
+        <div class="topbar"><button type="button" class="back" onclick="setTab('home')">‹ Moods</button><div class="sub">Your pick</div><div style="width:20px"></div></div>
+        <!-- NOT .no-tab: the tab bar stays visible on the result screen so there is always a
+             second way out. A single back control that fails to fire is a dead end, and
+             "stuck on a screen" is a Guideline 2.1 rejection on its own. -->
+        <div class="screen-body" id="resultBody"></div>
       </section>
 
       <!-- GROUPS -->
@@ -256,8 +284,8 @@
           <div class="section-title">Settings</div>
           <div class="card">
             
-            <div class="rowitem" onclick="openURL('https://jonathanscribbles.com/moodie#privacy')"><div class="grow"><div class="name">Privacy Policy</div></div><div style="color:var(--dim)">›</div></div>
-            <div class="rowitem" onclick="openURL('https://jonathanscribbles.com/moodie#support')"><div class="grow"><div class="name">Support</div></div><div style="color:var(--dim)">›</div></div>
+            <button type="button" class="rowitem" style="width:100%" onclick="openURL('https://jonathanscribbles.com/moodie#privacy')"><div class="grow"><div class="name">Privacy Policy</div></div><div style="color:var(--dim)">›</div></div>
+            <button type="button" class="rowitem" style="width:100%" onclick="openURL('https://jonathanscribbles.com/moodie#support')"><div class="grow"><div class="name">Support</div></div><div style="color:var(--dim)">›</div></div>
             <p class="credit" id="attribution"></p>
             
           </div>
@@ -266,10 +294,10 @@
       </section>
 
       <nav class="tabbar" id="tabbar" style="display:none">
-        <div class="tab" data-tab="home" onclick="setTab('home')"><div class="ti">🔀</div>Shuffle</div>
-        <div class="tab" data-tab="groups" onclick="setTab('groups')"><div class="ti">👥</div>Together</div>
-        <div class="tab" data-tab="saved" onclick="setTab('saved')"><div class="ti">🔖</div>Saved</div>
-        <div class="tab" data-tab="profile" onclick="setTab('profile')"><div class="ti">😌</div>You</div>
+        <button type="button" class="tab" data-tab="home" onclick="setTab('home')"><div class="ti">🔀</div>Shuffle</button>
+        <button type="button" class="tab" data-tab="groups" onclick="setTab('groups')"><div class="ti">👥</div>Together</button>
+        <button type="button" class="tab" data-tab="saved" onclick="setTab('saved')"><div class="ti">🔖</div>Saved</button>
+        <button type="button" class="tab" data-tab="profile" onclick="setTab('profile')"><div class="ti">😌</div>You</button>
       </nav>
 
       <div class="toast" id="toast"></div>
@@ -313,12 +341,17 @@ const SERVICES=[
   {id:'hulu',name:'Hulu',c:'#1CE783'},{id:'apple',name:'Apple TV+',c:'#6E6E73'},
   {id:'peacock',name:'Peacock',c:'#F5A623'},{id:'paramount',name:'Paramount+',c:'#0064FF'},
 ];
+/* `ph` is the verb phrase used by moodPhrase() in "Because you want to ___:". The result
+   screen used to lowercase `lbl` instead, which reads correctly for only three of these ten
+   ("laugh", "cry it out", "chill") and produced "Because you want to smart", "...to thrills",
+   "...to family" for the rest — broken English on the app's primary result screen, and in
+   any screenshot of it. */
 const MOODS=[
-  {id:'laugh',em:'😂',lbl:'Laugh',c:'#FFD23D'},{id:'cry',em:'🥲',lbl:'Cry it out',c:'#43B4FF'},
-  {id:'thrill',em:'😨',lbl:'Thrills',c:'#FF5C7A'},{id:'romance',em:'❤️',lbl:'Romance',c:'#FF7AB8'},
-  {id:'mindblown',em:'🤯',lbl:'Mind‑blown',c:'#A879FF'},{id:'chill',em:'😌',lbl:'Chill',c:'#34E0C4'},
-  {id:'scared',em:'👻',lbl:'Spooky',c:'#7CE084'},{id:'hyped',em:'🔥',lbl:'Hyped',c:'#FF8A3D'},
-  {id:'smart',em:'🧠',lbl:'Smart',c:'#6BA8FF'},{id:'family',em:'👨‍👩‍👧',lbl:'Family',c:'#9BE04A'},
+  {id:'laugh',em:'😂',lbl:'Laugh',c:'#FFD23D',ph:'laugh'},{id:'cry',em:'🥲',lbl:'Cry it out',c:'#43B4FF',ph:'cry it out'},
+  {id:'thrill',em:'😨',lbl:'Thrills',c:'#FF5C7A',ph:'be thrilled'},{id:'romance',em:'❤️',lbl:'Romance',c:'#FF7AB8',ph:'fall in love'},
+  {id:'mindblown',em:'🤯',lbl:'Mind‑blown',c:'#A879FF',ph:'have your mind blown'},{id:'chill',em:'😌',lbl:'Chill',c:'#34E0C4',ph:'chill'},
+  {id:'scared',em:'👻',lbl:'Spooky',c:'#7CE084',ph:'be spooked'},{id:'hyped',em:'🔥',lbl:'Hyped',c:'#FF8A3D',ph:'get hyped'},
+  {id:'smart',em:'🧠',lbl:'Smart',c:'#6BA8FF',ph:'think'},{id:'family',em:'👨‍👩‍👧',lbl:'Family',c:'#9BE04A',ph:'watch as a family'},
 ];
 const TITLES=[
   {id:1,t:'The Good Place',em:'😄',svc:'netflix',r:'TV‑14',rt:'22m',moods:['laugh','smart','chill'],g:'linear-gradient(135deg,#34E0C4,#43B4FF)',why:'Feel‑good and clever without trying too hard.',media:'tvShow',y:2016},
@@ -370,7 +403,9 @@ const TITLES=[
 
 
 /* ---------- State ---------- */
-const state={ services:new Set(['netflix','disney','max']), moods:new Set(), saved:new Set([1,7]), lastMatch:null };
+const state={ services:new Set(['netflix','disney','max']), moods:new Set(), saved:new Set()/* starts EMPTY: it used to be seeded with two titles the user never saved,
+   so a clean install showed pre-populated demo content in a list that is meant to be theirs —
+   placeholder data of exactly the kind Guideline 2.3.1 covers */, lastMatch:null };
 
 /* ---------- Artwork + synopsis + availability: TMDB ----------
    Posters, backdrops and synopses come from TMDB, whose terms permit displaying them in
@@ -490,25 +525,30 @@ function hydrate(el,t,onDesc){
   });
 }
 
-function posterArt(t,cls){
-  const d=document.createElement('div'); d.className='poster'+(cls?' '+cls:''); d.style.background=t.g;
+function posterArt(t,cls,asButton){
+  /* A clickable card is a real <button>; a decorative one stays a <div>. Never a div+onclick. */
+  const d=document.createElement(asButton?'button':'div');
+  if(asButton) d.type='button';
+  d.className=(asButton?'poster-btn ':'')+'poster'+(cls?' '+cls:''); d.style.background=t.g;
   d.innerHTML='<div class="art">'+t.em+'</div><img class="pimg" alt="" loading="lazy"><div class="sheen"></div><div class="pmeta"><div class="ptitle">'+t.t+'</div></div>';
   hydrate(d,t);
   return d;
 }
 function posterMini(t,showSvc,onClick){
-  const d=posterArt(t,'mini');
+  const d=posterArt(t,'mini',!!onClick);
   if(showSvc) d.querySelector('.pmeta').insertAdjacentHTML('beforeend','<div class="psub"><span class="badge svc">'+SVC_BADGE+'</span></div>');
-  if(onClick) d.onclick=function(){ onClick(d,t); };
+  if(onClick){ d.setAttribute('aria-label',t.t); d.onclick=function(){ onClick(d,t); }; }
   return d;
 }
 
 /* ---------- Nav ---------- */
 const APP_TABS=['home','groups','saved','profile'];
+/* 'result' is not a tab, but the tab bar shows there too — see the note on #resultBody. */
+const TABBED_SCREENS=APP_TABS.concat(['result']);
 function showScreen(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
-  document.getElementById('tabbar').style.display=APP_TABS.includes(id)?'flex':'none';
+  document.getElementById('tabbar').style.display=TABBED_SCREENS.includes(id)?'flex':'none';
   document.querySelectorAll('.screen-body').forEach(b=>b.scrollTop=0);
 }
 function setTab(name){
@@ -524,7 +564,9 @@ function finishOnboarding(){ setTab('home'); }
 function buildServiceChips(container){
   container.innerHTML='';
   SERVICES.forEach(s=>{
-    const c=document.createElement('div'); c.className='chip'+(state.services.has(s.id)?' selected':'');
+    const c=document.createElement('button'); c.type='button';
+    c.className='chip'+(state.services.has(s.id)?' selected':'');
+    c.setAttribute('aria-pressed',state.services.has(s.id)?'true':'false');
     if(state.services.has(s.id)) c.style.background=s.c;
     c.innerHTML='<span style="width:8px;height:8px;border-radius:50%;background:'+(state.services.has(s.id)?'#fff':s.c)+'"></span>'+s.name;
     c.onclick=function(){ haptic('LIGHT'); state.services.has(s.id)?state.services.delete(s.id):state.services.add(s.id); persistServices();
@@ -547,7 +589,9 @@ function buildTaste(reset){
 function buildMoods(){
   const g=document.getElementById('moodGrid'); g.innerHTML='';
   MOODS.forEach(m=>{
-    const d=document.createElement('div'); d.className='mood'+(state.moods.has(m.id)?' selected':'');
+    const d=document.createElement('button'); d.type='button';
+    d.className='mood'+(state.moods.has(m.id)?' selected':'');
+    d.setAttribute('aria-pressed',state.moods.has(m.id)?'true':'false');
     d.innerHTML='<div class="glow" style="background:'+m.c+'"></div><span class="em">'+m.em+'</span><span class="lbl">'+m.lbl+'</span>';
     d.onclick=function(){ haptic('LIGHT'); state.moods.has(m.id)?state.moods.delete(m.id):state.moods.add(m.id); buildMoods(); };
     g.appendChild(d);
@@ -563,17 +607,21 @@ function pool(){
 }
 function moodPhrase(){
   if(state.moods.size===0) return 'watch something great';
-  const m=MOODS.find(x=>x.id===[...state.moods][0]); return (m?m.lbl:'').toLowerCase();
+  const m=MOODS.find(x=>x.id===[...state.moods][0]); return m?(m.ph||m.lbl.toLowerCase()):'watch something great';
 }
-let _pool=[];
+let _pool=[]; let _spin=null;
 function doShuffle(){
   haptic('MEDIUM'); _pool=pool(); if(!_pool.length){ toast('Pick a mood to shuffle'); return; }
   showScreen('result');
+  /* Tapping "Again" mid-spin used to start a second interval while the first was still
+     running; whichever settled last won, so the card could flip to a title other than the
+     one announced. One spinner at a time. */
+  if(_spin){ clearInterval(_spin); _spin=null; }
   const body=document.getElementById('resultBody'); let n=0;
-  const spin=setInterval(function(){
+  const spin=_spin=setInterval(function(){
     const t=_pool[Math.floor(Math.random()*_pool.length)];
     body.innerHTML='<div class="section-title">Shuffling…</div><div class="poster big" style="background:'+t.g+'"><div class="art">'+t.em+'</div><div class="sheen"></div><div class="pmeta"><div class="ptitle">'+t.t+'</div></div></div>';
-    if(++n>7){ clearInterval(spin); settleResult(_pool[Math.floor(Math.random()*_pool.length)]); }
+    if(++n>7){ clearInterval(spin); if(_spin===spin) _spin=null; settleResult(_pool[Math.floor(Math.random()*_pool.length)]); }
   },90);
 }
 function settleResult(t){
@@ -657,7 +705,7 @@ function pairBegin(){ pairReadInputs(); haptic('LIGHT'); pair.people=[]; pair.id
 function pairPerson(){
   var i=pair.idx, nm=(pair.names[i]||('Person '+(i+1)));
   var b=document.getElementById('groupsBody');
-  var grid=MOODS.map(function(m){ return '<div class="mood" onclick="pairToggle(this,\''+m.id+'\')"><div class="glow" style="background:'+m.c+'"></div><span class="em">'+m.em+'</span><span class="lbl">'+m.lbl+'</span></div>'; }).join('');
+  var grid=MOODS.map(function(m){ return '<button type="button" class="mood" aria-pressed="false" onclick="pairToggle(this,\''+m.id+'\')"><div class="glow" style="background:'+m.c+'"></div><span class="em">'+m.em+'</span><span class="lbl">'+m.lbl+'</span></button>'; }).join('');
   b.innerHTML=
     '<div style="display:flex;align-items:center;justify-content:space-between;margin:2px 2px 8px"><div class="section-title" style="margin:0">Person '+(i+1)+' of '+pair.count+'</div><div style="font-size:13px;color:var(--dim)">Pass the phone 📲</div></div>'
    +'<div class="card" style="text-align:center"><div style="font-weight:800;font-size:20px">'+esc(nm)+', how do you want to feel?</div><div style="font-size:13px;color:var(--muted);margin-top:4px">Tap a couple — the more you pick, the better the match.</div></div>'
@@ -666,7 +714,7 @@ function pairPerson(){
    +'<button class="btn" style="margin-top:10px" onclick="pairNext()">'+(i+1<pair.count?'Next person →':'See our pick →')+'</button>';
   pair._cur=new Set();
 }
-function pairToggle(el,id){ haptic('LIGHT'); if(pair._cur.has(id)){ pair._cur.delete(id); el.classList.remove('selected'); } else { pair._cur.add(id); el.classList.add('selected'); } var ssel=document.getElementById('pairSel'); if(ssel) ssel.textContent = pair._cur.size ? (pair._cur.size+' picked') : 'No moods picked — open to anything.'; }
+function pairToggle(el,id){ haptic('LIGHT'); if(pair._cur.has(id)){ pair._cur.delete(id); el.classList.remove('selected'); } else { pair._cur.add(id); el.classList.add('selected'); } el.setAttribute('aria-pressed',pair._cur.has(id)?'true':'false'); var ssel=document.getElementById('pairSel'); if(ssel) ssel.textContent = pair._cur.size ? (pair._cur.size+' picked') : 'No moods picked — open to anything.'; }
 function pairNext(){ pair.people.push({ name:(pair.names[pair.idx]||('Person '+(pair.idx+1))), moods:new Set(pair._cur) }); pair.idx++; if(pair.idx<pair.count){ pairPerson(); } else { pairCompute(false); } }
 function personSat(t,moods){ return moods.size===0 || t.moods.some(function(m){ return moods.has(m); }); }
 function moodById(id){ return MOODS.find(function(x){ return x.id===id; }); }

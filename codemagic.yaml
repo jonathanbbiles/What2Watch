@@ -104,10 +104,151 @@ workflows:
         # poster-less IPA can never reach TestFlight again. The key is never printed.
         script: bash scripts/tmdb-live-check.sh
 
-      - name: Add + sync iOS platform (Capacitor)
+      # The add / patch / sync split is load-bearing and must stay in this order.
+      # `cap add` writes the Xcode project and the Podfile from the Capacitor template;
+      # `cap sync` copies www/ and runs `pod install`. The deployment target has to be
+      # patched BETWEEN them: CocoaPods bakes the Podfile's `platform :ios` into every pod
+      # target at install time, so patching after sync would leave the Pods on the old
+      # minimum and ship a binary whose pods disagree with the app.
+      - name: Add iOS platform (Capacitor)
         script: |
           [ -d ios ] || npx cap add ios
+      - name: Force min iOS 15 + Universal device family (BEFORE cap sync)
+        script: |
+          set -euo pipefail
+          PBX=ios/App/App.xcodeproj/project.pbxproj
+          PODFILE=ios/App/Podfile
+
+          # perl, not `sed -i ''`: this runs on a macOS (BSD) sed, which does NOT expand \n
+          # in a replacement — the "insert a new line" case below would silently write a
+          # literal backslash-n into the project file.
+          #
+          # 1. App target minimum. The Capacitor 6 template ships iOS 13; Apple wants 15+
+          #    (ITMS-90068 on upload if the minimum is below what the store accepts).
+          perl -pi -e 's/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]+;/IPHONEOS_DEPLOYMENT_TARGET = 15.0;/g' "$PBX"
+
+          # 2. Universal, stated explicitly rather than inherited. Moodie ships iPad
+          #    screenshots and a real large-screen layout, and Apple reviews on an iPad Air
+          #    (M3) either way — so say "1,2" out loud instead of relying on a template
+          #    default that a future Capacitor version could change underneath us.
+          if grep -q 'TARGETED_DEVICE_FAMILY' "$PBX"; then
+            perl -pi -e 's/TARGETED_DEVICE_FAMILY = "?[0-9,]+"?;/TARGETED_DEVICE_FAMILY = "1,2";/g' "$PBX"
+          else
+            perl -pi -e 's/^(\s*)(IPHONEOS_DEPLOYMENT_TARGET = 15\.0;)/$1$2\n$1TARGETED_DEVICE_FAMILY = "1,2";/g' "$PBX"
+          fi
+
+          # 3. Podfile platform. Capacitor's own post_install (assertDeploymentTarget)
+          #    propagates this to every pod, so this single line covers the whole Pods project.
+          perl -pi -e "s/^platform :ios, *'[0-9.]+'/platform :ios, '15.0'/" "$PODFILE"
+
+          echo "--- deployment target / device family after patch ---"
+          grep -n 'IPHONEOS_DEPLOYMENT_TARGET\|TARGETED_DEVICE_FAMILY' "$PBX" | sort -u
+          grep -n "platform :ios" "$PODFILE"
+
+          # Fail the build rather than silently shipping the template defaults.
+          grep -q 'IPHONEOS_DEPLOYMENT_TARGET = 15.0;' "$PBX" || { echo "FATAL: deployment target patch did not apply"; exit 1; }
+          grep -q 'TARGETED_DEVICE_FAMILY = "1,2";' "$PBX"     || { echo "FATAL: device family patch did not apply"; exit 1; }
+          grep -q "platform :ios, '15.0'" "$PODFILE"           || { echo "FATAL: Podfile platform patch did not apply"; exit 1; }
+          if grep -qE 'IPHONEOS_DEPLOYMENT_TARGET = (1[0-4]|[0-9])\.' "$PBX"; then
+            echo "FATAL: a build configuration is still below iOS 15"; exit 1
+          fi
+      - name: Sync iOS platform (Capacitor)
+        script: |
           npx cap sync ios
+      - name: Verify the Capacitor plugins actually reached the generated iOS project
+        script: |
+          set -euo pipefail
+          # Being in package.json/node_modules proves nothing: a plugin that never lands in
+          # the GENERATED project is simply absent at runtime, and `cap ls` will still list
+          # it happily. Check the artifact CocoaPods actually built, and fail if a plugin
+          # the app calls at runtime is missing — a silently-absent Haptics/Share/Browser/
+          # Preferences plugin is a dead control in front of a reviewer.
+          PODFILE=ios/App/Podfile
+          echo "--- generated Podfile ---"; cat "$PODFILE"
+          missing=0
+          for p in CapacitorBrowser CapacitorHaptics CapacitorShare CapacitorPreferences; do
+            if grep -q "$p" "$PODFILE" && [ -d "ios/App/Pods/$p" ]; then
+              echo "present: $p"
+            else
+              echo "MISSING: $p (not in Podfile, or no Pods/$p directory after pod install)"
+              missing=1
+            fi
+          done
+          # Capacitor 6 uses CocoaPods, so there should be no SPM package manifest at all.
+          # If a future Capacitor switches this project to SPM, plugins get dropped silently
+          # unless they declare Package.swift — stop the build and make someone look.
+          if [ -f ios/App/CapApp-SPM/Package.swift ]; then
+            echo "NOTE: this project is now SPM-based, not CocoaPods — plugin inclusion must be re-verified:"
+            cat ios/App/CapApp-SPM/Package.swift
+            missing=1
+          fi
+          [ "$missing" -eq 0 ] || { echo "FATAL: Capacitor plugin verification failed"; exit 1; }
+      - name: Add the app-level privacy manifest
+        script: |
+          set -euo pipefail
+          # Accurate to what this build actually does: Moodie makes no network requests,
+          # collects nothing, tracks nothing, and uses no required-reason API from the app
+          # target itself (UserDefaults access lives in the Preferences pod, which ships its
+          # own manifest). An empty-but-explicit manifest is the honest declaration.
+          MANIFEST=ios/App/App/PrivacyInfo.xcprivacy
+          cat > "$MANIFEST" <<'PLIST'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>NSPrivacyTracking</key>
+            <false/>
+            <key>NSPrivacyTrackingDomains</key>
+            <array/>
+            <key>NSPrivacyCollectedDataTypes</key>
+            <array/>
+            <key>NSPrivacyAccessedAPITypes</key>
+            <array/>
+          </dict>
+          </plist>
+          PLIST
+          plutil -lint "$MANIFEST"
+
+          # Register it with the App target so it lands at the bundle ROOT, where Apple reads
+          # it. (Dropping the file in www/ would only bundle it under public/, where it is
+          # inert.) This needs the xcodeproj gem, which comes with CocoaPods/fastlane on this
+          # image — but the exact ruby on PATH varies between Codemagic images, so try to
+          # install it rather than assuming.
+          #
+          # NON-FATAL on purpose. Apple requires a privacy manifest from third-party SDKs and
+          # for required-reason API use; the App target itself calls no required-reason API
+          # (the UserDefaults access lives in the Preferences pod, which ships its own
+          # manifest). So this file is a belt-and-braces accurate declaration, not a
+          # submission blocker — it must never be the reason a good build fails.
+          if ! ruby -e 'require "xcodeproj"' 2>/dev/null; then
+            echo "xcodeproj gem not loadable — trying to install it"
+            gem install xcodeproj --no-document || true
+          fi
+          if ruby -e 'require "xcodeproj"' 2>/dev/null; then
+            ruby -e '
+              require "xcodeproj"
+              proj = Xcodeproj::Project.open("ios/App/App.xcodeproj")
+              target = proj.targets.find { |t| t.name == "App" } or abort("no App target")
+              group = proj.main_group.find_subpath("App", true)
+              if group.files.any? { |f| f.path == "PrivacyInfo.xcprivacy" }
+                puts "PrivacyInfo.xcprivacy already registered"
+              else
+                ref = group.new_file("PrivacyInfo.xcprivacy")
+                target.add_resources([ref])
+                proj.save
+                puts "added PrivacyInfo.xcprivacy to the App target resources"
+              end
+            '
+          else
+            echo "WARNING: could not load xcodeproj — privacy manifest written to disk but NOT registered with the App target."
+          fi
+
+          # Report the truth either way, so the build log says what actually shipped.
+          if grep -q 'PrivacyInfo.xcprivacy' ios/App/App.xcodeproj/project.pbxproj; then
+            echo "RESULT: privacy manifest IS registered with the App target."
+          else
+            echo "RESULT: privacy manifest is NOT registered (app target uses no required-reason API, so this is not a submission blocker)."
+          fi
       - name: Embed the real app icon (replace Capacitor default)
         script: |
           ICONSET="ios/App/App/Assets.xcassets/AppIcon.appiconset"

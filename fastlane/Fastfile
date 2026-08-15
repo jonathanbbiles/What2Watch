@@ -79,10 +79,18 @@ platform :ios do
 
       # The compliance answers Apple asks at submission time. These match the shipped build:
       # no encryption beyond exempt HTTPS (Info.plist sets ITSAppUsesNonExemptEncryption
-      # false), no third-party content, and no ad identifier — Moodie has no ads or analytics.
+      # false), and no ad identifier — Moodie has no ads or analytics.
+      #
+      # content_rights is TRUE, and that is a correction. It said false while the app was
+      # already displaying poster artwork and synopsis text fetched from TMDB at runtime —
+      # which is exactly "contains, shows, or accesses third-party content". Answering false
+      # there is a misrepresentation at submit time, on the same build whose reviewer notes
+      # spend three paragraphs explaining the TMDB licence and attribution. Moodie does have
+      # the right to display it (TMDB API terms, with the required credits shown in-app on
+      # the You screen and on every pick), so the honest answer is yes.
       submission_information: {
         export_compliance_uses_encryption:           false,
-        content_rights_contains_third_party_content: false,
+        content_rights_contains_third_party_content: true,
         add_id_info_uses_idfa:                       false
       }
     )
