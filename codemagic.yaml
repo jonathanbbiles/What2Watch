@@ -498,11 +498,10 @@ workflows:
         # the Fastfile requires the same file. RED HERE means the variable is genuinely not a
         # private key in any shape.
         #
-        # ADVISORY: it prints its finding and always exits 0. It is a description of what
-        # fastlane will see, not the thing that decides whether fastlane works — and an
-        # over-strict description must never block the step below, which is the real test.
-        script: |
-          ruby scripts/asc_key_pem.rb || echo "(advisory — the real lane below is the test that counts)"
+        # Fatal again, and legitimately so: it no longer guesses at the shape, it hands the
+        # key to OpenSSL and keeps whichever form actually parses. If every form fails, the
+        # value is not a private key and nothing downstream can work.
+        script: ruby scripts/asc_key_pem.rb
       - name: 6/8 fastlane assembles the ASC API key object (no network call)
         # Splits "fastlane cannot even build the credential" from "the call to Apple failed".
         # In a check run with no log text those two are indistinguishable, and they have
