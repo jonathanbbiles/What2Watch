@@ -111,6 +111,17 @@ export FASTLANE_DISABLE_COLORS=1
 # Never sit waiting on stdin that will never arrive.
 export FASTLANE_OPT_OUT_USAGE=1
 
+# --- Lint the listing before anything touches the network -----------------------------
+# Plain Ruby, no fastlane, no network. Runs in every mode: catching an over-length keyword
+# here costs a second, and catching it from a rejection costs a review cycle.
+hr "Listing lint (local files only)"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+if ! ruby "$REPO_ROOT/scripts/lint_listing.rb" "$REPO_ROOT"; then
+  say "The listing in fastlane/ is not submittable. Nothing was sent to Apple."
+  [ "$ADVISORY" = "true" ] && { say "(advisory — not failing the build)"; exit 0; }
+  exit 1
+fi
+
 hr "fastlane"
 fastlane --version || true
 

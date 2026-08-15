@@ -453,13 +453,14 @@ workflows:
           export FASTLANE_SKIP_UPDATE_CHECK=1 FASTLANE_DISABLE_COLORS=1
           fastlane lanes
       - name: 2/4 Listing lint — fastlane/metadata + screenshots vs Apple's limits (no network)
-        # Local files only. Green here with red below means the listing is fine and the key
-        # is the problem; red here means a field is over length or a screenshot is the wrong
-        # size, and no amount of working credentials would have saved the submission.
+        # Plain Ruby, deliberately not a fastlane lane: it runs identically on a laptop, so
+        # it is testable before it ever reaches CI, and it is immune to fastlane's working
+        # directory. Green here with red below means the listing is fine and the key is the
+        # problem; red here means a field is over length or a screenshot is the wrong size,
+        # and no amount of working credentials would have saved the submission.
         script: |
           export LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8
-          export FASTLANE_SKIP_UPDATE_CHECK=1 FASTLANE_DISABLE_COLORS=1
-          fastlane ios asc_lint
+          ruby scripts/lint_listing.rb
       - name: 3/4 ASC key reaches the build and Apple accepts it (CLI + Ruby OpenSSL)
         # Answers the question this repo has never been able to answer: does
         # `integrations: app_store_connect:` actually export APP_STORE_CONNECT_* to scripts,
