@@ -70,8 +70,12 @@ fi
 
 # --- Credentials, by name only --------------------------------------------------------
 hr "App Store Connect credentials in this build"
+# APP_STORE_CONNECT_PRIVATE_KEY is NOT in this list. The key is not always in the variable:
+# Codemagic can leave it as a .p8 under ~/.appstoreconnect/private_keys/. Whether a usable
+# key exists at all is decided below by asc_key_pem.rb, which checks both places — treating
+# an empty variable as fatal here would reject a build whose key is simply on disk.
 missing=0
-for v in APP_STORE_CONNECT_KEY_IDENTIFIER APP_STORE_CONNECT_ISSUER_ID APP_STORE_CONNECT_PRIVATE_KEY; do
+for v in APP_STORE_CONNECT_KEY_IDENTIFIER APP_STORE_CONNECT_ISSUER_ID; do
   if [ -z "${!v:-}" ]; then
     say "MISSING: $v"
     missing=1
@@ -114,8 +118,16 @@ export FASTLANE_OPT_OUT_USAGE=1
 # --- Lint the listing before anything touches the network -----------------------------
 # Plain Ruby, no fastlane, no network. Runs in every mode: catching an over-length keyword
 # here costs a second, and catching it from a rejection costs a review cycle.
-hr "Listing lint (local files only)"
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+hr "App Store Connect private key"
+if ! ruby "$REPO_ROOT/scripts/asc_key_pem.rb"; then
+  say "No usable private key — see the list above of everything that was tried."
+  [ "$ADVISORY" = "true" ] && { say "(advisory — not failing the build)"; exit 0; }
+  exit 1
+fi
+
+hr "Listing lint (local files only)"
 if ! ruby "$REPO_ROOT/scripts/lint_listing.rb" "$REPO_ROOT"; then
   say "The listing in fastlane/ is not submittable. Nothing was sent to Apple."
   [ "$ADVISORY" = "true" ] && { say "(advisory — not failing the build)"; exit 0; }

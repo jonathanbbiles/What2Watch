@@ -164,9 +164,18 @@ def asc_private_key_pem!
   end
   require helper
 
-  env_or_die("APP_STORE_CONNECT_PRIVATE_KEY")
+  # Deliberately no env_or_die here: the key is not always IN the variable. Codemagic can
+  # leave it as a .p8 under ~/.appstoreconnect/private_keys/, where its own CLI finds it
+  # without being told — which is why the CLI authenticates in builds where fastlane, handed
+  # only the variable, cannot. asc_key_pem.rb looks in both places.
   pem, shape = asc_private_key_pem
-  UI.user_error!("APP_STORE_CONNECT_PRIVATE_KEY is not a private key in any recognised shape.") if pem.nil?
+  if pem.nil?
+    UI.user_error!(
+      "No usable App Store Connect private key: APP_STORE_CONNECT_PRIVATE_KEY holds nothing " \
+      "parseable and there is no readable .p8 in the standard key directories. Run " \
+      "`ruby scripts/asc_key_pem.rb` in the build for the full list of what was tried."
+    )
+  end
 
   UI.message("App Store Connect private key shape: #{shape}")
   pem

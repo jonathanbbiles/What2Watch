@@ -15,6 +15,12 @@
 #   3. base64-encoded PEM          the whole .p8 file base64'd into one line
 #   4. a path to the .p8 on disk   some setups write the key out and export where
 #   5. a bare base64 key body      the .p8 with its BEGIN/END armor stripped
+#   6. not in the variable at all  the .p8 written to ~/.appstoreconnect/private_keys/,
+#                                  which is where Apple's tools look by convention. This is
+#                                  the one that fooled us longest: Codemagic's CLI finds the
+#                                  file on its own and authenticates, so the key looks fine
+#                                  everywhere except fastlane, which was only ever handed
+#                                  the environment variable.
 #
 # DON'T CLASSIFY — VERIFY.
 # An earlier version of this file guessed the shape by looking for the "-----BEGIN" marker.
@@ -36,6 +42,23 @@
 # the kind of require that fails on a build image and nowhere else.
 
 require "openssl"
+
+# Where Apple's tooling keeps API keys by convention. codemagic-cli-tools reads these
+# without being told, which is why `app-store-connect` can authenticate in a build where
+# the environment variable holds nothing useful.
+ASC_KEY_SEARCH_DIRS = [
+  File.join(Dir.home.to_s, ".appstoreconnect", "private_keys"),
+  File.join(Dir.home.to_s, "private_keys"),
+  File.join(Dir.pwd, "private_keys")
+].freeze
+
+# .p8 files on disk, the one matching APP_STORE_CONNECT_KEY_IDENTIFIER first.
+def asc_key_files(key_id = ENV["APP_STORE_CONNECT_KEY_IDENTIFIER"])
+  files = ASC_KEY_SEARCH_DIRS.uniq.flat_map do |dir|
+    Dir.exist?(dir) ? Dir.glob(File.join(dir, "*.p8")) : []
+  end
+  files.uniq.sort_by { |f| key_id.to_s.empty? || !File.basename(f).include?(key_id.to_s) ? 1 : 0 }
+end
 
 # Every form the value might be, cheapest first. Nothing here decides anything; the parse
 # below does. Each entry is [candidate_pem, description].
@@ -77,13 +100,23 @@ def asc_key_candidates(raw)
                    "bare base64 key body, SEC1 armor added"]
   end
 
+  # Shape 6: the key is not in the variable at all, it is a file on disk.
+  asc_key_files.each do |path|
+    begin
+      candidates << [File.read(path), "the .p8 found at #{path}"]
+    rescue StandardError # rubocop:disable Lint/SuppressedException
+      # Unreadable. Other candidates may still work.
+    end
+  end
+
   candidates
 end
 
 # Returns [pem_text, shape_description], or nil when nothing parses as a private key.
 def asc_private_key_pem(raw = ENV["APP_STORE_CONNECT_PRIVATE_KEY"])
+  # No early return on an empty variable: the key may still be on disk, and that is exactly
+  # the case this function exists to survive.
   raw = raw.to_s
-  return nil if raw.strip.empty?
 
   asc_key_candidates(raw).each do |candidate, description|
     # `empty?` and `bytesize` are encoding-safe; `strip` is not, and a candidate may be
@@ -116,18 +149,16 @@ end
 # Run directly: say what shape the key is in, without ever revealing it.
 if $PROGRAM_NAME == __FILE__
   raw = ENV["APP_STORE_CONNECT_PRIVATE_KEY"].to_s
-  if raw.strip.empty?
-    puts "FATAL: APP_STORE_CONNECT_PRIVATE_KEY is empty."
-    puts "It comes from `integrations: app_store_connect:` in codemagic.yaml, or from three"
-    puts "Secure environment variables on the app in the Codemagic UI."
-    exit 1
-  end
+  puts "APP_STORE_CONNECT_PRIVATE_KEY: #{raw.length} characters"
+  found = asc_key_files
+  puts "key files on disk: #{found.empty? ? 'none' : found.join(', ')}"
 
   result = asc_private_key_pem(raw)
   if result.nil?
-    puts "FATAL: APP_STORE_CONNECT_PRIVATE_KEY is #{raw.length} characters, and none of the"
+    puts "FATAL: none of the forms tried parse as a private key"
     puts "forms tried parse as a private key:"
     asc_key_candidates(raw).each { |_, description| puts "  - #{description}" }
+    puts "and no readable .p8 in: #{ASC_KEY_SEARCH_DIRS.join(', ')}"
     puts "Re-add it in Codemagic by pasting the .p8 file contents verbatim, BEGIN/END included."
     exit 1
   end
