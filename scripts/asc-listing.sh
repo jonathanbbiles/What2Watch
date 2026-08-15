@@ -122,6 +122,11 @@ if ! ruby "$REPO_ROOT/scripts/lint_listing.rb" "$REPO_ROOT"; then
   exit 1
 fi
 
+# The repo root, resolved by bash from this script's own location. fastlane's working
+# directory during a lane is not reliably the repo root, so the Fastfile is told rather
+# than left to guess.
+export ASC_REPO_ROOT="$REPO_ROOT"
+
 hr "fastlane"
 fastlane --version || true
 
