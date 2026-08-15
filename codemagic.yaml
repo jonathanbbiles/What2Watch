@@ -43,17 +43,39 @@ workflows:
           - JB_Shared_Distribution
       vars:
         BUNDLE_ID: "com.jonathanbiles.moodie"
+        # What fastlane/deliver targets. Same value as BUNDLE_ID; named separately because
+        # the shared Fastfile reads APP_IDENTIFIER, and that name is what makes the Fastfile
+        # identical across every app in the portfolio.
+        APP_IDENTIFIER: "com.jonathanbiles.moodie"
         # Apple's numeric App ID. An identifier, not a secret.
         ASC_APP_ID: "6788245223"
+        # --- The three compliance answers Apple asks at submission time -----------------
+        # These are declarations, not defaults. They must match the shipped build.
+        #   encryption: false — Info.plist sets ITSAppUsesNonExemptEncryption false; Moodie
+        #     uses nothing beyond exempt HTTPS.
+        #   third-party content: TRUE — the app displays poster artwork and synopsis text
+        #     fetched from TMDB at runtime, which is exactly "contains, shows, or accesses
+        #     third-party content". Moodie has the right to display it (TMDB API terms, with
+        #     the required credit shown in-app), so the honest answer is yes. Answering false
+        #     while the reviewer notes explain the TMDB licence would be a misrepresentation.
+        #   IDFA: false — no ads, no analytics, no attribution SDK.
+        ASC_USES_ENCRYPTION: "false"
+        ASC_CONTENT_RIGHTS: "true"
+        ASC_USES_IDFA: "false"
         # SUBMIT_FOR_REVIEW is intentionally NOT declared here.
         #
-        # The post-publish `fastlane ios submit_review` step below runs only when
-        # SUBMIT_FOR_REVIEW=true, and that can now only arrive as a per-build override
-        # from the Codemagic REST API:
+        # The post-publish listing step below submits only when SUBMIT_FOR_REVIEW=true, and
+        # that can now only arrive as a per-build override from the Codemagic REST API:
         #     scripts/cm-build.sh --submit --watch
         # Previously this was a yaml value that had to be flipped back to "false" after
         # a release; forgetting meant the next push to main submitted itself. Undeclared
         # means the safe state is the default, not something to remember.
+        #
+        # ASC_LISTING_MODE is likewise undeclared. Undeclared = "validate" = read-only, so
+        # every push to main proves the App Store Connect key still authenticates without
+        # ever writing to the live listing. Set it to "push" per build to upload metadata
+        # and screenshots without submitting:
+        #     scripts/cm-build.sh --env ASC_LISTING_MODE=push --watch
         XCODE_WORKSPACE: "ios/App/App.xcworkspace"
         XCODE_SCHEME: "App"
       node: 22
@@ -337,47 +359,90 @@ workflows:
       # Ordering is the whole point: this runs after the block above has uploaded the signed
       # IPA to App Store Connect, so the build exists for deliver to attach to the version.
       scripts:
-        - name: Submit for App Store review (fastlane deliver)
-          script: |
-            set -euo pipefail
+        - name: App Store listing (validate by default; submits only when SUBMIT_FOR_REVIEW=true)
+          # One step, three behaviours, chosen by environment (see scripts/asc-listing.sh):
+          #   nothing set          -> validate: read-only. Proves the ASC key still works on
+          #                           every single build, and writes nothing. This is why a
+          #                           push to main can never disturb an app that is in review.
+          #   ASC_LISTING_MODE=push -> upload metadata + screenshots, do not submit.
+          #   SUBMIT_FOR_REVIEW=true -> upload the listing and submit for review.
+          #
+          # ASC_LISTING_ADVISORY=true applies to the validate mode only: the IPA has already
+          # shipped to TestFlight by the time this runs, so a read-only check must not repaint
+          # a successful build as failed. Writes are never advisory.
+          script: ASC_LISTING_ADVISORY=true bash scripts/asc-listing.sh
 
-            if [ "${SUBMIT_FOR_REVIEW:-false}" != "true" ]; then
-              echo "SUBMIT_FOR_REVIEW is not 'true' — TestFlight only, not submitting for review."
-              exit 0
-            fi
-
-            # Publishing scripts run regardless of build status, so check before submitting.
-            if [ "${CM_BUILD_STEP_STATUS:-success}" != "success" ]; then
-              echo "Previous step reported '${CM_BUILD_STEP_STATUS}' — refusing to submit a bad build."
-              exit 1
-            fi
-
-            # Confirm Codemagic injected the App Store Connect key, reporting variable NAMES
-            # only. Never echo a value — these are secrets and the build log is not private.
-            missing=0
-            for v in APP_STORE_CONNECT_KEY_IDENTIFIER APP_STORE_CONNECT_ISSUER_ID APP_STORE_CONNECT_PRIVATE_KEY; do
-              if [ -z "${!v:-}" ]; then
-                echo "MISSING: $v"
-                missing=1
-              else
-                echo "present: $v"
-              fi
-            done
-            if [ "$missing" -ne 0 ]; then
-              echo "Those variables come from 'integrations: app_store_connect: ChordLoopAPIKey'."
-              echo "Fix the integration in Codemagic — do not hardcode a key in the repo."
-              exit 1
-            fi
-
-            # fastlane aborts on a non-UTF-8 locale, and the listing text contains em dashes.
-            export LC_ALL=en_US.UTF-8
-            export LANG=en_US.UTF-8
-            export FASTLANE_SKIP_UPDATE_CHECK=1
-            export FASTLANE_HIDE_CHANGELOG=1
-            export FASTLANE_DISABLE_COLORS=1
-
-            fastlane --version
-            fastlane ios submit_review
+  # ---------------------------------------------------------------------------
+  # READ-ONLY validation of the whole no-browser submit path, startable WITHOUT a
+  # Codemagic API token: push a branch whose name starts with `asc-validate` and this
+  # workflow runs. Nothing else does — `ios-testflight` only triggers on main — so the
+  # push builds nothing, signs nothing, uploads nothing and submits nothing.
+  #
+  #     git switch -c asc-validate-<what-you-changed> && git push -u origin HEAD
+  #
+  # WHY A BRANCH TRIGGER, AND NOT THE API
+  # Every other check in this repo (asc-auth-check, asc-screenshots) has no `triggering:`
+  # block, so it can only be started through the Codemagic REST API — which needs
+  # CODEMAGIC_API_TOKEN, which is not configured on this machine. Those checks were
+  # therefore unrunnable, and the submit path had never actually been proven to
+  # authenticate. A branch trigger needs no token at all.
+  #
+  # HOW TO READ THE RESULT WITHOUT A TOKEN
+  # Codemagic posts a GitHub check run naming every step and its outcome, which
+  # `gh api repos/<owner>/<repo>/commits/<sha>/check-runs` returns. The steps below are
+  # split so that WHICH step went red is itself the diagnosis — the check run carries step
+  # names and pass/fail, not log text.
+  # ---------------------------------------------------------------------------
+  asc-listing-validate:
+    name: Moodie — ASC listing validate (read-only)
+    instance_type: mac_mini_m2
+    max_build_duration: 20
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: 'asc-validate*'
+          include: true
+          source: true
+      cancel_previous_builds: true
+    integrations:
+      app_store_connect: ChordLoopAPIKey
+    environment:
+      vars:
+        BUNDLE_ID: "com.jonathanbiles.moodie"
+        APP_IDENTIFIER: "com.jonathanbiles.moodie"
+        ASC_APP_ID: "6788245223"
+        ASC_USES_ENCRYPTION: "false"
+        ASC_CONTENT_RIGHTS: "true"
+        ASC_USES_IDFA: "false"
+        # Belt and braces. This workflow has no publishing block and no build, so it could
+        # not submit even if something set these; declaring the safe values means a stray
+        # per-build override cannot turn a validation run into a submission.
+        ASC_LISTING_MODE: "validate"
+        SUBMIT_FOR_REVIEW: "false"
+      xcode: latest
+    scripts:
+      - name: 1/3 Listing lint — fastlane/metadata + screenshots vs Apple's limits (no network)
+        # Local files only. Green here with red below means the listing is fine and the key
+        # is the problem; red here means a field is over length or a screenshot is the wrong
+        # size, and no amount of working credentials would have saved the submission.
+        script: |
+          export LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8
+          export FASTLANE_SKIP_UPDATE_CHECK=1 FASTLANE_DISABLE_COLORS=1
+          fastlane ios asc_lint
+      - name: 2/3 ASC key reaches the build and Apple accepts it (CLI + Ruby OpenSSL)
+        # Answers the question this repo has never been able to answer: does
+        # `integrations: app_store_connect:` actually export APP_STORE_CONNECT_* to scripts,
+        # or does the key have to be added again as three Secure env vars? Also parses the
+        # .p8 under Ruby's OpenSSL, which is the exact step that fails locally with
+        # "invalid curve name" and the reason submits run server-side.
+        script: bash scripts/asc-auth-check.sh
+      - name: 3/3 fastlane deliver auth + version-state guard (writes nothing)
+        # The real lane, in its default read-only mode: authenticates the way deliver does,
+        # reads the App Store version states, and reports what a submit WOULD target. If the
+        # app is in review it prints that the guard would refuse — which is the behaviour
+        # being validated, not a failure.
+        script: bash scripts/asc-listing.sh
 
   # ---------------------------------------------------------------------------
   # On-demand, READ-ONLY check that the App Store Connect key stored in Codemagic
