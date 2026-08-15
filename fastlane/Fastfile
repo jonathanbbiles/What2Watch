@@ -136,6 +136,26 @@ def target_app_identifier
   UI.user_error!("No app identifier. Set APP_IDENTIFIER in the workflow env, or app_identifier in fastlane/Appfile.")
 end
 
+# The private key does not always arrive in the same shape — Codemagic's own CLI accepts
+# PEM, escaped PEM and base64 PEM interchangeably, so the CLI authenticates while fastlane
+# does not, which looks exactly like a bad key and is not one. scripts/asc_key_pem.rb
+# normalises all three to PEM text; see its header. Loaded rather than duplicated so there
+# is one rule, and it is one that can be tested on a laptop.
+def asc_private_key_pem!
+  helper = File.join(repo_root, "scripts", "asc_key_pem.rb")
+  unless File.exist?(helper)
+    UI.user_error!("Missing #{helper}. It ships alongside this Fastfile — copy it from the App Builder Template.")
+  end
+  require helper
+
+  env_or_die("APP_STORE_CONNECT_PRIVATE_KEY")
+  pem, shape = asc_private_key_pem
+  UI.user_error!("APP_STORE_CONNECT_PRIVATE_KEY is not a private key in any recognised shape.") if pem.nil?
+
+  UI.message("App Store Connect private key shape: #{shape}")
+  pem
+end
+
 # Builds the API key AND (via set_spaceship_token, on by default) authenticates the
 # Spaceship client that deliver itself uses. This call is where a malformed .p8 blows up
 # with OpenSSL "invalid curve name", so it doubles as the key-parses-in-Ruby probe.
@@ -143,8 +163,8 @@ def asc_api_key
   app_store_connect_api_key(
     key_id: env_or_die("APP_STORE_CONNECT_KEY_IDENTIFIER"),
     issuer_id: env_or_die("APP_STORE_CONNECT_ISSUER_ID"),
-    key_content: env_or_die("APP_STORE_CONNECT_PRIVATE_KEY"),
-    # The .p8 arrives as plain PEM text in the environment variable, not base64.
+    # Always PEM text by the time it gets here, whatever shape it arrived in.
+    key_content: asc_private_key_pem!,
     is_key_content_base64: false,
     in_house: false
   )

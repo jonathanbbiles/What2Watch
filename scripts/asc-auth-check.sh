@@ -113,10 +113,14 @@ elif ! command -v ruby >/dev/null 2>&1; then
   warn "skipped — no ruby on PATH"
 else
   # The key is passed through the environment, never on the command line or to disk.
-  ruby_out="$(ruby -e '
+  # asc_key_pem.rb is the one place that knows the shapes this variable arrives in — PEM,
+  # PEM with escaped newlines, or base64 PEM. Reproducing that rule here is how this probe
+  # used to report a perfectly good key as broken.
+  ruby_out="$(ruby -r"$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/asc_key_pem" -e '
     require "openssl"
-    pem = ENV["APP_STORE_CONNECT_PRIVATE_KEY"].to_s
-    pem = pem.gsub("\\n", "\n") unless pem.include?("\n")
+    pem, shape = asc_private_key_pem
+    raise "not a private key in any recognised shape" if pem.nil?
+    puts "shape=#{shape}"
     key = OpenSSL::PKey.read(pem)
     raise "not an EC key: #{key.class}" unless key.is_a?(OpenSSL::PKey::EC)
     puts "curve=#{key.group.curve_name} openssl=#{OpenSSL::OPENSSL_VERSION}"

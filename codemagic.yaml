@@ -490,28 +490,14 @@ workflows:
         # RED HERE means the key id, the issuer id, or the key's ROLE is wrong — a key with
         # too narrow a role authenticates for some calls and 403s on the rest.
         script: bash scripts/asc-auth-check.sh --only cli
-      - name: 5/7 The private key arrived intact (PEM shape only — no value printed)
-        # Structural, not cryptographic: BEGIN/END lines present and real newlines survived
-        # the trip through the environment. RED HERE means the variable itself is mangled —
-        # most often a .p8 pasted as one long line, which every parser then rejects for a
-        # reason that has nothing to do with the key.
-        script: |
-          set -uo pipefail
-          key="${APP_STORE_CONNECT_PRIVATE_KEY:-}"
-          if [ -z "$key" ]; then echo "FATAL: APP_STORE_CONNECT_PRIVATE_KEY is empty"; exit 1; fi
-          lines="$(printf '%s' "$key" | wc -l | tr -d ' ')"
-          echo "newline count: $lines  (a .p8 has ~5)"
-          case "$key" in
-            *"BEGIN PRIVATE KEY"*)    echo "shape: PKCS#8 (what Apple issues)" ;;
-            *"BEGIN EC PRIVATE KEY"*) echo "shape: SEC1 EC" ;;
-            *) echo "FATAL: no BEGIN line — this is not PEM text"; exit 1 ;;
-          esac
-          case "$key" in *"END"*) echo "END line present" ;; *) echo "FATAL: no END line"; exit 1 ;; esac
-          if [ "$lines" -lt 2 ]; then
-            echo "FATAL: the key is on a single line — the newlines were lost when it was stored."
-            echo "Re-add it in Codemagic by pasting the .p8 file contents verbatim, BEGIN/END lines included."
-            exit 1
-          fi
+      - name: 5/7 The private key is usable in Ruby (shape only — no value printed)
+        # The key does not always arrive in the same shape. Codemagic's own app-store-connect
+        # CLI accepts PEM, escaped PEM and base64 PEM interchangeably, so step 4 can go green
+        # while fastlane fails — which looks exactly like a bad key and is not one.
+        # scripts/asc_key_pem.rb normalises all three and is the ONE place that rule lives;
+        # the Fastfile requires the same file. RED HERE means the variable is genuinely not a
+        # private key in any shape, e.g. pasted truncated.
+        script: ruby scripts/asc_key_pem.rb
       - name: 6/7 THE AUTHORITY — the real lane, fastlane deliver auth + version-state guard (writes nothing)
         # The real lane, in its default read-only mode: authenticates the way deliver does,
         # reads the App Store version states, and reports what a submit WOULD target. If the
