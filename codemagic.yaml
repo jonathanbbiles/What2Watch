@@ -427,7 +427,7 @@ workflows:
       # API token is to make each step able to fail for exactly one reason. They also
       # catch the two things that actually break when this lane is copied to a new app:
       # fastlane missing from the image, and a Fastfile that does not parse.
-      - name: 0/4 Toolchain — fastlane on PATH, Ruby, listing files present
+      - name: 0/6 Toolchain — fastlane on PATH, Ruby, listing files present
         script: |
           set -uo pipefail
           echo "ruby:     $(ruby -v 2>&1 || echo MISSING)"
@@ -444,7 +444,7 @@ workflows:
           echo "--- fastlane/ ---"; ls -la fastlane
           echo "--- metadata ---";  ls -R fastlane/metadata | head -40
           echo "--- screenshots ---"; ls fastlane/screenshots/en-US | head -40
-      - name: 1/4 Fastfile parses — list the lanes it defines
+      - name: 1/6 Fastfile parses — list the lanes it defines
         # `fastlane lanes` loads and evaluates the Fastfile without running anything. A
         # Ruby error in the shared lane shows up here rather than being mistaken for a
         # listing problem or an auth problem.
@@ -452,7 +452,7 @@ workflows:
           export LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8
           export FASTLANE_SKIP_UPDATE_CHECK=1 FASTLANE_DISABLE_COLORS=1
           fastlane lanes
-      - name: 2/4 Listing lint — fastlane/metadata + screenshots vs Apple's limits (no network)
+      - name: 2/6 Listing lint — fastlane/metadata + screenshots vs Apple's limits (no network)
         # Plain Ruby, deliberately not a fastlane lane: it runs identically on a laptop, so
         # it is testable before it ever reaches CI, and it is immune to fastlane's working
         # directory. Green here with red below means the listing is fine and the key is the
@@ -461,7 +461,7 @@ workflows:
         script: |
           export LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8
           ruby scripts/lint_listing.rb
-      - name: 3/5 ASC credentials exported into the build (names only, never values)
+      - name: 3/6 ASC credentials exported into the build (names only, never values)
         # Split out from the auth check because the two failures have completely different
         # fixes, and the check run cannot show log text — only which step went red.
         #
@@ -485,14 +485,18 @@ workflows:
             echo "Add the key as three SECURE env vars on this app in Codemagic. Never hardcode it."
             exit 1
           fi
-      - name: 4/5 Apple accepts the key — authenticated ASC call + .p8 parses under Ruby
-        # Answers the question this repo has never been able to answer: does
-        # `integrations: app_store_connect:` actually export APP_STORE_CONNECT_* to scripts,
-        # or does the key have to be added again as three Secure env vars? Also parses the
-        # .p8 under Ruby's OpenSSL, which is the exact step that fails locally with
-        # "invalid curve name" and the reason submits run server-side.
-        script: bash scripts/asc-auth-check.sh
-      - name: 5/5 fastlane deliver auth + version-state guard (writes nothing)
+      - name: 4/6 Apple accepts the key — authenticated App Store Connect call
+        # A real authenticated request through Codemagic's own app-store-connect CLI.
+        # RED HERE means the key id, the issuer id, or the key's ROLE is wrong — a key with
+        # too narrow a role authenticates for some calls and 403s on the rest.
+        script: bash scripts/asc-auth-check.sh --only cli
+      - name: 5/6 The .p8 parses under Ruby OpenSSL (the fastlane/deliver path)
+        # Separate from the step above because the CLI (Python) and fastlane (Ruby) parse
+        # the key with completely different stacks. This is the exact step that fails on a
+        # laptop with OpenSSL "invalid curve name", and it is the reason submits run
+        # server-side. RED HERE means the CLI path works but deliver's cannot.
+        script: bash scripts/asc-auth-check.sh --only ruby
+      - name: 6/6 fastlane deliver auth + version-state guard (writes nothing)
         # The real lane, in its default read-only mode: authenticates the way deliver does,
         # reads the App Store version states, and reports what a submit WOULD target. If the
         # app is in review it prints that the guard would refuse — which is the behaviour

@@ -25,6 +25,21 @@
 
 set -uo pipefail   # NOT -e: every probe should run so one failure doesn't hide the rest.
 
+# --- Section selector -----------------------------------------------------------------
+# With no argument every probe runs (the original behaviour). With `--only <name>` exactly
+# one runs, which is how CI gets one probe per named build step: the GitHub check run says
+# WHICH step failed but never why, so a step must be able to fail for only one reason.
+#     scripts/asc-auth-check.sh                 all four probes
+#     scripts/asc-auth-check.sh --only creds    are the variables in the build at all
+#     scripts/asc-auth-check.sh --only cli      does Apple accept the key
+#     scripts/asc-auth-check.sh --only ruby     does the .p8 parse under Ruby's OpenSSL
+#     scripts/asc-auth-check.sh --only version  is there a submittable App Store version
+ONLY="all"
+if [ "${1:-}" = "--only" ]; then
+  ONLY="${2:-all}"
+fi
+want() { [ "$ONLY" = "all" ] || [ "$ONLY" = "$1" ]; }
+
 PASS=0; FAIL=0; WARN=0
 ok()   { printf '  [ OK ]  %s\n' "$*"; PASS=$((PASS+1)); }
 bad()  { printf '  [FAIL]  %s\n' "$*"; FAIL=$((FAIL+1)); }
@@ -36,6 +51,7 @@ printf '#############################################################\n'
 printf '#  ASC AUTH CHECK — read-only. NOTHING WILL BE SUBMITTED.   #\n'
 printf '#############################################################\n'
 
+if want creds; then
 # --- 1. Did Codemagic export the key into this build? --------------------------
 hr "1. App Store Connect credentials in the build environment"
 creds_ok=1
@@ -57,7 +73,9 @@ if [ "$creds_ok" -eq 0 ]; then
   Then re-run this check.
 EOF
 fi
+fi
 
+if want cli; then
 # --- 2. Does Apple accept the key? ---------------------------------------------
 hr "2. Authenticated call to App Store Connect (Codemagic CLI)"
 if ! command -v app-store-connect >/dev/null 2>&1; then
@@ -84,7 +102,9 @@ PY
     warn "a 401/NOT_AUTHORIZED here means the key, issuer id, or key role is wrong"
   fi
 fi
+fi
 
+if want ruby; then
 # --- 3. Does the key parse under Ruby's OpenSSL (the fastlane path)? -----------
 hr "3. EC private key parses under Ruby OpenSSL (the local 'invalid curve name' failure)"
 if [ -z "${APP_STORE_CONNECT_PRIVATE_KEY:-}" ]; then
@@ -110,7 +130,9 @@ else
     warn "the CLI path (section 2) may still work; only the fastlane/deliver path is blocked"
   fi
 fi
+fi
 
+if want version; then
 # --- 4. Is the app in a submittable state? -------------------------------------
 hr "4. App Store version state for app ${ASC_APP_ID:-<unset>}"
 if [ -z "${ASC_APP_ID:-}" ]; then
@@ -156,6 +178,7 @@ PY
     n_warn="$(printf '%s\n' "$ver_report" | grep -c '\[warn\]')"
     PASS=$((PASS + n_ok)); WARN=$((WARN + n_warn))
   fi
+fi
 fi
 
 # --- verdict -------------------------------------------------------------------
