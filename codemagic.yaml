@@ -461,14 +461,38 @@ workflows:
         script: |
           export LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8
           ruby scripts/lint_listing.rb
-      - name: 3/4 ASC key reaches the build and Apple accepts it (CLI + Ruby OpenSSL)
+      - name: 3/5 ASC credentials exported into the build (names only, never values)
+        # Split out from the auth check because the two failures have completely different
+        # fixes, and the check run cannot show log text — only which step went red.
+        #
+        #   RED HERE  -> `integrations: app_store_connect:` wires the key into Codemagic's
+        #                OWN publishing step but does not export it to scripts. Fix: add the
+        #                SAME key from Team Integrations as three SECURE environment
+        #                variables on this app in the Codemagic UI. Only Jonathan can do
+        #                that — they are secret.
+        #   RED BELOW -> the variables arrived but Apple rejected the key, or the .p8 will
+        #                not parse. Fix: the key id / issuer id / key role.
+        script: |
+          set -uo pipefail
+          missing=0
+          for v in APP_STORE_CONNECT_KEY_IDENTIFIER APP_STORE_CONNECT_ISSUER_ID APP_STORE_CONNECT_PRIVATE_KEY; do
+            if [ -z "${!v:-}" ]; then echo "MISSING: $v"; missing=1; else echo "present: $v"; fi
+          done
+          # Names only. Never print a value — build logs are not private.
+          echo "--- ASC-shaped variable NAMES visible in this build ---"
+          env | sed 's/=.*//' | grep -E 'APP_STORE|ASC_|APPLE|CERTIFICATE' | sort || true
+          if [ "$missing" -ne 0 ]; then
+            echo "Add the key as three SECURE env vars on this app in Codemagic. Never hardcode it."
+            exit 1
+          fi
+      - name: 4/5 Apple accepts the key — authenticated ASC call + .p8 parses under Ruby
         # Answers the question this repo has never been able to answer: does
         # `integrations: app_store_connect:` actually export APP_STORE_CONNECT_* to scripts,
         # or does the key have to be added again as three Secure env vars? Also parses the
         # .p8 under Ruby's OpenSSL, which is the exact step that fails locally with
         # "invalid curve name" and the reason submits run server-side.
         script: bash scripts/asc-auth-check.sh
-      - name: 4/4 fastlane deliver auth + version-state guard (writes nothing)
+      - name: 5/5 fastlane deliver auth + version-state guard (writes nothing)
         # The real lane, in its default read-only mode: authenticates the way deliver does,
         # reads the App Store version states, and reports what a submit WOULD target. If the
         # app is in review it prints that the guard would refuse — which is the behaviour
