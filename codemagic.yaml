@@ -496,8 +496,13 @@ workflows:
         # while fastlane fails — which looks exactly like a bad key and is not one.
         # scripts/asc_key_pem.rb normalises all three and is the ONE place that rule lives;
         # the Fastfile requires the same file. RED HERE means the variable is genuinely not a
-        # private key in any shape, e.g. pasted truncated.
-        script: ruby scripts/asc_key_pem.rb
+        # private key in any shape.
+        #
+        # ADVISORY: it prints its finding and always exits 0. It is a description of what
+        # fastlane will see, not the thing that decides whether fastlane works — and an
+        # over-strict description must never block the step below, which is the real test.
+        script: |
+          ruby scripts/asc_key_pem.rb || echo "(advisory — the real lane below is the test that counts)"
       - name: 6/7 THE AUTHORITY — the real lane, fastlane deliver auth + version-state guard (writes nothing)
         # The real lane, in its default read-only mode: authenticates the way deliver does,
         # reads the App Store version states, and reports what a submit WOULD target. If the

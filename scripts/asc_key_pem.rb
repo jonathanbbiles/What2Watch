@@ -11,6 +11,7 @@
 #   1. PEM text                       -----BEGIN PRIVATE KEY----- … with real newlines
 #   2. PEM with escaped newlines      the same, but "\n" as two literal characters
 #   3. base64-encoded PEM             the whole .p8 file base64'd into one line
+#   4. a path to the .p8 on disk      some integrations write the key out and export where
 #
 # fastlane's `app_store_connect_api_key` takes `is_key_content_base64`, a single boolean,
 # which cannot express "it might be any of these". So this normalises to shape 1 and the
@@ -23,14 +24,28 @@
 # THE KEY IS NEVER PRINTED, never written to disk, and never passed on a command line —
 # only its shape and length. Build logs are not private.
 
-require "base64"
-
+# No `require "base64"`. String#unpack1("m") is base64 decoding built into the language,
+# with no gem behind it — and base64 stopped being a default gem in newer Rubies, so the
+# require is exactly the kind of thing that fails on a build image and nowhere else.
 ASC_PEM_MARKER = "-----BEGIN"
 
 # Returns [pem_text, shape_description], or nil when the value is not a key in any shape.
 def asc_private_key_pem(raw = ENV["APP_STORE_CONNECT_PRIVATE_KEY"])
   raw = raw.to_s
   return nil if raw.strip.empty?
+
+  # Some setups store the value quoted; the quotes then travel into the key text.
+  trimmed = raw.strip.gsub(/\A["']|["']\z/, "")
+
+  # Shape 4: a path to the .p8 rather than its contents.
+  if trimmed.length < 4096 && !trimmed.include?("\n") && File.file?(trimmed)
+    contents = begin
+      File.read(trimmed)
+    rescue StandardError
+      nil
+    end
+    return [contents, "read from the file at that path"] if contents&.include?(ASC_PEM_MARKER)
+  end
 
   if raw.include?(ASC_PEM_MARKER)
     # Careful: a key whose newlines were escaped STILL contains the BEGIN marker, so
@@ -42,7 +57,7 @@ def asc_private_key_pem(raw = ENV["APP_STORE_CONNECT_PRIVATE_KEY"])
   end
 
   begin
-    decoded = Base64.decode64(raw)
+    decoded = trimmed.unpack1("m").to_s.force_encoding("UTF-8")
     return [decoded, "base64-encoded PEM"] if decoded.include?(ASC_PEM_MARKER)
   rescue StandardError # rubocop:disable Lint/SuppressedException
     # Not base64. Fall through to the failure below.
