@@ -88,7 +88,8 @@ Two things about screenshots that cost a review cycle when you get them wrong:
   with one.
 
 The lane checks all of this locally, before touching the network, and fails with the exact
-field and character count. Run that check on its own with `fastlane ios asc_lint`.
+field and character count. Run that check on its own — it needs no fastlane and no network:
+`ruby scripts/lint_listing.rb`.
 
 ### An iPhone-only app still needs iPad screenshots if it is Universal
 
@@ -107,23 +108,48 @@ git push -u origin HEAD
 ```
 
 Only the `asc-listing-validate` workflow triggers on that pattern. It builds nothing, signs
-nothing, and writes nothing — it runs three read-only steps:
+nothing, and writes nothing — it runs ten read-only steps, each able to fail for exactly one
+reason. **The check run carries step names and outcomes but not log text, so which step went
+red is the diagnosis:**
 
-1. **Listing lint** — local files against Apple's limits. No network.
-2. **ASC key check** — is the key actually exported into the build, does Apple accept it,
-   does the `.p8` parse under Ruby's OpenSSL.
-3. **deliver auth + version-state guard** — authenticates exactly the way `deliver` does and
-   reports what a submit *would* target.
+| Red step | What it means |
+|---|---|
+| `0/9 Toolchain` | fastlane isn't on the image, or the listing files aren't where they should be |
+| `1/9 Fastfile parses` | Ruby error in the lane |
+| `2/9 Listing lint` | a field is over length, a file is missing, or a screenshot is the wrong size |
+| `3/9 ASC credentials` | the key's variables aren't exported into the build |
+| `4/9 Apple accepts the key` | key id, issuer id, or the key's **role** is wrong |
+| `5/9 Ruby can handle EC keys` | the image's OpenSSL can't do EC at all — fastlane could never work there |
+| `6/9 key-shaped material` | no usable key in the variable **or** on disk |
+| `7/9 private key usable` | key material exists but nothing parses it |
+| `8/9 fastlane assembles the key` | fastlane can't build the credential (helper file, key shape) |
+| `9/9 THE AUTHORITY` | the real lane — fastlane's own auth or the version-state read failed |
 
-Read the result without opening a browser and without a Codemagic token:
+Read it without a browser and without a Codemagic token:
 
 ```bash
 gh api repos/jonathanbbiles/What2Watch/commits/<sha>/check-runs \
   --jq '.check_runs[] | {name, conclusion, text: .output.text}'
 ```
 
-The check run lists every step with a ✅ or ❌, so **which step went red is itself the
-diagnosis**. It does not carry log text; for that, open the `view logs` link it contains.
+### Where the key actually lives — the thing that cost a dozen runs
+
+`APP_STORE_CONNECT_PRIVATE_KEY` is exported into the build, but on this Codemagic image it
+does **not** contain the key. Codemagic writes the `.p8` to
+`~/.appstoreconnect/private_keys/`, and its own `app-store-connect` CLI looks there without
+being told. So the CLI authenticates fine while fastlane — handed only the variable — fails,
+with the same key, in the same build. That is why this looked like a bad key for so long.
+
+`scripts/asc_key_pem.rb` handles it: it tries the variable in every shape it might take
+(PEM, escaped newlines, base64, bare base64 body, a path) **and** the standard key
+directories, and keeps whichever one OpenSSL actually parses as an EC key. It does not
+classify — it verifies, then re-serialises to PEM so fastlane always gets the same thing.
+Run it on its own in any build: `ruby scripts/asc_key_pem.rb` (prints the shape, never the
+key).
+
+**Validated 2026-08-15 on `jonathanbbiles/What2Watch`, branch `asc-validate-listing-lane`:
+all ten steps green, including the real lane authenticating against App Store Connect and
+reading Moodie's version state. Nothing was uploaded and nothing was submitted.**
 
 ---
 
