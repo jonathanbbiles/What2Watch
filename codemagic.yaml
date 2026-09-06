@@ -201,7 +201,7 @@ workflows:
           echo "--- Pods/Local Podspecs ---"; ls -1 ios/App/Pods/"Local Podspecs" 2>/dev/null || echo "(none)"
 
           missing=0
-          for p in CapacitorBrowser CapacitorHaptics CapacitorShare CapacitorPreferences; do
+          for p in CapacitorBrowser CapacitorHaptics CapacitorShare CapacitorPreferences CapacitorAppLauncher; do
             if ! grep -q "pod '$p'" "$PODFILE"; then
               echo "MISSING from Podfile: $p — the plugin never reached the generated project"
               missing=1
@@ -319,7 +319,7 @@ workflows:
           # currently editable in App Store Connect — which is literally "1.0", not "1.0.0".
           # deliver attaches the build to that editable version; a build stamped 1.0.0 can never
           # attach to ASC version 1.0, and the submit step would just wait until it times out.
-          MARKETING_VERSION="1.0"
+          MARKETING_VERSION="1.1"
           # Build number is a UTC timestamp: always increases, never collides, and needs no
           # network round-trip to App Store Connect to work out "the last one plus one".
           BUILD_NUMBER="$(date -u +%Y%m%d%H%M)"
@@ -331,6 +331,15 @@ workflows:
             || /usr/libexec/PlistBuddy -c "Set :ITSAppUsesNonExemptEncryption false" "$PLIST"
           echo "CFBundleShortVersionString = $MARKETING_VERSION"
           echo "CFBundleVersion            = $BUILD_NUMBER"
+          # The streaming apps "Watch" can open directly. iOS only answers canOpenURL for
+          # schemes declared here; anything not listed falls back to the service's website
+          # (www/index.html PROVIDER_APPS). Keep the two lists in step.
+          /usr/libexec/PlistBuddy -c "Delete :LSApplicationQueriesSchemes" "$PLIST" 2>/dev/null || true
+          /usr/libexec/PlistBuddy -c "Add :LSApplicationQueriesSchemes array" "$PLIST"
+          for s in nflx aiv disneyplus hbomax hulu peacock paramountplus crunchyroll tubitv britbox fubo; do
+            /usr/libexec/PlistBuddy -c "Add :LSApplicationQueriesSchemes: string $s" "$PLIST"
+          done
+          echo "LSApplicationQueriesSchemes = $(/usr/libexec/PlistBuddy -c "Print :LSApplicationQueriesSchemes" "$PLIST" | tr -d '\n' | tr -s ' ')"
       - name: Set up code signing — apply the stored profile + the ONE shared cert (no mint, no revoke)
         script: |
           security find-identity -v -p codesigning || true
