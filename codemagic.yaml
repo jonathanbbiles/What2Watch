@@ -62,6 +62,9 @@ workflows:
         ASC_USES_ENCRYPTION: "false"
         ASC_CONTENT_RIGHTS: "true"
         ASC_USES_IDFA: "false"
+        # TEMPORARY — re-armed 2026-09-06 to resubmit 1.1 with the new screenshots (no Codemagic
+        # API token available to pass it per build). Remove this line right after the submission lands.
+        SUBMIT_FOR_REVIEW: "true"
         # SUBMIT_FOR_REVIEW is otherwise intentionally NOT declared here.
         #
         # The post-publish listing step below submits only when SUBMIT_FOR_REVIEW=true, and
@@ -84,6 +87,20 @@ workflows:
     scripts:
       - name: Install npm dependencies
         script: npm install
+      # 1.1 redesigned every screen, so the 1.0 screenshots no longer depict the app (2.3.3).
+      # Render the store set from the shipping www/index.html on this very build — TMDB is
+      # mocked, every poster is a generated gradient card, titles are plain text — so the
+      # listing step below uploads shots of exactly the UI in this binary. A render failure
+      # fails the build before anything is submitted with stale screenshots.
+      - name: Render the App Store screenshots from the shipping UI (no third-party art)
+        script: |
+          set -e
+          npm install --no-save playwright-core
+          rm -f fastlane/screenshots/en-US/*.png
+          node store-assets/render_shots_1_1.mjs
+          ls -la fastlane/screenshots/en-US
+          export LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8
+          ruby scripts/lint_listing.rb
       - name: Inject the TMDB API key (secure var -> placeholder; never in git)
         # www/index.html ships the literal placeholder __TMDB_API_KEY__. What2Watch is a
         # PUBLIC repo, so the key is only ever in Codemagic: add TMDB_API_KEY as a SECURE
