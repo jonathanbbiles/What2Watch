@@ -14,780 +14,803 @@
     --grad:linear-gradient(135deg,#FF3D8A 0%,#8B5CFF 100%);
     --grad2:linear-gradient(135deg,#FF8A3D 0%,#FF3D8A 60%,#8B5CFF 100%);
     --font:-apple-system,BlinkMacSystemFont,"SF Pro Rounded","SF Pro Display","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    /* The notch / Dynamic Island. Every header sits BELOW this; the 1.0 build ignored it,
+       which is why the top of every screen was hidden and the page could be dragged. */
+    --sat:env(safe-area-inset-top,0px); --sab:env(safe-area-inset-bottom,0px);
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  html,body{margin:0;padding:0}
-  /* EVERY tappable control in this app is a real <button>, never a div+onclick.
-     Apple reviews this build on an iPad Air (M3) — and an iPhone-only build is still
-     reviewed in the scaled compatibility window — where a bare div+onclick can simply
-     fail to fire. That is exactly how Bull or Bust took its 2.1(a) "the pick doesn't
-     respond". A <button> is activated by touch, pointer, keyboard and VoiceOver alike.
-     border:none belongs in this reset, not on each rule: .chip/.mood/.rowitem re-declare
-     the border they want further down the sheet (and win, being later), while .tab and
-     .back get no border instead of the UA button outline. */
+  /* The document itself never scrolls: only .screen-body does. A scrolling document under a
+     fixed-height stage is what made the whole UI slide when a thumb dragged it. */
+  html,body{margin:0;padding:0;height:100%;overflow:hidden;position:fixed;inset:0;overscroll-behavior:none}
   button{font-family:inherit; color:inherit; -webkit-appearance:none; appearance:none}
-  .chip,.mood,.tab,.back,.rowitem,.poster-btn{
+  .chip,.mood,.tab,.back,.rowitem,.poster-btn,.pill,.star,.svc{
     font-family:inherit; font-size:inherit; text-align:left; margin:0; border:none;
-    -webkit-appearance:none; appearance:none; background:none}
+    -webkit-appearance:none; appearance:none; background:none; cursor:pointer}
   .poster-btn{border:none; padding:0; width:100%; color:#fff}
   body{
     font-family:var(--font); background:
       radial-gradient(1200px 600px at 50% -10%, #241a44 0%, transparent 60%),
       radial-gradient(900px 500px at 90% 20%, #2a1350 0%, transparent 55%),
       var(--bg);
-    color:var(--text); min-height:100dvh; display:flex; flex-direction:column;
-    align-items:center; -webkit-font-smoothing:antialiased;
-  }
-  .wrap{width:100%; display:flex; flex-direction:column; align-items:center}
-  .stage{position:relative; width:100%; max-width:100%}
-  .phone{position:relative; width:100%; height:100dvh; max-height:100dvh;
-    background:var(--bg); overflow:hidden; display:flex; flex-direction:column; user-select:none}
-  /* .phone sets user-select:none so the UI does not select like a web page. On iOS that
-     inherits into form controls and breaks the caret and selection in a text field —
-     which made the "name each person" inputs in Together feel broken. Put it back for
-     anything the user actually types into. */
+    color:var(--text); -webkit-font-smoothing:antialiased; user-select:none}
   input,textarea,select{-webkit-user-select:text; user-select:text}
-  /* Large-screen / iPad layout rules are placed at the END of this stylesheet so they override the base rules above. */
+  .phone{position:absolute; inset:0; background:transparent; overflow:hidden; display:flex; flex-direction:column}
 
-  .screen{position:absolute; inset:0; display:none; flex-direction:column; background:var(--bg)}
+  .screen{position:absolute; inset:0; display:none; flex-direction:column; padding-top:var(--sat)}
   .screen.active{display:flex}
-  .screen-body{flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:0 18px 130px}
-  .screen-body.no-tab{padding-bottom:22px}
+  .screen-body{flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:0 18px 120px; overscroll-behavior:contain}
+  .screen-body.no-tab{padding-bottom:calc(var(--sab) + 18px)}
+  .screen-body.lock{overflow:hidden; padding-bottom:0}
 
-  .topbar{display:flex; align-items:center; justify-content:space-between; padding:16px 18px 6px; min-height:52px}
+  .topbar{display:flex; align-items:center; justify-content:space-between; padding:14px 18px 6px; min-height:52px; gap:10px}
   .topbar h1{font-size:24px; margin:0; letter-spacing:-.5px; font-weight:800; line-height:1.1}
   .topbar .sub{font-size:13px; color:var(--muted); margin-top:3px}
   .icon-btn{width:40px; height:40px; border-radius:50%; background:var(--surface); border:1px solid var(--line);
-    display:flex; align-items:center; justify-content:center; font-size:18px; color:var(--text); cursor:pointer}
-  /* min 44x44pt: Apple's minimum touch target. This is the way off the result screen, so
-     it is the last control that should be fiddly to hit on an iPad. */
-  .back{display:flex; align-items:center; gap:5px; color:var(--blue); font-weight:700; cursor:pointer;
-    font-size:16px; min-height:44px; min-width:44px; padding:0 8px 0 0}
+    display:flex; align-items:center; justify-content:center; font-size:18px; color:var(--text); cursor:pointer; flex:none}
+  .back{display:flex; align-items:center; gap:5px; color:var(--blue); font-weight:700; font-size:16px; min-height:44px; min-width:44px; padding:0 8px 0 0}
 
   .btn{display:flex; align-items:center; justify-content:center; gap:8px; width:100%; border:none; cursor:pointer;
     font-family:var(--font); font-weight:800; font-size:17px; color:#fff; background:var(--grad);
-    padding:16px 20px; border-radius:16px; letter-spacing:.2px; box-shadow:0 12px 30px rgba(255,61,138,.35)}
+    padding:15px 18px; border-radius:16px; letter-spacing:.2px; box-shadow:0 12px 30px rgba(255,61,138,.35)}
   .btn:active{transform:scale(.98)}
   .btn.secondary{background:var(--surface); box-shadow:none; border:1px solid var(--line); color:var(--text)}
-  .btn.small{font-size:15px; padding:13px 16px; border-radius:14px}
-  .shuffle-btn{background:var(--grad2); box-shadow:0 16px 40px rgba(255,138,61,.4); font-size:18px; padding:18px}
+  .btn.small{font-size:14px; padding:12px 14px; border-radius:14px}
+  .btn.ghost{background:transparent; box-shadow:none; color:var(--muted); font-weight:700}
+  .btn[disabled]{opacity:.5}
+  .shuffle-btn{background:var(--grad2); box-shadow:0 16px 40px rgba(255,138,61,.4); font-size:18px; padding:17px}
 
+  /* ---- Mascot: bobs, blinks and winks. Pure CSS, no assets. ---- */
   .mascot{position:relative; border-radius:30%; background:var(--grad2); flex:none;
-    box-shadow:0 14px 34px rgba(139,92,255,.4), inset 0 -8px 20px rgba(0,0,0,.15)}
-  .mascot .eye{position:absolute; top:38%; width:12%; height:12%; background:#1b0e2e; border-radius:50%}
-  .mascot .eye.l{left:30%}
-  .mascot .eye.r{left:58%; height:4%; border-radius:6px; top:42%}
-  .mascot .smile{position:absolute; left:34%; top:56%; width:32%; height:20%; border:3px solid #1b0e2e; border-top:none; border-radius:0 0 40px 40px}
+    box-shadow:0 14px 34px rgba(139,92,255,.4), inset 0 -8px 20px rgba(0,0,0,.15);
+    animation:bob 3.2s ease-in-out infinite}
+  .mascot .eye{position:absolute; top:38%; width:12%; height:12%; background:#1b0e2e; border-radius:50%; transform-origin:center}
+  .mascot .eye.l{left:30%; animation:blink 5s infinite}
+  .mascot .eye.r{left:58%; animation:wink 5s infinite}
+  .mascot .smile{position:absolute; left:34%; top:56%; width:32%; height:20%; border:3px solid #1b0e2e; border-top:none; border-radius:0 0 40px 40px; animation:grin 3.2s ease-in-out infinite}
   .mascot .cheek{position:absolute; top:52%; width:9%; height:6%; background:#ff9ec4; border-radius:50%; opacity:.7}
   .mascot .cheek.l{left:20%}
   .mascot .cheek.r{left:71%}
+  .mascot.still,.mascot.still *{animation:none}
+  @keyframes bob{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-7px) rotate(2deg)}}
+  @keyframes blink{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
+  @keyframes wink{0%,40%,56%,100%{transform:scaleY(1)}46%,50%{transform:scaleY(.12)}}
+  @keyframes grin{0%,100%{width:32%;left:34%}50%{width:38%;left:31%}}
+  @media(prefers-reduced-motion:reduce){.mascot,.mascot *{animation:none!important}}
 
-  .chips{display:flex; flex-wrap:wrap; gap:10px}
-  .chip{padding:11px 15px; border-radius:14px; background:var(--surface); border:1.5px solid var(--line);
-    font-weight:700; font-size:15px; cursor:pointer; display:flex; align-items:center; gap:8px; color:var(--text)}
-  .chip.selected{border-color:transparent; color:#12101d; transform:translateY(-1px)}
+  .center-col{display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; flex:1; padding:0 22px}
+  .brand{font-size:12px; color:var(--dim); text-align:center; padding:8px 0 calc(var(--sab) + 12px)}
+  .brand button{color:var(--dim); text-decoration:underline; text-underline-offset:3px; font-size:12px; padding:6px; background:none; border:none; font-family:inherit}
 
-  /* Mood picker — compact, fits one screen */
-  .mood-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:4px}
-  .mood{position:relative; border-radius:15px; padding:13px 14px; cursor:pointer; overflow:hidden;
-    background:var(--surface); border:2px solid var(--line); display:flex; align-items:center; gap:10px}
-  .mood .em{font-size:19px; position:relative; z-index:2}
-  .mood .lbl{font-weight:800; font-size:15px; position:relative; z-index:2}
+  /* ---- Services: obvious on/off state ---- */
+  .svcgrid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:8px}
+  .svc{display:flex; align-items:center; gap:10px; padding:12px 12px; border-radius:14px; background:var(--surface); border:2px solid var(--line); min-height:52px; color:var(--text)}
+  .svc .box{width:22px; height:22px; border-radius:7px; border:2px solid var(--dim); flex:none; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:900; color:#151024}
+  .svc .nm{font-weight:700; font-size:14.5px; line-height:1.15; flex:1}
+  .svc.on{border-color:var(--teal); background:rgba(52,224,196,.12)}
+  .svc.on .box{background:var(--teal); border-color:var(--teal)}
+  .svc.on .box:after{content:"✓"}
+  .search{width:100%; padding:13px 14px; border-radius:14px; border:1.5px solid var(--line); background:var(--surface); color:#fff; font-size:16px; font-family:var(--font); outline:none}
+  .search::placeholder{color:var(--dim)}
+  .counter{font-size:13px; color:var(--muted); margin:10px 2px 0}
+
+  /* ---- Moods: playful tiles ---- */
+  .mood-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:6px}
+  .mood{position:relative; border-radius:18px; padding:14px 12px; overflow:hidden;
+    background:var(--surface); border:2px solid var(--line); display:flex; align-items:center; gap:10px; min-height:64px; transition:transform .15s}
+  .mood .em{font-size:30px; position:relative; z-index:2; line-height:1; transition:transform .25s cubic-bezier(.2,1.4,.5,1)}
+  .mood .txt{position:relative; z-index:2; display:flex; flex-direction:column}
+  .mood .lbl{font-weight:800; font-size:16px}
+  .mood .hint2{font-size:11.5px; color:var(--muted); margin-top:2px}
   .mood .glow{position:absolute; inset:0; opacity:0; transition:opacity .2s}
-  .mood.selected{border-color:#fff}
-  .mood.selected .glow{opacity:.92}
-  .mood.selected .em,.mood.selected .lbl{color:#151024}
+  .mood.selected{border-color:#fff; transform:scale(1.03)}
+  .mood.selected .glow{opacity:.95}
+  .mood.selected .em{transform:scale(1.25) rotate(-8deg)}
+  .mood.selected .lbl,.mood.selected .hint2{color:#151024}
 
-  /* Posters — designed key-art cards (real art comes from the metadata DB in production) */
-  .poster{position:relative; border-radius:18px; overflow:hidden; display:flex; flex-direction:column;
-    justify-content:flex-end; color:#fff; aspect-ratio:2/3; box-shadow:0 16px 40px rgba(0,0,0,.4)}
-  .poster .art{position:absolute; inset:0; z-index:0; display:flex; align-items:center; justify-content:center;
-    font-size:68px; opacity:.30; transform:translateY(-9%); transition:opacity .3s}
-  .poster .pimg{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0; transition:opacity .45s; z-index:1}
+  /* ---- Posters ---- */
+  .poster{position:relative; border-radius:16px; overflow:hidden; display:flex; flex-direction:column;
+    justify-content:flex-end; color:#fff; aspect-ratio:2/3; box-shadow:0 12px 30px rgba(0,0,0,.4); background:var(--surface2)}
+  .poster .pimg{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0; transition:opacity .35s; z-index:1}
   .poster.has-img .pimg{opacity:1}
-  .poster.has-img .art{opacity:0}
-  .poster.fit-contain .pimg{object-fit:contain}
-  .poster .sheen{position:absolute; inset:0; z-index:2; pointer-events:none;
-    background:radial-gradient(120% 80% at 22% 10%, rgba(255,255,255,.30), transparent 52%),
-      linear-gradient(to top, rgba(0,0,0,.62), rgba(0,0,0,.05) 58%, transparent)}
-  .poster .pmeta{position:relative; z-index:3; padding:12px}
-  .poster .ptitle{font-weight:800; font-size:17px; line-height:1.12; letter-spacing:-.3px; text-shadow:0 1px 10px rgba(0,0,0,.4)}
-  .poster .psub{font-size:12px; color:#f2eeff; margin-top:6px; display:flex; gap:6px; flex-wrap:wrap; align-items:center}
-  .poster.mini .art{font-size:46px}
-  .poster.mini .ptitle{font-size:13.5px}
-  .poster.mini .pmeta{padding:9px}
-  .poster.big{aspect-ratio:2/3; height:min(44vh,360px); width:auto; margin:6px auto 0}
-  .poster.big .art{font-size:120px}
-  .poster.big .ptitle{font-size:22px}
-  .poster.picked{outline:3px solid #fff; outline-offset:2px}
+  .poster .sheen{position:absolute; inset:0; z-index:2; pointer-events:none; background:linear-gradient(to top, rgba(0,0,0,.72), rgba(0,0,0,.05) 55%, transparent)}
+  .poster .pmeta{position:relative; z-index:3; padding:9px}
+  .poster .ptitle{font-weight:800; font-size:13px; line-height:1.15; letter-spacing:-.2px; text-shadow:0 1px 8px rgba(0,0,0,.5)}
+  .poster .psub{font-size:11px; color:#e9e4ff; margin-top:3px}
+  .poster .tick{position:absolute; top:8px; right:8px; z-index:4; width:28px; height:28px; border-radius:50%; background:var(--teal); color:#151024; font-weight:900; display:none; align-items:center; justify-content:center; font-size:15px}
+  .poster.picked{outline:3px solid var(--teal); outline-offset:1px}
+  .poster.picked .tick{display:flex}
+  .grid3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-top:10px}
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:14px}
 
-  .badge{display:inline-flex; align-items:center; gap:5px; padding:4px 9px; border-radius:8px; font-size:11px; font-weight:800; background:rgba(255,255,255,.16)}
-  .badge.svc{background:rgba(255,255,255,.94); color:#151024}
-  .badge.rating{background:rgba(0,0,0,.5); border:1px solid rgba(255,255,255,.3)}
-
-  .why{background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:13px 15px; margin-top:14px; font-size:15px; color:#e9e4ff; line-height:1.4}
-  .why b{color:#fff}
+  /* ---- The pick: one screen, no vertical scroll ---- */
+  .pick{display:flex; flex-direction:column; height:100%; padding:0 16px; gap:10px}
+  .pick .hero{display:flex; gap:14px; align-items:stretch}
+  .pick .hero .poster{width:40%; flex:none; aspect-ratio:2/3; max-height:34vh}
+  .pick .hero .info{flex:1; min-width:0; display:flex; flex-direction:column; gap:6px}
+  .pick .title{font-size:21px; font-weight:800; line-height:1.1; letter-spacing:-.4px; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden}
+  .pick .meta{display:flex; flex-wrap:wrap; gap:6px}
+  .badge{display:inline-flex; align-items:center; gap:4px; padding:4px 8px; border-radius:8px; font-size:11px; font-weight:800; background:rgba(255,255,255,.14)}
+  .badge.star{background:rgba(255,210,61,.18); color:var(--yellow)}
+  .badge.svc{background:rgba(52,224,196,.18); color:var(--teal)}
+  .pick .why{background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:10px 12px; font-size:14px; line-height:1.35; color:#e9e4ff}
+  .pick .why b{color:#fff; display:block; font-size:12px; letter-spacing:.6px; text-transform:uppercase; color:var(--dim); margin-bottom:3px}
+  .pick .why .tag{font-style:italic}
+  .pick .quick{display:flex; gap:8px}
+  .pick .quick .btn{padding:12px 8px; font-size:14px; border-radius:14px}
+  .pick .syn{font-size:13.5px; color:var(--muted); line-height:1.45; display:-webkit-box; -webkit-line-clamp:5; -webkit-box-orient:vertical; overflow:hidden; flex:0 1 auto; min-height:0}
+  .pick .grow{flex:1}
+  .pick .links{display:flex; gap:8px; align-items:center; justify-content:space-between}
+  .pick .links .pill{color:var(--blue); font-weight:700; font-size:14px; padding:8px 0}
+  .rate{display:flex; align-items:center; gap:6px; justify-content:space-between; background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:8px 12px}
+  .rate .lbl{font-size:12.5px; color:var(--muted); font-weight:700}
+  .stars{display:flex; gap:2px}
+  .star{font-size:24px; line-height:1; padding:2px; color:#4a3f6e}
+  .star.on{color:var(--yellow)}
+  .pick .bottom{padding-bottom:calc(var(--sab) + 92px)}
+  @media(max-height:700px){ .pick .syn{-webkit-line-clamp:3} .pick .hero .poster{max-height:28vh} }
 
   .card{background:var(--surface); border:1px solid var(--line); border-radius:20px; padding:16px; margin-top:14px}
   .card h3{margin:0 0 4px; font-size:17px}
   .card p{margin:0; color:var(--muted); font-size:14px; line-height:1.45}
-  .rowitem{display:flex; align-items:center; gap:13px; padding:13px 0; border-bottom:1px solid var(--line); cursor:pointer}
+  .rowitem{display:flex; align-items:center; gap:13px; padding:12px 0; border-bottom:1px solid var(--line); color:var(--text); width:100%}
   .rowitem:last-child{border-bottom:none}
-  .rowitem .av{width:44px; height:44px; border-radius:50%; flex:none; display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:800; color:#151024}
-  .rowitem .grow{flex:1}
+  .rowitem .av{width:40px; height:40px; border-radius:50%; flex:none; display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:800; color:#151024}
+  .rowitem .grow{flex:1; min-width:0}
   .rowitem .name{font-weight:700; font-size:16px}
   .rowitem .desc{font-size:13px; color:var(--muted); margin-top:2px}
-
-  .grid3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-top:10px}
-  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:14px}
+  .rowitem .chev{color:var(--dim)}
   .section-title{font-size:13px; text-transform:uppercase; letter-spacing:1.2px; color:var(--dim); font-weight:800; margin:20px 2px 4px}
+  .toggle{width:50px; height:30px; border-radius:15px; background:#3a2f60; position:relative; flex:none; border:none; cursor:pointer}
+  .toggle:after{content:""; position:absolute; top:3px; left:3px; width:24px; height:24px; border-radius:50%; background:#fff; transition:left .15s}
+  .toggle.on{background:var(--teal)} .toggle.on:after{left:23px}
+  .chips{display:flex; flex-wrap:wrap; gap:8px}
+  .chip{padding:9px 13px; border-radius:12px; background:var(--surface); border:1.5px solid var(--line); font-weight:700; font-size:14px; display:flex; align-items:center; gap:6px; color:var(--text)}
+  .chip.x{color:var(--muted)}
+  .input{width:100%; padding:12px 14px; border-radius:12px; border:1.5px solid var(--line); background:var(--surface); color:#fff; font-size:15px; font-family:var(--font); outline:none}
 
-  .tabbar{position:absolute; left:0; right:0; bottom:0; height:84px; padding:8px 14px calc(env(safe-area-inset-bottom) + 6px);
-    background:rgba(16,12,29,.86); backdrop-filter:blur(20px); border-top:1px solid var(--line);
-    display:flex; justify-content:space-around; align-items:flex-start}
-  .tab{display:flex; flex-direction:column; align-items:center; gap:3px; padding:8px 12px; cursor:pointer; color:var(--dim); font-size:11px; font-weight:700; flex:1}
+  .tabbar{position:absolute; left:0; right:0; bottom:0; height:calc(var(--sab) + 78px); padding:8px 14px calc(var(--sab) + 6px);
+    background:rgba(16,12,29,.88); backdrop-filter:blur(20px); border-top:1px solid var(--line);
+    display:flex; justify-content:space-around; align-items:flex-start; z-index:20}
+  .tab{display:flex; flex-direction:column; align-items:center; gap:3px; padding:8px 12px; color:var(--dim); font-size:11px; font-weight:700; flex:1}
   .tab .ti{font-size:22px; line-height:1}
   .tab.active{color:#fff}
 
-  .toast{position:absolute; left:50%; bottom:104px; transform:translateX(-50%) translateY(20px); background:#000; color:#fff;
-    padding:12px 18px; border-radius:14px; font-weight:700; font-size:14px; opacity:0; pointer-events:none; transition:.25s; z-index:60; border:1px solid #3a2f60; white-space:nowrap}
+  .toast{position:absolute; left:50%; bottom:calc(var(--sab) + 100px); transform:translateX(-50%) translateY(20px); background:#000; color:#fff;
+    padding:12px 18px; border-radius:14px; font-weight:700; font-size:14px; opacity:0; pointer-events:none; transition:.25s; z-index:60; border:1px solid #3a2f60; white-space:nowrap; max-width:90%; overflow:hidden; text-overflow:ellipsis}
   .toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
-
-  .synopsis{font-size:13.5px; color:var(--muted); line-height:1.5; margin-top:12px}
-  .synopsis:before{content:"SYNOPSIS"; display:block; font-size:10px; letter-spacing:1.2px; color:var(--dim); font-weight:800; margin-bottom:5px}
-  .credit{font-size:11.5px; color:var(--dim); line-height:1.45; margin-top:10px}
   .hint{font-size:13px; color:var(--dim); text-align:center; margin-top:10px}
+  .credit{font-size:11.5px; color:var(--dim); line-height:1.45; margin-top:10px}
   .pop{animation:pop .35s cubic-bezier(.2,1.3,.5,1)}
-  @keyframes pop{0%{transform:scale(.9);opacity:.5}100%{transform:scale(1);opacity:1}}
-  .spacer{height:14px}
+  @keyframes pop{0%{transform:scale(.92);opacity:.4}100%{transform:scale(1);opacity:1}}
+  .spinner{display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; flex:1; color:var(--muted); font-weight:700}
+  .spinner .mascot{width:88px; height:88px}
+  .empty{text-align:center; color:var(--dim); margin-top:40px}
+  .empty .big{font-size:40px}
+  .sentinel{height:1px}
+  .sticky{position:sticky; top:0; z-index:5; background:var(--bg); padding:8px 0 10px; margin:0 -18px; padding-left:18px; padding-right:18px}
 
-  /* ---- Large-screen / iPad: fill the screen, center a readable column, no device frame ---- */
   @media(min-width:620px){
-    .topbar{max-width:600px; margin-left:auto; margin-right:auto; width:100%}
-    .screen-body{max-width:600px; margin-left:auto; margin-right:auto; width:100%}
-    .tabbar{justify-content:center}
-    .tabbar .tab{flex:0 1 150px}
+    .topbar,.screen-body,.pick{max-width:640px; margin-left:auto; margin-right:auto; width:100%}
+    .tabbar{justify-content:center} .tabbar .tab{flex:0 1 150px}
+    .grid3{grid-template-columns:repeat(5,1fr)}
+    .svcgrid{grid-template-columns:repeat(3,1fr)}
+    .pick .hero .poster{max-height:44vh}
   }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="stage">
-    <div class="phone" id="phone">
+<div class="phone" id="phone">
 
-      <!-- ONBOARDING 1 -->
-      <section class="screen active" id="ob1">
-        <div class="screen-body no-tab" style="display:flex;flex-direction:column;justify-content:center;text-align:center;padding-top:40px">
-          <div style="display:flex;justify-content:center;margin-bottom:24px">
-            <div class="mascot" style="width:116px;height:116px">
-              <div class="eye l"></div><div class="eye r"></div><div class="cheek l"></div><div class="cheek r"></div><div class="smile"></div>
-            </div>
-          </div>
-          <h1 style="font-size:33px;margin:0 0 12px;letter-spacing:-1px">Never argue about<br>what to watch again</h1>
-          <p style="color:var(--muted);font-size:16px;line-height:1.5;margin:0 22px">Tell Moodie how you want to <b style="color:#fff">feel</b> tonight. Tap shuffle. Get the one thing everyone will actually watch.</p>
-          <div style="flex:1"></div>
-          <button class="btn shuffle-btn" onclick="showScreen('ob2')">Let's go 🍿</button>
-          <!-- Copy audit: this read "Free to use SOLO - no account needed to START". Both
-               halves imply a tier that does not exist (paid groups, a later sign-up), and
-               Moodie's earlier 2.3 rejection was exactly "advertises a paid tier with no IAP
-               present". State the flat truth and nothing more. -->
-          <div class="hint">Completely free • No account, no in-app purchases</div>
-        </div>
-      </section>
-
-      <!-- ONBOARDING 2: services -->
-      <section class="screen" id="ob2">
-        <div class="topbar"><div><h1>Your services</h1><div class="sub">We'll favor picks on the services you use.</div></div></div>
-        <div class="screen-body no-tab">
-          <div class="chips" id="svcChips" style="margin-top:6px"></div>
-          <p class="hint" style="margin-top:18px">Tap the ones you have. Change anytime.</p>
-        </div>
-        <div style="padding:14px 18px calc(env(safe-area-inset-bottom) + 14px)">
-          <button class="btn" onclick="showScreen('ob3')">Continue</button>
-        </div>
-      </section>
-
-      <!-- ONBOARDING 3: taste -->
-      <section class="screen" id="ob3">
-        <div class="topbar"><div><h1>A peek at the catalog</h1><div class="sub">Some of what Moodie picks from. Have a browse, or skip straight in.</div></div></div>
-        <div class="screen-body no-tab">
-          <div class="grid3" id="tasteGrid"></div>
-          <button class="btn secondary small" id="moreBtn" style="margin-top:14px" onclick="buildTaste(false)">Show more titles</button>
-        </div>
-        <div style="padding:12px 18px calc(env(safe-area-inset-bottom) + 14px);display:flex;gap:10px">
-          <button class="btn secondary" style="flex:.5" onclick="finishOnboarding()">Skip</button>
-          <button class="btn" style="flex:1" onclick="finishOnboarding()">Start shuffling</button>
-        </div>
-      </section>
-
-      <!-- HOME / MOOD PICKER (one screen) -->
-      <section class="screen" id="home">
-        <div class="topbar">
-          <div><h1>How do you want<br>to feel tonight?</h1><div class="sub">Tap one or more.</div></div>
-          
-        </div>
-        <div class="screen-body no-tab">
-          <div class="mood-grid" id="moodGrid"></div>
-          <button class="btn shuffle-btn" style="margin-top:16px" onclick="doShuffle()">🔀 Shuffle my pick</button>
-          <div class="hint">Moodie picks one thing, then shows you where to watch it.</div>
-        </div>
-      </section>
-
-      <!-- RESULT -->
-      <section class="screen" id="result">
-        <div class="topbar"><button type="button" class="back" onclick="setTab('home')">‹ Moods</button><div class="sub">Your pick</div><div style="width:20px"></div></div>
-        <!-- NOT .no-tab: the tab bar stays visible on the result screen so there is always a
-             second way out. A single back control that fails to fire is a dead end, and
-             "stuck on a screen" is a Guideline 2.1 rejection on its own. -->
-        <div class="screen-body" id="resultBody"></div>
-      </section>
-
-      <!-- GROUPS -->
-      <section class="screen" id="groups">
-        <div class="topbar"><div><h1>Watch together</h1><div class="sub">Everyone picks a mood. Moodie finds the overlap.</div></div></div>
-        <div class="screen-body" id="groupsBody"></div>
-      </section>
-
-      <!-- SAVED -->
-      <section class="screen" id="saved">
-        <div class="topbar"><div><h1>Saved</h1><div class="sub">Your watch‑later list.</div></div></div>
-        <div class="screen-body">
-          <div class="grid2" id="savedGrid"></div>
-          <div id="savedEmpty" class="center" style="margin-top:40px;color:var(--dim);text-align:center">
-            <div style="font-size:40px">🔖</div>
-            <p style="font-size:14px">Tap ＋ Save on any pick to keep it here.</p>
-          </div>
-        </div>
-      </section>
-
-      <!-- PROFILE -->
-      <section class="screen" id="profile">
-        <div class="topbar"><div><h1>You</h1></div></div>
-        <div class="screen-body">
-          <div class="card" style="display:flex;align-items:center;gap:14px">
-            <div class="mascot" style="width:56px;height:56px">
-              <div class="eye l"></div><div class="eye r"></div><div class="smile"></div>
-            </div>
-            <div style="flex:1">
-              <div style="font-weight:800;font-size:18px">Moodie</div>
-              <div id="planLabel" style="font-size:13px;color:var(--muted)">Free — no account, no purchases</div>
-            </div>
-          </div>
-          <div class="section-title">My services</div>
-          <div class="chips" id="profileSvc"></div>
-          <div class="section-title">Watch together</div>
-          <div class="card" style="margin-top:6px">
-            <h3>Pair up &amp; make groups</h3>
-            <p>Pass the phone around — everyone picks how they want to feel, and Moodie finds the one title that works for the room. Optional kid-safe rating limit.</p>
-            <button class="btn small" style="margin-top:12px" onclick="setTab('groups')">Open Together</button>
-          </div>
-          <div class="section-title">Settings</div>
-          <div class="card">
-            
-            <button type="button" class="rowitem" style="width:100%" onclick="openURL('https://jonathanscribbles.com/moodie#privacy')"><div class="grow"><div class="name">Privacy Policy</div></div><div style="color:var(--dim)">›</div></div>
-            <button type="button" class="rowitem" style="width:100%" onclick="openURL('https://jonathanscribbles.com/moodie#support')"><div class="grow"><div class="name">Support</div></div><div style="color:var(--dim)">›</div></div>
-            <p class="credit" id="attribution"></p>
-            
-          </div>
-          <div class="spacer"></div>
-        </div>
-      </section>
-
-      <nav class="tabbar" id="tabbar" style="display:none">
-        <button type="button" class="tab" data-tab="home" onclick="setTab('home')"><div class="ti">🔀</div>Shuffle</button>
-        <button type="button" class="tab" data-tab="groups" onclick="setTab('groups')"><div class="ti">👥</div>Together</button>
-        <button type="button" class="tab" data-tab="saved" onclick="setTab('saved')"><div class="ti">🔖</div>Saved</button>
-        <button type="button" class="tab" data-tab="profile" onclick="setTab('profile')"><div class="ti">😌</div>You</button>
-      </nav>
-
-      <div class="toast" id="toast"></div>
-
+  <!-- ONBOARDING 1: welcome -->
+  <section class="screen active" id="ob1">
+    <div class="center-col">
+      <div class="mascot" style="width:128px;height:128px;margin-bottom:26px">
+        <div class="eye l"></div><div class="eye r"></div><div class="cheek l"></div><div class="cheek r"></div><div class="smile"></div>
+      </div>
+      <h1 style="font-size:32px;margin:0 0 10px;letter-spacing:-1px;line-height:1.05">Never argue about<br>what to watch again</h1>
+      <p style="color:var(--muted);font-size:16px;line-height:1.5;margin:0 6px 22px">Tell Moodie how you want to <b style="color:#fff">feel</b> tonight. Tap shuffle. Get one thing you haven't seen that fits the mood.</p>
+      <button class="btn shuffle-btn" style="max-width:340px" onclick="showScreen('ob2')">Let's go 🍿</button>
+      <div class="hint" style="margin-top:14px">Completely free • No account, no in-app purchases</div>
     </div>
-  </div>
-</div>
+    <div class="brand">Made with 🍿 by <button type="button" onclick="openURL('https://jonathanscribbles.com')">jonathanscribbles.com</button></div>
+  </section>
 
+  <!-- ONBOARDING 2: services -->
+  <section class="screen" id="ob2">
+    <div class="topbar"><div><h1>Where do you watch?</h1><div class="sub">Tap every service you pay for. Moodie only picks things you can actually play tonight.</div></div></div>
+    <div class="screen-body no-tab">
+      <div class="sticky"><input class="search" id="svcSearch" placeholder="Search any service (Crunchyroll, Tubi, BritBox…)" autocomplete="off" oninput="renderServices('svcGrid',this.value)"></div>
+      <div class="counter" id="svcCount">Nothing selected yet</div>
+      <div class="svcgrid" id="svcGrid"></div>
+      <div class="hint" id="svcNote"></div>
+    </div>
+    <div style="padding:12px 18px calc(var(--sab) + 12px);display:flex;gap:10px">
+      <button class="btn secondary" style="flex:.5" onclick="showScreen('ob3');buildTaste()">Skip</button>
+      <button class="btn" style="flex:1" id="svcContinue" onclick="showScreen('ob3');buildTaste()">Continue</button>
+    </div>
+  </section>
+
+  <!-- ONBOARDING 3: what you've already seen -->
+  <section class="screen" id="ob3">
+    <div class="topbar"><div><h1>Tap what you've seen</h1><div class="sub">So Moodie never suggests it. Scroll forever, or search.</div></div></div>
+    <div class="screen-body no-tab" id="tasteBody">
+      <div class="sticky"><input class="search" id="tasteSearch" placeholder="Search movies & shows" autocomplete="off" oninput="tasteSearchInput(this.value)"></div>
+      <div class="counter" id="tasteCount">0 marked as seen</div>
+      <div class="grid3" id="tasteGrid"></div>
+      <div class="sentinel" id="tasteSentinel"></div>
+      <div class="hint" id="tasteMore">Loading…</div>
+    </div>
+    <div style="padding:12px 18px calc(var(--sab) + 12px);display:flex;gap:10px">
+      <button class="btn secondary" style="flex:.5" onclick="finishOnboarding()">Skip</button>
+      <button class="btn" style="flex:1" onclick="finishOnboarding()">Start shuffling 🔀</button>
+    </div>
+  </section>
+
+  <!-- HOME / MOOD PICKER -->
+  <section class="screen" id="home">
+    <div class="topbar">
+      <div><h1>Tonight I want to…</h1><div class="sub">Pick a feeling, or a few. Then let the mascot spin.</div></div>
+      <div class="mascot" style="width:48px;height:48px"><div class="eye l"></div><div class="eye r"></div><div class="smile"></div></div>
+    </div>
+    <div class="screen-body">
+      <div class="mood-grid" id="moodGrid"></div>
+      <button class="btn shuffle-btn" style="margin-top:16px" onclick="doShuffle()">🔀 Shuffle my pick</button>
+      <div class="hint" id="homeHint"></div>
+    </div>
+  </section>
+
+  <!-- RESULT -->
+  <section class="screen" id="result">
+    <div class="topbar" style="padding-bottom:0"><button type="button" class="back" onclick="setTab('home')">‹ Moods</button><div class="sub" id="resultHead">Your pick</div><div style="width:44px"></div></div>
+    <div class="screen-body lock" id="resultBody"></div>
+  </section>
+
+  <!-- TOGETHER -->
+  <section class="screen" id="groups">
+    <div class="topbar"><div><h1>Watch together</h1><div class="sub">Every Popcorn Pal picks a feeling. Moodie finds the overlap.</div></div></div>
+    <div class="screen-body" id="groupsBody"></div>
+  </section>
+
+  <!-- SAVED -->
+  <section class="screen" id="saved">
+    <div class="topbar"><div><h1>Saved</h1><div class="sub">Your watch-later list.</div></div></div>
+    <div class="screen-body">
+      <div class="grid2" id="savedGrid"></div>
+      <div id="savedEmpty" class="empty"><div class="big">🔖</div><p style="font-size:14px">Tap Save on any pick to keep it here.</p></div>
+    </div>
+  </section>
+
+  <!-- YOU -->
+  <section class="screen" id="profile">
+    <div class="topbar"><div><h1>You</h1><div class="sub">Everything Moodie knows lives on this phone.</div></div></div>
+    <div class="screen-body" id="profileBody"></div>
+  </section>
+
+  <nav class="tabbar" id="tabbar" style="display:none">
+    <button type="button" class="tab" data-tab="home" onclick="setTab('home')"><div class="ti">🔀</div>Shuffle</button>
+    <button type="button" class="tab" data-tab="groups" onclick="setTab('groups')"><div class="ti">👥</div>Together</button>
+    <button type="button" class="tab" data-tab="saved" onclick="setTab('saved')"><div class="ti">🔖</div>Saved</button>
+    <button type="button" class="tab" data-tab="profile" onclick="setTab('profile')"><div class="ti">😌</div>You</button>
+  </nav>
+
+  <div class="toast" id="toast"></div>
+</div>
 <script>
-/* ---------- Native bridge (Capacitor): haptics, native Share sheet, on-device storage ---------- */
-var Cap = window.Capacitor || {};
-var NP = (Cap && Cap.Plugins) || {};
+/* ================================================================================
+   Moodie 1.1 — the redesign.
+   One HTML file, no framework, no build step. Everything the user does stays on the
+   phone (Capacitor Preferences). Titles, art, synopses and where-to-watch come from
+   TMDB at runtime (credited below — that credit is a licence condition).
+   ================================================================================ */
+
+/* ---------- Native bridge (Capacitor): haptics, share, storage, app launcher ---------- */
+var Cap=window.Capacitor||{};
+var NP=(Cap&&Cap.Plugins)||{};
 function capNative(){ try{ return !!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform()); }catch(e){ return false; } }
 function capPlugin(name){ try{ return (window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins[name])||null; }catch(e){ return null; } }
-function haptic(style){ try{ if(NP.Haptics && NP.Haptics.impact) NP.Haptics.impact({style:style||'MEDIUM'}); }catch(e){} }
+function haptic(style){ try{ if(NP.Haptics&&NP.Haptics.impact) NP.Haptics.impact({style:style||'MEDIUM'}); }catch(e){} }
 var Store={
   set:function(k,v){ try{ if(NP.Preferences){ NP.Preferences.set({key:k,value:JSON.stringify(v)}); return; } }catch(e){} try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} },
   get:function(k){ return new Promise(function(res){ try{ if(NP.Preferences){ NP.Preferences.get({key:k}).then(function(r){ try{ res(r&&r.value?JSON.parse(r.value):null); }catch(e){ res(null); } }).catch(function(){ res(null); }); return; } }catch(e){} try{ var raw=localStorage.getItem(k); res(raw?JSON.parse(raw):null); }catch(e){ res(null); } }); }
 };
-function persistServices(){ try{ Store.set('services',[...state.services]); }catch(e){} }
-function persistSaved(){ try{ Store.set('saved',[...state.saved]); }catch(e){} }
-/* EXTERNAL LINKS — Capacitor Browser.open with a window.open fallback, so links
-   really open in the system browser instead of dead-navigating inside the native
-   WKWebView. (Same openSite() pattern used in Permission / Slow Burn / the App
-   Builder Template.) */
+/* EXTERNAL LINKS open in the system browser, never inside the WKWebView. */
 function openURL(url){
   if(!url) return;
   var B=capPlugin('Browser');
-  if(capNative()&&B){
-    try{ Promise.resolve(B.open({url:url})).catch(function(){ window.open(url,'_system'); }); return; }catch(e){}
-  }
-  try{ window.open(url,'_system'); }
-  catch(e){ try{ window.open(url,'_blank','noopener'); }catch(e2){ location.href=url; } }
+  if(capNative()&&B){ try{ Promise.resolve(B.open({url:url})).catch(function(){ window.open(url,'_system'); }); return; }catch(e){} }
+  try{ window.open(url,'_system'); }catch(e){ try{ window.open(url,'_blank','noopener'); }catch(e2){ location.href=url; } }
 }
-function sharePick(id){ var t=TITLES.find(function(x){ return x.id===id; }); if(!t) return; var text='Moodie says watch \"'+t.t+'\" tonight \u2014 '+t.why; try{ if(NP.Share && NP.Share.share){ NP.Share.share({title:'Moodie',text:text,dialogTitle:'Share your pick'}); return; } }catch(e){} try{ if(navigator.share){ navigator.share({text:text}); return; } }catch(e){} toast('Shared '+t.t+' \ud83c\udf7f'); }
-function boot(){ var at=document.getElementById('attribution'); if(at) at.textContent=tmdbNote()+' '+ATTRIBUTION+' '+JW_CREDIT; buildTaste(true); buildMoods(); buildServiceChips(document.getElementById('svcChips')); Store.get('services').then(function(sv){ if(Array.isArray(sv)&&sv.length){ state.services=new Set(sv); buildServiceChips(document.getElementById('svcChips')); if(document.getElementById('profileSvc')) buildServiceChips(document.getElementById('profileSvc')); } }); Store.get('saved').then(function(sd){ if(Array.isArray(sd)){ state.saved=new Set(sd); } }); }
-/* ---------- Data ---------- */
-const SERVICES=[
-  {id:'netflix',name:'Netflix',c:'#E50914'},{id:'prime',name:'Prime Video',c:'#00A8E1'},
-  {id:'disney',name:'Disney+',c:'#1F5FE0'},{id:'max',name:'Max',c:'#7B2FF7'},
-  {id:'hulu',name:'Hulu',c:'#1CE783'},{id:'apple',name:'Apple TV+',c:'#6E6E73'},
-  {id:'peacock',name:'Peacock',c:'#F5A623'},{id:'paramount',name:'Paramount+',c:'#0064FF'},
-];
-/* `ph` is the verb phrase used by moodPhrase() in "Because you want to ___:". The result
-   screen used to lowercase `lbl` instead, which reads correctly for only three of these ten
-   ("laugh", "cry it out", "chill") and produced "Because you want to smart", "...to thrills",
-   "...to family" for the rest — broken English on the app's primary result screen, and in
-   any screenshot of it. */
-const MOODS=[
-  {id:'laugh',em:'😂',lbl:'Laugh',c:'#FFD23D',ph:'laugh'},{id:'cry',em:'🥲',lbl:'Cry it out',c:'#43B4FF',ph:'cry it out'},
-  {id:'thrill',em:'😨',lbl:'Thrills',c:'#FF5C7A',ph:'be thrilled'},{id:'romance',em:'❤️',lbl:'Romance',c:'#FF7AB8',ph:'fall in love'},
-  {id:'mindblown',em:'🤯',lbl:'Mind‑blown',c:'#A879FF',ph:'have your mind blown'},{id:'chill',em:'😌',lbl:'Chill',c:'#34E0C4',ph:'chill'},
-  {id:'scared',em:'👻',lbl:'Spooky',c:'#7CE084',ph:'be spooked'},{id:'hyped',em:'🔥',lbl:'Hyped',c:'#FF8A3D',ph:'get hyped'},
-  {id:'smart',em:'🧠',lbl:'Smart',c:'#6BA8FF',ph:'think'},{id:'family',em:'👨‍👩‍👧',lbl:'Family',c:'#9BE04A',ph:'watch as a family'},
-];
-const TITLES=[
-  {id:1,t:'The Good Place',em:'😄',svc:'netflix',r:'TV‑14',rt:'22m',moods:['laugh','smart','chill'],g:'linear-gradient(135deg,#34E0C4,#43B4FF)',why:'Feel‑good and clever without trying too hard.',media:'tvShow',y:2016},
-  {id:2,t:'Brooklyn Nine‑Nine',em:'🚔',svc:'peacock',r:'TV‑14',rt:'22m',moods:['laugh','chill'],g:'linear-gradient(135deg,#FF8A3D,#FFD23D)',why:'A comfort‑watch that never misses.',media:'tvShow',y:2013},
-  {id:3,t:"Schitt's Creek",em:'🏨',svc:'hulu',r:'TV‑14',rt:'22m',moods:['laugh','chill'],g:'linear-gradient(135deg,#FF7AB8,#FF8A3D)',why:'Warm, silly, impossible not to smile.',media:'tvShow',y:2015},
-  {id:4,t:'Ted Lasso',em:'⚽️',svc:'apple',r:'TV‑MA',rt:'45m',moods:['laugh','cry','smart'],g:'linear-gradient(135deg,#43B4FF,#8B5CFF)',why:'Kindness as a superpower — you\'ll feel better.',media:'tvShow',y:2020},
-  {id:5,t:'Paddington 2',em:'🐻',svc:'max',r:'PG',rt:'103m',moods:['family','laugh','chill'],g:'linear-gradient(135deg,#FF8A3D,#FF3D8A)',why:'The purest feel‑good movie ever made.',media:'movie',y:2017},
-  {id:6,t:'Bluey',em:'🐶',svc:'disney',r:'TV‑Y',rt:'8m',moods:['family','chill'],g:'linear-gradient(135deg,#43B4FF,#34E0C4)',why:'Sweet, tiny, secretly for the grown‑ups too.',media:'tvShow',y:2018},
-  {id:7,t:'Spider‑Man: Into the Spider‑Verse',em:'🕷️',svc:'netflix',r:'PG',rt:'117m',moods:['hyped','family','mindblown'],g:'linear-gradient(135deg,#FF3D8A,#8B5CFF)',why:'A jolt of color and joy for everyone.',media:'movie',y:2018},
-  {id:8,t:'Everything Everywhere All at Once',em:'🥯',svc:'hulu',r:'R',rt:'139m',moods:['mindblown','cry','hyped'],g:'linear-gradient(135deg,#8B5CFF,#FF3D8A)',why:'It\'ll scramble and then mend your heart.',media:'movie',y:2022},
-  {id:9,t:'Inception',em:'🌀',svc:'netflix',r:'PG‑13',rt:'148m',moods:['mindblown','thrill'],g:'linear-gradient(135deg,#6B4CFF,#43B4FF)',why:'Bend your brain, then argue the ending.',media:'movie',y:2010},
-  {id:10,t:'Interstellar',em:'🚀',svc:'paramount',r:'PG‑13',rt:'169m',moods:['cry','mindblown'],g:'linear-gradient(135deg,#151B4A,#43B4FF)',why:'Big feelings, bigger space.',media:'movie',y:2014},
-  {id:11,t:'The Notebook',em:'💌',svc:'max',r:'PG‑13',rt:'123m',moods:['romance','cry'],g:'linear-gradient(135deg,#FF7AB8,#FF3D8A)',why:'The classic ugly‑cry love story.',media:'movie',y:2004},
-  {id:12,t:'Pride & Prejudice',em:'💐',svc:'peacock',r:'PG',rt:'129m',moods:['romance','chill'],g:'linear-gradient(135deg,#9BE04A,#34E0C4)',why:'Longing glances and rolling hills.',media:'movie',y:2005},
-  {id:13,t:'A Quiet Place',em:'🤫',svc:'paramount',r:'PG‑13',rt:'90m',moods:['thrill','scared'],g:'linear-gradient(135deg,#2A2150,#FF5C7A)',why:'Hold your breath the whole way through.',media:'movie',y:2018},
-  {id:14,t:'Hereditary',em:'🕯️',svc:'max',r:'R',rt:'127m',moods:['scared','thrill'],g:'linear-gradient(135deg,#1a1030,#7CE084)',why:'Genuinely terrifying. Lights on.',media:'movie',y:2018},
-  {id:15,t:'Knives Out',em:'🔪',svc:'netflix',r:'PG‑13',rt:'130m',moods:['smart','laugh','thrill'],g:'linear-gradient(135deg,#FF8A3D,#6B4CFF)',why:'A twisty whodunit that\'s actually fun.',media:'movie',y:2019},
-  {id:16,t:'Coco',em:'🎸',svc:'disney',r:'PG',rt:'105m',moods:['family','cry'],g:'linear-gradient(135deg,#FF8A3D,#FFD23D)',why:'Bring tissues — a gorgeous cry.',media:'movie',y:2017},
-  {id:17,t:'Planet Earth II',em:'🌍',svc:'max',r:'TV‑G',rt:'50m',moods:['chill','smart','family'],g:'linear-gradient(135deg,#34E0C4,#9BE04A)',why:'Breathe out. The planet is stunning.',media:'tvShow',y:2016},
-  {id:18,t:'Top Gun: Maverick',em:'✈️',svc:'paramount',r:'PG‑13',rt:'130m',moods:['hyped','thrill'],g:'linear-gradient(135deg,#0064FF,#FF8A3D)',why:'Pure adrenaline and a grin.',media:'movie',y:2022},
-  {id:19,t:'Fleabag',em:'🍷',svc:'prime',r:'TV‑MA',rt:'27m',moods:['smart','laugh','cry'],g:'linear-gradient(135deg,#FF3D8A,#6B4CFF)',why:'Sharp, filthy, secretly devastating.',media:'tvShow',y:2016},
-  {id:20,t:'Spirited Away',em:'🐉',svc:'max',r:'PG',rt:'125m',moods:['family','mindblown','chill'],g:'linear-gradient(135deg,#43B4FF,#8B5CFF)',why:'Dreamlike magic for all ages.',media:'movie',y:2001},
-  {id:21,t:'The Office',em:'📎',svc:'peacock',r:'TV‑14',rt:'22m',moods:['laugh','chill'],g:'linear-gradient(135deg,#43B4FF,#6B4CFF)',why:'The endless comfort re‑watch.',media:'tvShow',y:2005},
-  {id:22,t:'Parks and Recreation',em:'🏞️',svc:'peacock',r:'TV‑14',rt:'22m',moods:['laugh','chill'],g:'linear-gradient(135deg,#9BE04A,#43B4FF)',why:'Relentlessly sunny and quotable.',media:'tvShow',y:2009},
-  {id:23,t:'Modern Family',em:'🏡',svc:'hulu',r:'TV‑PG',rt:'22m',moods:['laugh','family'],g:'linear-gradient(135deg,#FFD23D,#FF8A3D)',why:'Easy laughs the whole family gets.',media:'tvShow',y:2009},
-  {id:24,t:'Stranger Things',em:'🚲',svc:'netflix',r:'TV‑14',rt:'51m',moods:['thrill','hyped','scared'],g:'linear-gradient(135deg,#E50914,#151B4A)',why:'Nostalgic, spooky, totally binge‑able.',media:'tvShow',y:2016},
-  {id:25,t:'The Bear',em:'🔥',svc:'hulu',r:'TV‑MA',rt:'30m',moods:['thrill','smart','hyped'],g:'linear-gradient(135deg,#FF5C7A,#FF8A3D)',why:'Intense, delicious, wildly good.',media:'tvShow',y:2022},
-  {id:26,t:'Wednesday',em:'🖤',svc:'netflix',r:'TV‑14',rt:'50m',moods:['scared','smart','thrill'],g:'linear-gradient(135deg,#2A2150,#8B5CFF)',why:'Deadpan, gothic and fun.',media:'tvShow',y:2022},
-  {id:27,t:'Encanto',em:'🦋',svc:'disney',r:'PG',rt:'102m',moods:['family','hyped'],g:'linear-gradient(135deg,#FF7AB8,#FFD23D)',why:'Color, songs and all the feels.',media:'movie',y:2021},
-  {id:28,t:'Moana',em:'🌊',svc:'disney',r:'PG',rt:'107m',moods:['family','hyped','chill'],g:'linear-gradient(135deg,#34E0C4,#0064FF)',why:'A big‑hearted adventure with bangers.',media:'movie',y:2016},
-  {id:29,t:'La La Land',em:'🎹',svc:'max',r:'PG‑13',rt:'128m',moods:['romance','chill'],g:'linear-gradient(135deg,#6B4CFF,#FF7AB8)',why:'Dreamy, gorgeous, bittersweet.',media:'movie',y:2016},
-  {id:30,t:'Dune',em:'🏜️',svc:'max',r:'PG‑13',rt:'155m',moods:['mindblown','hyped'],g:'linear-gradient(135deg,#FF8A3D,#151B4A)',why:'Epic, immersive big‑screen sci‑fi.',media:'movie',y:2021},
-  {id:31,t:'Abbott Elementary',em:'🍎',svc:'hulu',r:'TV‑PG',rt:'22m',moods:['laugh','chill'],g:'linear-gradient(135deg,#FFD23D,#34E0C4)',why:'Warm workplace comedy that lands.',media:'tvShow',y:2021},
-  {id:32,t:'The Menu',em:'🍽️',svc:'hulu',r:'R',rt:'107m',moods:['thrill','smart'],g:'linear-gradient(135deg,#1a1030,#FF5C7A)',why:'A deliciously dark, twisty ride.',media:'movie',y:2022},
-  {id:33,t:'Palm Springs',em:'🌴',svc:'hulu',r:'R',rt:'90m',moods:['laugh','mindblown','romance'],g:'linear-gradient(135deg,#FF8A3D,#43B4FF)',why:'A time‑loop rom‑com that’s smarter than it lets on.',media:'movie',y:2020},
-  {id:34,t:'Get Out',em:'🫖',svc:'peacock',r:'R',rt:'104m',moods:['scared','mindblown','smart'],g:'linear-gradient(135deg,#1a1030,#43B4FF)',why:'Horror with a brain and a pulse.',media:'movie',y:2017},
-  {id:35,t:'The Last of Us',em:'🍄',svc:'max',r:'TV‑MA',rt:'55m',moods:['cry','thrill','scared'],g:'linear-gradient(135deg,#2A2150,#9BE04A)',why:'Gutting, tense, unforgettable.',media:'tvShow',y:2023},
-  {id:36,t:'Over the Garden Wall',em:'🌲',svc:'max',r:'TV‑PG',rt:'11m',moods:['chill','scared','family'],g:'linear-gradient(135deg,#FF8A3D,#34E0C4)',why:'Cozy, eerie and quietly perfect.',media:'tvShow',y:2014},
-  {id:37,t:'The Princess Bride',em:'⚔️',svc:'disney',r:'PG',rt:'98m',moods:['laugh','romance','family'],g:'linear-gradient(135deg,#FF7AB8,#FFD23D)',why:'Adventure, romance and endless quotes.',media:'movie',y:1987},
-  {id:38,t:'Before Sunrise',em:'🚋',svc:'max',r:'R',rt:'101m',moods:['romance','smart','chill'],g:'linear-gradient(135deg,#6B4CFF,#FF7AB8)',why:'Two strangers, one night, all talk — in the best way.',media:'movie',y:1995},
-  {id:39,t:'Jurassic Park',em:'🦖',svc:'peacock',r:'PG‑13',rt:'127m',moods:['thrill','hyped','family'],g:'linear-gradient(135deg,#9BE04A,#151B4A)',why:'Dinosaurs, wonder and screaming. Perfect.',media:'movie',y:1993},
-  {id:40,t:'Jumanji: Welcome to the Jungle',em:'🎲',svc:'netflix',r:'PG‑13',rt:'119m',moods:['laugh','hyped','family'],g:'linear-gradient(135deg,#34E0C4,#FF8A3D)',why:'A big, funny, ridiculous good time.',media:'movie',y:2017},
-  {id:41,t:'Up',em:'🎈',svc:'disney',r:'PG',rt:'96m',moods:['cry','family','chill'],g:'linear-gradient(135deg,#43B4FF,#FFD23D)',why:'The first ten minutes will wreck you. Worth it.',media:'movie',y:2009},
-  {id:42,t:'Titanic',em:'🚢',svc:'paramount',r:'PG‑13',rt:'194m',moods:['romance','cry','thrill'],g:'linear-gradient(135deg,#151B4A,#FF7AB8)',why:'Sweeping, doomed and impossible to look away.',media:'movie',y:1997},
-  {id:43,t:'Ghostbusters',em:'👻',svc:'peacock',r:'PG',rt:'105m',moods:['laugh','scared','family'],g:'linear-gradient(135deg,#7CE084,#FF8A3D)',why:'Spooky, silly and endlessly fun.',media:'movie',y:1984},
-  {id:44,t:'The Shape of Water',em:'🐟',svc:'hulu',r:'R',rt:'123m',moods:['romance','scared','mindblown'],g:'linear-gradient(135deg,#34E0C4,#6B4CFF)',why:'A strange, gorgeous love story.',media:'movie',y:2017},
-  {id:45,t:'Crazy Rich Asians',em:'💍',svc:'max',r:'PG‑13',rt:'120m',moods:['romance','laugh','hyped'],g:'linear-gradient(135deg,#FF3D8A,#FFD23D)',why:'Glamorous, funny and big‑hearted.',media:'movie',y:2018},
-];
+/* Open another app by URL scheme when it is installed, else fall back to its website.
+   AppLauncher.canOpenUrl needs the scheme listed in LSApplicationQueriesSchemes — see
+   codemagic.yaml, which writes that list into Info.plist on every build. */
+function openAppOrWeb(scheme,web){
+  var AL=capPlugin('AppLauncher');
+  if(capNative()&&AL&&scheme){
+    Promise.resolve(AL.canOpenUrl({url:scheme})).then(function(r){
+      if(r&&r.value) return AL.openUrl({url:scheme});
+      openURL(web);
+    }).catch(function(){ openURL(web); });
+    return;
+  }
+  openURL(web);
+}
+function esc(x){ return String(x==null?'':x).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+function toast(m){ var t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(toast._t); toast._t=setTimeout(function(){ t.classList.remove('show'); },1900); }
 
-
-/* ---------- State ---------- */
-const state={ services:new Set(['netflix','disney','max']), moods:new Set(), saved:new Set()/* starts EMPTY: it used to be seeded with two titles the user never saved,
-   so a clean install showed pre-populated demo content in a list that is meant to be theirs —
-   placeholder data of exactly the kind Guideline 2.3.1 covers */, lastMatch:null };
-
-/* ---------- Artwork + synopsis + availability: TMDB ----------
-   Posters, backdrops and synopses come from TMDB, whose terms permit displaying them in
-   an app like this; the "where to watch" hand-off uses TMDB's /watch/providers endpoint,
-   which is powered by JustWatch. Both are credited in the UI (see ATTRIBUTION below) —
-   that credit is a licence condition, not decoration, so do not remove it.
-
-   Nothing here is scraped: an earlier build pulled key art and article text from the
-   Wikipedia API, which is what drew the 4.1(a)/IP problem. That code is gone.
-
-   THE KEY IS NOT IN THIS REPO. TMDB_API_KEY below holds a placeholder token; the Codemagic
-   build substitutes the secure TMDB_API_KEY variable into it before `npx cap sync`. That
-   token must appear EXACTLY ONCE in this file, so do not repeat it in prose. If the
-   substitution has not run (a local checkout, or a missing CI variable) TMDB_ON is false
-   and the app degrades to its own gradient card art with no network calls at all —
-   the same behaviour it shipped with before TMDB was wired in. ---------- */
-const TMDB_API_KEY='__TMDB_API_KEY__';
-/* An EMPTY substitution used to satisfy the old check (''.indexOf('__') is -1, not 0), so
-   the app believed TMDB was live, sent key-less requests, took 401s, and fell back to
-   gradient art on every single title — indistinguishable on screen from "TMDB has no
-   poster for this one". Require a key that could plausibly be real. */
-const TMDB_ON=!!TMDB_API_KEY && TMDB_API_KEY.indexOf('__')!==0 && TMDB_API_KEY.length>=16;
-/* Artwork status, shown on the You screen. Without it every failure — bad key, blocked
-   network, changed API shape, genuinely missing poster — collapses into the same silent
-   gradient card, so a tester looking at a screenshot cannot tell which one happened. */
+/* ---------- TMDB ----------
+   THE KEY IS NOT IN THIS REPO. The placeholder below is substituted by the Codemagic build
+   (secure variable TMDB_API_KEY) before `cap sync`. It must appear EXACTLY ONCE here. */
+var TMDB_API_KEY='__TMDB_API_KEY__';
+var TMDB_ON=!!TMDB_API_KEY && TMDB_API_KEY.indexOf('__')!==0 && TMDB_API_KEY.length>=16;
+var TMDB_IMG='https://image.tmdb.org/t/p/';
+var REGION='US';
+var ATTRIBUTION='This product uses the TMDB API but is not endorsed or certified by TMDB.';
+var JW_CREDIT='Where-to-watch data provided by JustWatch.';
 var tmdbStatus=TMDB_ON?'pending':'nokey', tmdbDetail='';
 function tmdbNote(){
-  if(tmdbStatus==='ok') return 'Artwork: connected to TMDB.';
-  if(tmdbStatus==='nokey') return "Artwork: showing Moodie's own art (TMDB is not configured in this build).";
-  if(tmdbStatus==='error') return 'Artwork: TMDB unreachable'+(tmdbDetail?' ('+tmdbDetail+')':'')+" — showing Moodie's own art.";
-  return 'Artwork: contacting TMDB\u2026';
+  if(tmdbStatus==='ok') return 'Connected to TMDB.';
+  if(tmdbStatus==='nokey') return 'TMDB is not configured in this build.';
+  if(tmdbStatus==='error') return 'TMDB unreachable'+(tmdbDetail?' ('+tmdbDetail+')':'')+'.';
+  return 'Contacting TMDB…';
 }
-const TMDB_IMG='https://image.tmdb.org/t/p/';
-const TMDB_REGION='US';
-
-/* Streaming services stay a private, on-device preference: the user says which ones they
-   pay for and Moodie matches against them. A pick carries a neutral 'on your services'
-   badge rather than a provider's name or logo — Moodie has no licensed availability feed
-   of its own, and provider marks in our own UI are exactly what 4.1(a) flagged. */
-const SVC_BADGE='On your services';
-const ATTRIBUTION='This product uses the TMDB API but is not endorsed or certified by TMDB.';
-const JW_CREDIT='Where-to-watch data provided by JustWatch.';
-
-const tmdbCache={};
-/* The catalog grid paints 24 cards at once, so a naive implementation fires ~50 requests in
-   one burst on first launch and TMDB starts throttling — the user sees a screen of blank
-   cards. Everything therefore goes through a small in-flight cap: the same total number of
-   requests, just never more than TMDB_MAX_INFLIGHT of them at a time. */
 var TMDB_MAX_INFLIGHT=4, tmdbQueue=[], tmdbActive=0;
-function tmdbRawFetch(path,params){
+function tmdbRaw(path,params){
   var q=Object.keys(params||{}).map(function(k){ return k+'='+encodeURIComponent(params[k]); }).join('&');
-  var url='https://api.themoviedb.org/3'+path+'?api_key='+encodeURIComponent(TMDB_API_KEY)+(q?'&'+q:'');
+  var url='https://api.themoviedb.org/3'+path+'?api_key='+encodeURIComponent(TMDB_API_KEY)+'&language=en-US'+(q?'&'+q:'');
   return fetch(url).then(function(r){
-    if(!r.ok){ tmdbStatus='error'; tmdbDetail='HTTP '+r.status; throw 0; }
-    tmdbStatus='ok'; tmdbDetail='';
-    return r.json();
+    if(!r.ok){ tmdbStatus='error'; tmdbDetail='HTTP '+r.status; throw new Error('HTTP '+r.status); }
+    tmdbStatus='ok'; tmdbDetail=''; return r.json();
   },function(e){ tmdbStatus='error'; tmdbDetail='no network'; throw e; });
 }
 function tmdbPump(){
-  while(tmdbActive<TMDB_MAX_INFLIGHT && tmdbQueue.length){
+  while(tmdbActive<TMDB_MAX_INFLIGHT&&tmdbQueue.length){
     var job=tmdbQueue.shift(); tmdbActive++;
-    var p=tmdbRawFetch(job.path,job.params);
-    p.then(job.resolve,job.reject);
+    var p=tmdbRaw(job.path,job.params); p.then(job.resolve,job.reject);
     p.catch(function(){}).then(function(){ tmdbActive--; tmdbPump(); });
   }
 }
-function tmdbFetch(path,params){
-  return new Promise(function(resolve,reject){
-    tmdbQueue.push({path:path,params:params,resolve:resolve,reject:reject});
-    tmdbPump();
-  });
+function tmdb(path,params){
+  if(!TMDB_ON) return Promise.reject(new Error('TMDB off'));
+  return new Promise(function(resolve,reject){ tmdbQueue.push({path:path,params:params,resolve:resolve,reject:reject}); tmdbPump(); });
 }
-/* One lookup per title, cached for the session. Resolves to a plain object; every failure
-   path resolves (never rejects) to empty fields so callers only need one branch. */
-function tmdbLookup(t){
-  if(!TMDB_ON) return Promise.resolve({});
-  if(tmdbCache[t.id]) return tmdbCache[t.id];
-  var kind=t.media==='tvShow'?'tv':'movie';
-  var yearKey=kind==='tv'?'first_air_date_year':'year';
-  var query=searchTitle(t);
-  var byYear={query:query,include_adult:'false'}; if(t.y) byYear[yearKey]=t.y;
-  var p=tmdbFetch('/search/'+kind,byYear)
-    .then(function(d){
-      /* A wrong or missing year must not cost us the poster — retry unfiltered. */
-      if(d&&d.results&&d.results.length) return d;
-      return tmdbFetch('/search/'+kind,{query:query,include_adult:'false'});
-    })
-    .then(function(d){
-      var hit=d&&d.results&&d.results[0]; if(!hit) return {};
-      var out={ img: hit.poster_path?TMDB_IMG+'w500'+hit.poster_path:null,
-                backdrop: hit.backdrop_path?TMDB_IMG+'w1280'+hit.backdrop_path:null,
-                desc: hit.overview||'' };
-      return tmdbFetch('/'+kind+'/'+hit.id+'/watch/providers',{})
-        .then(function(w){
-          var reg=w&&w.results&&w.results[TMDB_REGION];
-          /* Only the JustWatch deep link is used. Provider names and logos are
-             deliberately NOT rendered — see SVC_BADGE above. */
-          if(reg&&reg.link) out.link=reg.link;
-          return out;
-        })
-        .catch(function(){ return out; });
-    })
-    .catch(function(){ return {}; });
-  tmdbCache[t.id]=p; return p;
+/* A TMDB search/discover hit -> Moodie's title record. Movies and shows share a shape. */
+function fromHit(h,kindHint){
+  var kind=h.media_type||kindHint||(h.title?'movie':'tv'); if(kind==='person') return null;
+  var title=h.title||h.name||''; if(!title) return null;
+  var date=h.release_date||h.first_air_date||'';
+  return { key:kind[0]+h.id, kind:kind, id:h.id, title:title, year:date?date.slice(0,4):'',
+    poster:h.poster_path?TMDB_IMG+'w342'+h.poster_path:null, overview:h.overview||'',
+    vote:h.vote_average||0, votes:h.vote_count||0, genres:h.genre_ids||[] };
 }
-/* Paint a card once its lookup lands. The poster element is rebuilt on every re-render
-   ("Again" / "Another pick"), so a slow lookup for the PREVIOUS title must not paint over
-   the one now on screen — bail out once our own element has left the document. */
-function hydrate(el,t,onDesc){
-  tmdbLookup(t).then(function(m){
-    if(m.link) t._link=m.link;
-    if(el&&el.isConnected&&m.img){
-      var img=el.querySelector('.pimg');
-      if(img){ img.onload=function(){ if(img.naturalWidth>img.naturalHeight*1.02) el.classList.add('fit-contain'); el.classList.add('has-img'); }; img.src=m.img; }
-    }
-    if(onDesc) onDesc(m.desc||'');
-  });
+var detailCache={};
+/* Everything the pick screen needs beyond the discover hit, in ONE request. */
+function details(t){
+  if(detailCache[t.key]) return detailCache[t.key];
+  var extra=t.kind==='movie'?'external_ids,watch/providers,release_dates':'external_ids,watch/providers,content_ratings';
+  var p=tmdb('/'+t.kind+'/'+t.id,{append_to_response:extra}).then(function(d){
+    var out={ tagline:d.tagline||'', runtime:d.runtime||(d.episode_run_time&&d.episode_run_time[0])||0,
+      genres:(d.genres||[]).map(function(g){ return g.name; }), imdb:(d.external_ids&&d.external_ids.imdb_id)||'',
+      overview:d.overview||t.overview, cert:'', providers:[], link:'' };
+    try{
+      if(t.kind==='movie'){ var us=(d.release_dates.results||[]).filter(function(r){ return r.iso_3166_1===REGION; })[0];
+        if(us) us.release_dates.forEach(function(r){ if(r.certification&&!out.cert) out.cert=r.certification; }); }
+      else { var cr=(d.content_ratings.results||[]).filter(function(r){ return r.iso_3166_1===REGION; })[0]; if(cr) out.cert=cr.rating||''; }
+    }catch(e){}
+    try{ var w=d['watch/providers'].results[REGION]; if(w){ out.link=w.link||''; out.providers=(w.flatrate||[]).map(function(p){ return {id:p.provider_id,name:p.provider_name}; }); } }catch(e){}
+    if(t.kind==='tv'&&d.number_of_seasons) out.seasons=d.number_of_seasons;
+    return out;
+  }).catch(function(){ return {tagline:'',runtime:0,genres:[],imdb:'',overview:t.overview,cert:'',providers:[],link:''}; });
+  detailCache[t.key]=p; return p;
 }
 
-function posterArt(t,cls,asButton){
-  /* A clickable card is a real <button>; a decorative one stays a <div>. Never a div+onclick. */
-  const d=document.createElement(asButton?'button':'div');
-  if(asButton) d.type='button';
-  d.className=(asButton?'poster-btn ':'')+'poster'+(cls?' '+cls:''); d.style.background=t.g;
-  d.innerHTML='<div class="art">'+t.em+'</div><img class="pimg" alt="" loading="lazy"><div class="sheen"></div><div class="pmeta"><div class="ptitle">'+t.t+'</div></div>';
-  hydrate(d,t);
-  return d;
-}
-function posterMini(t,showSvc,onClick){
-  const d=posterArt(t,'mini',!!onClick);
-  if(showSvc) d.querySelector('.pmeta').insertAdjacentHTML('beforeend','<div class="psub"><span class="badge svc">'+SVC_BADGE+'</span></div>');
-  if(onClick){ d.setAttribute('aria-label',t.t); d.onclick=function(){ onClick(d,t); }; }
-  return d;
+/* ---------- Moods -> TMDB genres (movie ids / tv ids) ---------- */
+var MOODS=[
+  {id:'laugh',em:'😂',lbl:'Laugh',hint:'comedies that land',c:'#FFD23D',ph:'laugh',mg:[35],tg:[35]},
+  {id:'cry',em:'🥲',lbl:'Cry it out',hint:'big feelings',c:'#43B4FF',ph:'cry it out',mg:[18],tg:[18]},
+  {id:'thrill',em:'😱',lbl:'Thrills',hint:'edge of the couch',c:'#FF5C7A',ph:'be thrilled',mg:[53,28],tg:[80,10759]},
+  {id:'romance',em:'😍',lbl:'Romance',hint:'swoon a little',c:'#FF7AB8',ph:'fall in love',mg:[10749],tg:[10749]},
+  {id:'mindblown',em:'🤯',lbl:'Mind-blown',hint:'twists & big ideas',c:'#A879FF',ph:'have your mind blown',mg:[878,9648],tg:[10765,9648]},
+  {id:'chill',em:'😌',lbl:'Chill',hint:'easy, cozy, low stakes',c:'#34E0C4',ph:'chill',mg:[16,99,10402],tg:[16,99,10764]},
+  {id:'scared',em:'👻',lbl:'Spooky',hint:'lights on, please',c:'#7CE084',ph:'be spooked',mg:[27],tg:[9648,10765]},
+  {id:'hyped',em:'🔥',lbl:'Hyped',hint:'loud and fast',c:'#FF8A3D',ph:'get hyped',mg:[28,12],tg:[10759]},
+  {id:'smart',em:'🧠',lbl:'Smart',hint:'something to think about',c:'#6BA8FF',ph:'think',mg:[99,36,9648],tg:[99,9648]},
+  {id:'family',em:'🍿',lbl:'Family',hint:'everyone on the couch',c:'#9BE04A',ph:'watch as a family',mg:[10751,16],tg:[10751,10762]},
+];
+function moodById(id){ return MOODS.filter(function(m){ return m.id===id; })[0]; }
+
+/* ---------- Streaming apps: provider id -> URL scheme + website ----------
+   Ids are TMDB/JustWatch provider ids. The scheme opens the installed app straight to a
+   search for the title; the web URL is the fallback when the app is not on the phone. */
+function q(s){ return encodeURIComponent(s); }
+var PROVIDER_APPS={
+  8:   {scheme:function(t){ return 'nflx://www.netflix.com/search?q='+q(t); }, web:function(t){ return 'https://www.netflix.com/search?q='+q(t); }},
+  9:   {scheme:function(){ return 'aiv://aiv/'; }, web:function(t){ return 'https://www.amazon.com/s?k='+q(t)+'&i=instant-video'; }},
+  119: {scheme:function(){ return 'aiv://aiv/'; }, web:function(t){ return 'https://www.amazon.com/s?k='+q(t)+'&i=instant-video'; }},
+  337: {scheme:function(){ return 'disneyplus://'; }, web:function(t){ return 'https://www.disneyplus.com/search/'+q(t); }},
+  1899:{scheme:function(){ return 'hbomax://'; }, web:function(t){ return 'https://play.max.com/search?q='+q(t); }},
+  384: {scheme:function(){ return 'hbomax://'; }, web:function(t){ return 'https://play.max.com/search?q='+q(t); }},
+  15:  {scheme:function(){ return 'hulu://'; }, web:function(t){ return 'https://www.hulu.com/search?q='+q(t); }},
+  350: {scheme:function(t){ return 'https://tv.apple.com/search?term='+q(t); }, web:function(t){ return 'https://tv.apple.com/search?term='+q(t); }},
+  386: {scheme:function(){ return 'peacock://'; }, web:function(t){ return 'https://www.peacocktv.com/search?q='+q(t); }},
+  531: {scheme:function(){ return 'paramountplus://'; }, web:function(t){ return 'https://www.paramountplus.com/search/?query='+q(t); }},
+  283: {scheme:function(){ return 'crunchyroll://'; }, web:function(t){ return 'https://www.crunchyroll.com/search?q='+q(t); }},
+  73:  {scheme:function(){ return 'tubitv://'; }, web:function(t){ return 'https://tubitv.com/search/'+q(t); }},
+  151: {scheme:function(){ return 'britbox://'; }, web:function(t){ return 'https://www.britbox.com/us/search?q='+q(t); }},
+  257: {scheme:function(){ return 'fubo://'; }, web:function(t){ return 'https://www.fubo.tv/search?q='+q(t); }},
+  387: {scheme:function(){ return 'peacock://'; }, web:function(t){ return 'https://www.peacocktv.com/search?q='+q(t); }},
+  1770:{scheme:function(){ return 'paramountplus://'; }, web:function(t){ return 'https://www.paramountplus.com/search/?query='+q(t); }},
+  2:   {scheme:function(t){ return 'https://tv.apple.com/search?term='+q(t); }, web:function(t){ return 'https://tv.apple.com/search?term='+q(t); }}
+};
+/* Shown before TMDB answers (or when it cannot): the services almost everyone has. */
+var FALLBACK_PROVIDERS=[
+  {id:8,name:'Netflix'},{id:9,name:'Amazon Prime Video'},{id:337,name:'Disney Plus'},{id:1899,name:'Max'},
+  {id:15,name:'Hulu'},{id:350,name:'Apple TV+'},{id:386,name:'Peacock Premium'},{id:531,name:'Paramount Plus'},
+  {id:283,name:'Crunchyroll'},{id:73,name:'Tubi TV'},{id:151,name:'BritBox'},{id:1770,name:'Paramount+ with Showtime'}
+];
+var PROVIDERS=FALLBACK_PROVIDERS.slice();
+function providerName(id){ var p=PROVIDERS.filter(function(x){ return x.id===id; })[0]; return p?p.name:'your service'; }
+
+/* ---------- State (all on-device) ---------- */
+var state={ services:new Set(), moods:new Set(), seen:{}, noped:{}, ratings:{}, saved:{}, pals:[], includeSeen:false, onboarded:false, recent:[], lastPick:null };
+function persist(k){ var v=state[k]; if(v instanceof Set) v=Array.from(v); try{ Store.set(k,v); }catch(e){} }
+function persistAll(){ ['services','seen','noped','ratings','saved','pals','includeSeen','onboarded'].forEach(persist); }
+function excluded(key){ return !!state.noped[key] || (!state.includeSeen && !!state.seen[key]) || state.recent.indexOf(key)>=0; }
+/* Genres the user rated 4-5 stars: picks that share one float to the top. */
+function likedGenres(){
+  var score={};
+  Object.keys(state.ratings).forEach(function(k){ var r=state.ratings[k]; if(r.n>=4&&r.genres) r.genres.forEach(function(g){ score[g]=(score[g]||0)+(r.n-3); }); });
+  return score;
 }
 
-/* ---------- Nav ---------- */
-const APP_TABS=['home','groups','saved','profile'];
-/* 'result' is not a tab, but the tab bar shows there too — see the note on #resultBody. */
-const TABBED_SCREENS=APP_TABS.concat(['result']);
+/* ---------- Screens ---------- */
+var APP_TABS=['home','groups','saved','profile'], TABBED=APP_TABS.concat(['result']);
 function showScreen(id){
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
   document.getElementById(id).classList.add('active');
-  document.getElementById('tabbar').style.display=TABBED_SCREENS.includes(id)?'flex':'none';
-  document.querySelectorAll('.screen-body').forEach(b=>b.scrollTop=0);
+  document.getElementById('tabbar').style.display=TABBED.indexOf(id)>=0?'flex':'none';
+  document.querySelectorAll('.screen-body').forEach(function(b){ b.scrollTop=0; });
 }
 function setTab(name){
   showScreen(name);
-  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===name));
-  if(name==='groups') renderGroups();
+  document.querySelectorAll('.tab').forEach(function(t){ t.classList.toggle('active',t.dataset.tab===name); });
+  if(name==='home') buildMoods();
+  if(name==='groups') pairSetup();
   if(name==='saved') renderSaved();
   if(name==='profile') renderProfile();
 }
-function finishOnboarding(){ setTab('home'); }
+function finishOnboarding(){ state.onboarded=true; persist('onboarded'); setTab('home'); }
 
-/* ---------- Builders ---------- */
-function buildServiceChips(container){
-  container.innerHTML='';
-  SERVICES.forEach(s=>{
-    const c=document.createElement('button'); c.type='button';
-    c.className='chip'+(state.services.has(s.id)?' selected':'');
-    c.setAttribute('aria-pressed',state.services.has(s.id)?'true':'false');
-    if(state.services.has(s.id)) c.style.background=s.c;
-    c.innerHTML='<span style="width:8px;height:8px;border-radius:50%;background:'+(state.services.has(s.id)?'#fff':s.c)+'"></span>'+s.name;
-    c.onclick=function(){ haptic('LIGHT'); state.services.has(s.id)?state.services.delete(s.id):state.services.add(s.id); persistServices();
-      buildServiceChips(document.getElementById('svcChips'));
-      if(document.getElementById('profileSvc')) buildServiceChips(document.getElementById('profileSvc')); };
-    container.appendChild(c);
-  });
+/* ---------- Services ---------- */
+function loadProviders(){
+  return tmdb('/watch/providers/movie',{watch_region:REGION}).then(function(d){
+    var list=(d.results||[]).map(function(p){ return {id:p.provider_id,name:p.provider_name,pri:(p.display_priorities&&p.display_priorities[REGION]!=null)?p.display_priorities[REGION]:(p.display_priority!=null?p.display_priority:999)}; })
+      .filter(function(p){ return p.name; }).sort(function(a,b){ return a.pri-b.pri; });
+    if(list.length>20) PROVIDERS=list;
+  }).catch(function(){});
 }
-let tasteShown=0;
-function buildTaste(reset){
-  const g=document.getElementById('tasteGrid');
-  if(reset){ g.innerHTML=''; tasteShown=0; }
-  const size=tasteShown===0?24:8;
-  TITLES.slice(tasteShown,tasteShown+size).forEach(t=>{
-    g.appendChild(posterMini(t,false,function(d){ d.classList.toggle('picked'); }));
-  });
-  tasteShown+=size;
-  document.getElementById('moreBtn').style.display=tasteShown>=TITLES.length?'none':'block';
+function renderServices(containerId,filter){
+  var box=document.getElementById(containerId); if(!box) return;
+  var f=String(filter||'').trim().toLowerCase();
+  var list=PROVIDERS.filter(function(p){ return !f || p.name.toLowerCase().indexOf(f)>=0; });
+  if(!f) list=list.filter(function(p,i){ return state.services.has(p.id) || i<24; });
+  box.innerHTML=list.map(function(p){ var on=state.services.has(p.id);
+    return '<button type="button" class="svc'+(on?' on':'')+'" aria-pressed="'+on+'" onclick="toggleService('+p.id+',\''+containerId+'\')"><span class="box"></span><span class="nm">'+esc(p.name)+'</span></button>';
+  }).join('') || '<div class="hint">No service called “'+esc(f)+'”. Try another spelling.</div>';
+  var n=state.services.size, c=document.getElementById(containerId==='svcGrid'?'svcCount':'profSvcCount');
+  if(c) c.textContent=n?(n+' selected — '+Array.from(state.services).map(providerName).join(', ')):'Nothing selected yet';
+  var note=document.getElementById('svcNote'); if(note&&containerId==='svcGrid') note.textContent=f?'':(PROVIDERS.length>24?'Showing the most popular '+Math.min(24,PROVIDERS.length)+' of '+PROVIDERS.length+'. Search for any other.':'');
 }
+function toggleService(id,containerId){
+  haptic('LIGHT'); if(state.services.has(id)) state.services.delete(id); else state.services.add(id); persist('services');
+  var inp=document.getElementById(containerId==='svcGrid'?'svcSearch':'profSvcSearch');
+  renderServices(containerId,inp?inp.value:'');
+}
+
+/* ---------- Taste: everything you've already seen ---------- */
+var taste={page:0,busy:false,done:false,mode:'top',query:'',keys:{},io:null,seq:0};
+function tasteCount(){ var c=document.getElementById('tasteCount'); if(c) c.textContent=Object.keys(state.seen).length+' marked as seen'; }
+function tileFor(t,onTap){
+  var d=document.createElement('button'); d.type='button'; d.className='poster-btn poster'+(state.seen[t.key]?' picked':'');
+  d.setAttribute('aria-label',t.title); d.setAttribute('aria-pressed',state.seen[t.key]?'true':'false');
+  d.innerHTML='<img class="pimg" alt="" loading="lazy"><div class="sheen"></div><div class="tick">✓</div><div class="pmeta"><div class="ptitle">'+esc(t.title)+'</div><div class="psub">'+esc(t.year)+(t.kind==='tv'?' · Series':'')+'</div></div>';
+  if(t.poster){ var img=d.querySelector('.pimg'); img.onload=function(){ d.classList.add('has-img'); }; img.src=t.poster; }
+  d.onclick=function(){ onTap(d,t); };
+  return d;
+}
+function toggleSeen(el,t){
+  haptic('LIGHT');
+  if(state.seen[t.key]) delete state.seen[t.key]; else state.seen[t.key]={title:t.title,year:t.year,kind:t.kind,id:t.id,poster:t.poster};
+  persist('seen'); el.classList.toggle('picked',!!state.seen[t.key]); el.setAttribute('aria-pressed',state.seen[t.key]?'true':'false'); tasteCount();
+}
+function buildTaste(){
+  var g=document.getElementById('tasteGrid'); g.innerHTML=''; taste.page=0; taste.done=false; taste.keys={}; taste.mode='top'; taste.query=''; taste.seq++;
+  var s=document.getElementById('tasteSearch'); if(s) s.value='';
+  tasteCount();
+  if(!TMDB_ON){ document.getElementById('tasteMore').textContent='Titles need a connection to TMDB — you can skip this and mark things as seen later from the You tab.'; return; }
+  if(!taste.io){ taste.io=new IntersectionObserver(function(en){ if(en[0].isIntersecting) loadTastePage(); },{root:document.getElementById('tasteBody'),rootMargin:'400px'}); taste.io.observe(document.getElementById('tasteSentinel')); }
+  loadTastePage();
+}
+function tasteSearchInput(v){
+  clearTimeout(taste._t);
+  taste._t=setTimeout(function(){
+    var g=document.getElementById('tasteGrid'); g.innerHTML=''; taste.page=0; taste.done=false; taste.keys={}; taste.seq++;
+    taste.query=String(v||'').trim(); taste.mode=taste.query?'search':'top'; loadTastePage();
+  },250);
+}
+/* Top mode interleaves TMDB's top-rated movies and shows, page by page, forever
+   (each list is 500 pages deep). Search mode is /search/multi. */
+function loadTastePage(){
+  if(taste.busy||taste.done||!TMDB_ON) return;
+  taste.busy=true; var seq=taste.seq, page=++taste.page, more=document.getElementById('tasteMore'); more.textContent='Loading…';
+  var req;
+  if(taste.mode==='search'){ req=tmdb('/search/multi',{query:taste.query,include_adult:'false',page:page}).then(function(d){ return (d.results||[]).map(function(h){ return fromHit(h); }); }); }
+  else {
+    var half=Math.ceil(page/2), which=page%2?'movie':'tv';
+    req=tmdb('/'+which+'/top_rated',{page:half,region:REGION}).then(function(d){ return (d.results||[]).map(function(h){ return fromHit(h,which); }); });
+  }
+  req.then(function(list){
+    if(seq!==taste.seq) return;
+    var g=document.getElementById('tasteGrid'), added=0;
+    list.forEach(function(t){ if(!t||!t.poster||taste.keys[t.key]) return; taste.keys[t.key]=1; g.appendChild(tileFor(t,toggleSeen)); added++; });
+    if(!list.length||(taste.mode==='search'&&page>=5)){ taste.done=true; more.textContent=added||page>1?'That’s everything.':'Nothing found.'; }
+    else more.textContent='Keep scrolling for more…';
+  }).catch(function(){ if(seq===taste.seq) more.textContent='Could not load titles. Check your connection and scroll to retry.'; })
+    .then(function(){ taste.busy=false; if(taste.mode==='search'&&taste.done===false&&document.getElementById('tasteGrid').children.length<12&&taste.page<3) loadTastePage(); });
+}
+
+/* ---------- Moods ---------- */
 function buildMoods(){
-  const g=document.getElementById('moodGrid'); g.innerHTML='';
-  MOODS.forEach(m=>{
-    const d=document.createElement('button'); d.type='button';
-    d.className='mood'+(state.moods.has(m.id)?' selected':'');
-    d.setAttribute('aria-pressed',state.moods.has(m.id)?'true':'false');
-    d.innerHTML='<div class="glow" style="background:'+m.c+'"></div><span class="em">'+m.em+'</span><span class="lbl">'+m.lbl+'</span>';
-    d.onclick=function(){ haptic('LIGHT'); state.moods.has(m.id)?state.moods.delete(m.id):state.moods.add(m.id); buildMoods(); };
+  var g=document.getElementById('moodGrid'); g.innerHTML='';
+  MOODS.forEach(function(m){
+    var d=document.createElement('button'); d.type='button'; var on=state.moods.has(m.id);
+    d.className='mood'+(on?' selected':''); d.setAttribute('aria-pressed',on?'true':'false');
+    d.innerHTML='<div class="glow" style="background:'+m.c+'"></div><span class="em">'+m.em+'</span><span class="txt"><span class="lbl">'+m.lbl+'</span><span class="hint2">'+m.hint+'</span></span>';
+    d.onclick=function(){ haptic('LIGHT'); if(state.moods.has(m.id)) state.moods.delete(m.id); else state.moods.add(m.id); buildMoods(); };
     g.appendChild(d);
   });
+  var h=document.getElementById('homeHint');
+  h.textContent = state.services.size ? 'Picks come from '+(state.services.size===1?providerName(Array.from(state.services)[0]):state.services.size+' of your services')+', and never something you’ve marked as seen.' : 'Add your streaming services on the You tab and Moodie only picks things you can play tonight.';
+}
+function moodPhrase(set){
+  var ids=Array.from(set||state.moods); if(!ids.length) return 'watch something great';
+  var ph=ids.map(function(id){ var m=moodById(id); return m?m.ph:''; }).filter(Boolean);
+  return ph.length>1?ph.slice(0,-1).join(', ')+' and '+ph[ph.length-1]:ph[0];
 }
 
-/* ---------- Shuffle ---------- */
-function pool(){
-  let p=TITLES.filter(t=> state.moods.size===0 || t.moods.some(x=>state.moods.has(x)));
-  const ps=p.filter(t=>state.services.has(t.svc)); if(ps.length) p=ps;
-  if(state.lastMatch && p.length>1) p=p.filter(t=>t.id!==state.lastMatch);
-  return p;
+/* ---------- The pick ----------
+   discover on TMDB with the moods' genres, on the user's services (flatrate, US),
+   skipping anything seen, thumbed-down or picked recently. Two tries: with services,
+   then without; and a random page each time so the same mood does not repeat. */
+function pickTitle(moodSet,opts){
+  opts=opts||{}; var ids=Array.from(moodSet||[]);
+  if(!TMDB_ON) return Promise.reject(new Error('offline'));
+  var liked=likedGenres();
+  function tryOnce(withServices,attempt){
+    var kind = opts.cap ? 'movie' : (Math.random()<0.6?'movie':'tv');
+    var genres=[]; ids.forEach(function(id){ var m=moodById(id); if(m) genres=genres.concat(kind==='movie'?m.mg:m.tg); });
+    genres=genres.filter(function(g,i,a){ return a.indexOf(g)===i; });
+    var params={ include_adult:'false', sort_by:'popularity.desc', page:1+Math.floor(Math.random()*(attempt<2?4:8)), 'vote_count.gte':kind==='movie'?300:150, watch_region:REGION };
+    if(genres.length) params.with_genres=genres.join('|');
+    if(withServices&&state.services.size){ params.with_watch_providers=Array.from(state.services).join('|'); params.with_watch_monetization_types='flatrate'; }
+    if(opts.cap&&kind==='movie'){ params.certification_country=REGION; params['certification.lte']=opts.cap; }
+    return tmdb('/discover/'+kind,params).then(function(d){
+      var list=(d.results||[]).map(function(h){ return fromHit(h,kind); }).filter(function(t){ return t&&t.poster&&!excluded(t.key)&&!(opts.exclude&&opts.exclude[t.key]); });
+      if(!list.length) throw new Error('empty');
+      list.forEach(function(t){ t.score=Math.random()*2+t.genres.reduce(function(s,g){ return s+(liked[g]||0); },0); });
+      list.sort(function(a,b){ return b.score-a.score; });
+      return list[Math.floor(Math.random()*Math.min(3,list.length))];
+    });
+  }
+  return tryOnce(true,1).catch(function(){ return tryOnce(true,2); }).catch(function(){ return tryOnce(false,3); }).catch(function(){ return tryOnce(false,4); });
 }
-function moodPhrase(){
-  if(state.moods.size===0) return 'watch something great';
-  const m=MOODS.find(x=>x.id===[...state.moods][0]); return m?(m.ph||m.lbl.toLowerCase()):'watch something great';
-}
-let _pool=[]; let _spin=null;
+function spinnerHTML(msg){ return '<div class="spinner"><div class="mascot"><div class="eye l"></div><div class="eye r"></div><div class="cheek l"></div><div class="cheek r"></div><div class="smile"></div></div><div>'+esc(msg)+'</div></div>'; }
+var _shuffleSeq=0;
 function doShuffle(){
-  haptic('MEDIUM'); _pool=pool(); if(!_pool.length){ toast('Pick a mood to shuffle'); return; }
-  showScreen('result');
-  /* Tapping "Again" mid-spin used to start a second interval while the first was still
-     running; whichever settled last won, so the card could flip to a title other than the
-     one announced. One spinner at a time. */
-  if(_spin){ clearInterval(_spin); _spin=null; }
-  const body=document.getElementById('resultBody'); let n=0;
-  const spin=_spin=setInterval(function(){
-    const t=_pool[Math.floor(Math.random()*_pool.length)];
-    body.innerHTML='<div class="section-title">Shuffling…</div><div class="poster big" style="background:'+t.g+'"><div class="art">'+t.em+'</div><div class="sheen"></div><div class="pmeta"><div class="ptitle">'+t.t+'</div></div></div>';
-    if(++n>7){ clearInterval(spin); if(_spin===spin) _spin=null; settleResult(_pool[Math.floor(Math.random()*_pool.length)]); }
-  },90);
+  haptic('MEDIUM'); var seq=++_shuffleSeq;
+  showScreen('result'); document.getElementById('resultHead').textContent='Your pick';
+  var body=document.getElementById('resultBody'); body.innerHTML=spinnerHTML('Shuffling for something to '+moodPhrase()+'…');
+  pickTitle(state.moods).then(function(t){ return details(t).then(function(d){ return {t:t,d:d}; }); })
+    .then(function(r){ if(seq!==_shuffleSeq) return; state.lastPick=r; state.recent.push(r.t.key); if(state.recent.length>25) state.recent.shift(); renderPick(r.t,r.d,{why:'Because you want to '+moodPhrase(),again:'doShuffle()'}); })
+    .catch(function(){ if(seq!==_shuffleSeq) return; body.innerHTML='<div class="empty"><div class="big">📡</div><p>'+(TMDB_ON?'Nothing came back — check your connection and try again.':'This build has no TMDB key, so there are no titles to pick from.')+'</p><button class="btn secondary small" style="max-width:220px;margin:0 auto" onclick="doShuffle()">Try again</button></div>'; });
 }
-function settleResult(t){
-  state.lastMatch=t.id; haptic('HEAVY'); const isSaved=state.saved.has(t.id);
-  const body=document.getElementById('resultBody');
-  body.innerHTML=
-    '<div class="section-title">Your pick</div>'
-   +'<div class="poster big pop" id="rposter" style="background:'+t.g+'"><div class="art">'+t.em+'</div><img class="pimg" alt=""><div class="sheen"></div>'
-   +'<div class="pmeta"><div class="ptitle" style="font-size:22px">'+t.t+'</div><div class="psub"><span class="badge svc">'+SVC_BADGE+'</span><span class="badge rating">'+t.r+'</span><span class="badge rating">'+t.rt+'</span></div></div></div>'
-   +'<div class="why"><b>Because you want to '+moodPhrase()+':</b> '+t.why+'</div>'
-   +'<div class="synopsis" id="rsyn" style="display:none"></div>'
-   +'<button class="btn" style="margin-top:14px" onclick="watchNow('+t.id+')">🍿 Where to watch</button>'
-   +'<div class="hint" style="margin-top:8px">Opens a live availability search — streaming rights change often.</div>'
-   +'<div class="credit">'+JW_CREDIT+' Artwork and synopsis from TMDB.</div>'
-   +'<div style="display:flex;gap:10px;margin-top:10px"><button class="btn secondary" id="saveBtn" onclick="toggleSave('+t.id+')">'+(isSaved?'✓ Saved':'＋ Save')+'</button>'
-   +'<button class="btn secondary" onclick="doShuffle()">🔀 Again</button>'
-   +'<button class="btn secondary" onclick="sharePick('+t.id+')">↗ Share</button></div>'
-   +'<button class="btn" style="margin-top:10px;background:var(--surface2);box-shadow:none" onclick="groupCTA()">👥 Watch this with someone →</button>';
-  hydrate(document.getElementById('rposter'),t,function(desc){ var el=document.getElementById('rsyn'); if(!el) return; if(desc){ el.textContent=desc; el.style.display=''; } });
+var _picks={};
+function watchFor(t,d){
+  var mine=(d.providers||[]).filter(function(p){ return state.services.has(p.id); });
+  var p=mine[0]||(d.providers||[])[0]||null;
+  var app=p&&PROVIDER_APPS[p.id];
+  return { provider:p, mine:!!mine.length, scheme:app?app.scheme(t.title):'', web:app?app.web(t.title):(d.link||('https://www.justwatch.com/us/search?q='+q(t.title))) };
 }
-function toggleSave(id){
-  haptic('LIGHT'); state.saved.has(id)?state.saved.delete(id):state.saved.add(id); persistSaved();
-  const b=document.getElementById('saveBtn'); if(b) b.textContent=state.saved.has(id)?'✓ Saved':'＋ Save';
-  toast(state.saved.has(id)?'Saved to your list 🔖':'Removed');
+function pickHTML(t,d,ctx){
+  var w=watchFor(t,d), r=state.ratings[t.key], saved=!!state.saved[t.key];
+  var meta='';
+  if(t.year) meta+='<span class="badge">'+esc(t.year)+'</span>';
+  if(t.kind==='tv') meta+='<span class="badge">Series'+(d.seasons?' · '+d.seasons+' season'+(d.seasons>1?'s':''):'')+'</span>';
+  if(d.runtime) meta+='<span class="badge">'+(d.runtime>=60?Math.floor(d.runtime/60)+'h '+(d.runtime%60?d.runtime%60+'m':''):d.runtime+'m')+'</span>';
+  if(d.cert) meta+='<span class="badge">'+esc(d.cert)+'</span>';
+  if(t.vote) meta+='<span class="badge star">★ '+Number(t.vote).toFixed(1)+'</span>';
+  if(w.provider) meta+='<span class="badge svc">'+(w.mine?'On your ':'On ')+esc(w.provider.name)+'</span>';
+  var whyLine=d.tagline?'<span class="tag">“'+esc(d.tagline)+'”</span>':(d.genres.length?esc(d.genres.slice(0,3).join(' · ')):'A '+(t.kind==='tv'?'series':'movie')+' people rate '+Number(t.vote).toFixed(1)+' out of 10.');
+  var stars=''; for(var i=1;i<=5;i++) stars+='<button type="button" class="star'+(r&&r.n>=i?' on':'')+'" aria-label="'+i+' star" onclick="rate(\''+t.key+'\','+i+')">★</button>';
+  return '<div class="pick pop">'
+   +'<div class="hero"><div class="poster"><img class="pimg" alt=""><div class="sheen"></div></div>'
+   +'<div class="info"><div class="title">'+esc(t.title)+'</div><div class="meta">'+meta+'</div>'
+   +'<div class="why"><b>'+esc(ctx.why)+'</b>'+whyLine+'</div></div></div>'
+   +'<button class="btn shuffle-btn" style="padding:14px" onclick="watchNow(\''+t.key+'\')">▶ '+(w.provider?'Watch on '+esc(w.provider.name):'Find where to watch')+'</button>'
+   +'<div class="quick"><button class="btn secondary" onclick="'+ctx.again+'">🔀 Shuffle again</button><button class="btn secondary" onclick="notTonight(\''+t.key+'\')">👎 Not for me</button><button class="btn secondary" id="saveBtn" onclick="toggleSave(\''+t.key+'\')">'+(saved?'✓ Saved':'🔖 Save')+'</button></div>'
+   +'<div class="syn">'+esc(d.overview||t.overview||'')+'</div>'
+   +'<div class="links">'+(d.imdb?'<button type="button" class="pill" onclick="openURL(\'https://www.imdb.com/title/'+esc(d.imdb)+'/\')">Cast, crew & reviews on IMDb ›</button>':'<span></span>')+'<button type="button" class="pill" style="color:var(--dim)" onclick="sharePick(\''+t.key+'\')">↗ Share</button></div>'
+   +'<div class="rate"><span class="lbl">'+(r?'Your rating':'Seen it? Rate it — Moodie learns')+'</span><div class="stars">'+stars+'</div></div>'
+   +'<div class="credit" style="margin-top:0">Artwork & synopsis: TMDB. '+JW_CREDIT+'</div>'
+   +'<div class="grow"></div><div class="bottom"></div></div>';
 }
-/* ---------- Where to watch ----------
-   Moodie ships a curated catalog, not a licensed availability feed, so it must never
-   claim a title is streaming on a particular service right now — licensing moves
-   constantly. The button hands off to JustWatch, which lists every service the title
-   is actually on today (stream / rent / buy) for the user's region. */
-function searchTitle(t){
-  return String((t&&t.t)||'')
-    .replace(/[‐‑‒–—]/g,'-')
-    .replace(/[‘’]/g,"'")
-    .replace(/[“”]/g,'"')
-    .trim();
+function mountPick(host,t,d,ctx,prefix){
+  _picks[t.key]={t:t,d:d}; haptic('HEAVY');
+  host.innerHTML=(prefix||'')+pickHTML(t,d,ctx);
+  if(t.poster){ var el=host.querySelector('.pick .poster'), img=el.querySelector('.pimg'); img.onload=function(){ el.classList.add('has-img'); }; img.src=t.poster.replace('w342','w500'); }
 }
-/* Fallback only: used when the TMDB /watch/providers lookup has not landed or returned
-   no regional link (offline, rate-limited, or the title has no US availability entry). */
-function whereToWatchURL(t){ return 'https://www.justwatch.com/us/search?q='+encodeURIComponent(searchTitle(t)); }
-function watchNow(id){
-  var t=TITLES.find(function(x){ return x.id===id; });
-  if(!t) return;
-  haptic('MEDIUM');
-  /* t._link is TMDB's JustWatch deep link for this exact title, cached by hydrate(). */
-  openURL(t._link||whereToWatchURL(t));
+function renderPick(t,d,ctx){ mountPick(document.getElementById('resultBody'),t,d,ctx,''); }
+function watchNow(key){
+  var p=_picks[key]; if(!p) return; haptic('MEDIUM');
+  var w=watchFor(p.t,p.d); openAppOrWeb(w.scheme,w.web);
 }
-function groupCTA(){ setTab('groups'); }
+function notTonight(key){
+  var p=_picks[key]; if(!p) return; haptic('LIGHT');
+  state.noped[key]={title:p.t.title,year:p.t.year,kind:p.t.kind,id:p.t.id}; persist('noped'); toast('Got it — never again');
+  if(pair&&pair.result&&pair.result.key===key) pairCompute(); else doShuffle();
+}
+function rate(key,n){
+  var p=_picks[key]; if(!p) return; haptic('LIGHT');
+  state.ratings[key]={n:n,title:p.t.title,kind:p.t.kind,id:p.t.id,genres:p.t.genres,at:Date.now()};
+  state.seen[key]=state.seen[key]||{title:p.t.title,year:p.t.year,kind:p.t.kind,id:p.t.id,poster:p.t.poster};
+  persist('ratings'); persist('seen');
+  document.querySelectorAll('.rate .star').forEach(function(s,i){ s.classList.toggle('on',i<n); });
+  var l=document.querySelector('.rate .lbl'); if(l) l.textContent='Your rating';
+  toast(n>=4?'Nice — more like this 👍':'Noted — fewer like this');
+}
+function toggleSave(key){
+  var p=_picks[key]; haptic('LIGHT');
+  if(state.saved[key]) delete state.saved[key]; else if(p) state.saved[key]={title:p.t.title,year:p.t.year,kind:p.t.kind,id:p.t.id,poster:p.t.poster,overview:p.t.overview,vote:p.t.vote,genres:p.t.genres};
+  persist('saved'); var b=document.getElementById('saveBtn'); if(b) b.textContent=state.saved[key]?'✓ Saved':'🔖 Save';
+  toast(state.saved[key]?'Saved to your list 🔖':'Removed'); if(document.getElementById('saved').classList.contains('active')) renderSaved();
+}
+function sharePick(key){
+  var p=_picks[key]; if(!p) return; var text='Moodie says watch “'+p.t.title+'” tonight 🍿';
+  try{ if(NP.Share&&NP.Share.share){ NP.Share.share({title:'Moodie',text:text,dialogTitle:'Share your pick'}); return; } }catch(e){}
+  try{ if(navigator.share){ navigator.share({text:text}); return; } }catch(e){} toast('Shared '+p.t.title);
+}
 
-/* ---------- Together: pass-the-phone mood overlap (serverless) ---------- */
-var RATING_RANK={'TV-Y':1,'TV-Y7':1,'TV-G':1,'G':1,'TV-PG':2,'PG':2,'PG-13':3,'TV-14':3,'R':4,'TV-MA':4,'NC-17':5};
-function ratingRank(r){ return RATING_RANK[String(r||'').replace(/\u2011/g,'-')]||3; }
-function esc(x){ return String(x==null?'':x).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+/* ---------- Together: pass the phone around ---------- */
+var PAL='Popcorn Pal';
 var pair=null;
-function renderGroups(){ pairSetup(); }
+function palName(i){ return (pair&&pair.names[i])||(state.pals[i])||(PAL+' '+(i+1)); }
 function pairSetup(){
-  pair={ count:(pair&&pair.count)||2, cap:(pair&&pair.cap)||0, names:(pair&&pair.names)||[], people:[], idx:0, result:null };
+  pair={ count:(pair&&pair.count)||Math.max(2,Math.min(6,state.pals.length||2)), cap:(pair&&pair.cap)||'', names:(pair&&pair.names)||state.pals.slice(), people:[], idx:0, result:null };
   var b=document.getElementById('groupsBody');
-  var caps=[['0','No limit'],['2','Kid‑safe · up to PG'],['3','Family · up to PG‑13']];
-  var capOpts=caps.map(function(c){ return '<option value="'+c[0]+'"'+(String(pair.cap)===c[0]?' selected':'')+'>'+c[1]+'</option>'; }).join('');
+  var caps=[['','No limit'],['PG','Kid-safe · up to PG'],['PG-13','Family · up to PG-13']];
+  var capOpts=caps.map(function(c){ return '<option value="'+c[0]+'"'+(pair.cap===c[0]?' selected':'')+'>'+c[1]+'</option>'; }).join('');
   var names='';
-  for(var i=0;i<pair.count;i++){ names+='<input class="nm" data-i="'+i+'" placeholder="Person '+(i+1)+' (optional)" value="'+esc(pair.names[i]||'')+'" style="width:100%;margin-top:8px;padding:12px 14px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);color:#fff;font-size:15px;font-family:var(--font)">'; }
+  for(var i=0;i<pair.count;i++) names+='<input class="input nm" data-i="'+i+'" placeholder="'+PAL+' '+(i+1)+' (name, optional)" value="'+esc(pair.names[i]||'')+'" style="margin-top:8px">';
   b.innerHTML=
-    '<div class="card"><h3 style="font-size:19px">Everyone picks their mood</h3>'
-   +'<p>Pass the phone around — each person taps how they want to feel, then Moodie finds the one thing you’ll all enjoy. No accounts, works offline.</p></div>'
-   +'<div class="section-title">Who’s watching?</div>'
-   +'<div class="card"><div style="display:flex;align-items:center;justify-content:space-between">'
-   +'<div class="name" style="font-size:16px">Number of people</div>'
-   +'<div style="display:flex;align-items:center;gap:14px"><button class="icon-btn" onclick="pairCount(-1)">–</button>'
-   +'<span style="font-weight:800;font-size:20px;min-width:22px;text-align:center">'+pair.count+'</span>'
-   +'<button class="icon-btn" onclick="pairCount(1)">+</button></div></div>'
-   +'<div id="pairNames">'+names+'</div></div>'
+    '<div class="card"><h3 style="font-size:19px">Everyone picks a feeling</h3><p>Pass the phone around. Each Popcorn Pal taps how they want to feel tonight, then Moodie finds the one thing you’ll all enjoy — and that nobody has marked as seen. No accounts.</p></div>'
+   +'<div class="section-title">Who’s on the couch?</div>'
+   +'<div class="card"><div style="display:flex;align-items:center;justify-content:space-between"><div class="name" style="font-size:16px">Popcorn Pals</div>'
+   +'<div style="display:flex;align-items:center;gap:14px"><button class="icon-btn" aria-label="Fewer" onclick="pairCount(-1)">–</button><span style="font-weight:800;font-size:20px;min-width:22px;text-align:center">'+pair.count+'</span><button class="icon-btn" aria-label="More" onclick="pairCount(1)">+</button></div></div>'
+   +'<div id="pairNames">'+names+'</div><p class="hint" style="text-align:left;margin-top:8px">Names are remembered for next time.</p></div>'
    +'<div class="section-title">Content limit (optional)</div>'
-   +'<div class="card"><select id="pairCap" style="width:100%;padding:12px 14px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);color:#fff;font-size:15px;font-family:var(--font)">'+capOpts+'</select>'
-   +'<p style="margin-top:8px">Keeps picks appropriate when kids are watching.</p></div>'
+   +'<div class="card"><select id="pairCap" class="input">'+capOpts+'</select><p style="margin-top:8px">Keeps picks appropriate when kids are watching.</p></div>'
    +'<button class="btn shuffle-btn" style="margin-top:16px" onclick="pairBegin()">Start picking →</button>';
 }
-function pairReadInputs(){ var ns=document.querySelectorAll('#pairNames .nm'); if(ns.length){ pair.names=[]; ns.forEach(function(el){ pair.names[+el.dataset.i]=el.value.trim(); }); } var c=document.getElementById('pairCap'); if(c) pair.cap=+c.value; }
+function pairReadInputs(){ var ns=document.querySelectorAll('#pairNames .nm'); if(ns.length){ pair.names=[]; ns.forEach(function(el){ pair.names[+el.dataset.i]=el.value.trim(); }); } var c=document.getElementById('pairCap'); if(c) pair.cap=c.value; }
 function pairCount(d){ pairReadInputs(); pair.count=Math.max(2,Math.min(6,pair.count+d)); pairSetup(); }
-function pairBegin(){ pairReadInputs(); haptic('LIGHT'); pair.people=[]; pair.idx=0; pairPerson(); }
+function pairBegin(){ pairReadInputs(); state.pals=pair.names.filter(Boolean); persist('pals'); haptic('LIGHT'); pair.people=[]; pair.idx=0; pairPerson(); }
 function pairPerson(){
-  var i=pair.idx, nm=(pair.names[i]||('Person '+(i+1)));
+  var i=pair.idx, nm=palName(i);
   var b=document.getElementById('groupsBody');
-  var grid=MOODS.map(function(m){ return '<button type="button" class="mood" aria-pressed="false" onclick="pairToggle(this,\''+m.id+'\')"><div class="glow" style="background:'+m.c+'"></div><span class="em">'+m.em+'</span><span class="lbl">'+m.lbl+'</span></button>'; }).join('');
+  var grid=MOODS.map(function(m){ return '<button type="button" class="mood" aria-pressed="false" onclick="pairToggle(this,\''+m.id+'\')"><div class="glow" style="background:'+m.c+'"></div><span class="em">'+m.em+'</span><span class="txt"><span class="lbl">'+m.lbl+'</span><span class="hint2">'+m.hint+'</span></span></button>'; }).join('');
   b.innerHTML=
-    '<div style="display:flex;align-items:center;justify-content:space-between;margin:2px 2px 8px"><div class="section-title" style="margin:0">Person '+(i+1)+' of '+pair.count+'</div><div style="font-size:13px;color:var(--dim)">Pass the phone 📲</div></div>'
-   +'<div class="card" style="text-align:center"><div style="font-weight:800;font-size:20px">'+esc(nm)+', how do you want to feel?</div><div style="font-size:13px;color:var(--muted);margin-top:4px">Tap a couple — the more you pick, the better the match.</div></div>'
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin:2px 2px 8px"><div class="section-title" style="margin:0">'+PAL+' '+(i+1)+' of '+pair.count+'</div><div style="font-size:13px;color:var(--dim)">Pass the phone 📲</div></div>'
+   +'<div class="card" style="text-align:center"><div style="font-weight:800;font-size:20px">'+esc(nm)+', tonight you want to…</div><div style="font-size:13px;color:var(--muted);margin-top:4px">Tap a couple — the more you pick, the better the match.</div></div>'
    +'<div class="mood-grid" style="margin-top:12px">'+grid+'</div>'
-   +'<div id="pairSel" style="text-align:center;font-size:13px;color:var(--dim);margin-top:12px">No moods picked — open to anything.</div>'
-   +'<button class="btn" style="margin-top:10px" onclick="pairNext()">'+(i+1<pair.count?'Next person →':'See our pick →')+'</button>';
+   +'<div id="pairSel" class="hint">Nothing picked — up for anything.</div>'
+   +'<button class="btn" style="margin-top:10px" onclick="pairNext()">'+(i+1<pair.count?'Next Pal →':'See our pick →')+'</button>';
   pair._cur=new Set();
 }
-function pairToggle(el,id){ haptic('LIGHT'); if(pair._cur.has(id)){ pair._cur.delete(id); el.classList.remove('selected'); } else { pair._cur.add(id); el.classList.add('selected'); } el.setAttribute('aria-pressed',pair._cur.has(id)?'true':'false'); var ssel=document.getElementById('pairSel'); if(ssel) ssel.textContent = pair._cur.size ? (pair._cur.size+' picked') : 'No moods picked — open to anything.'; }
-function pairNext(){ pair.people.push({ name:(pair.names[pair.idx]||('Person '+(pair.idx+1))), moods:new Set(pair._cur) }); pair.idx++; if(pair.idx<pair.count){ pairPerson(); } else { pairCompute(false); } }
-function personSat(t,moods){ return moods.size===0 || t.moods.some(function(m){ return moods.has(m); }); }
-function moodById(id){ return MOODS.find(function(x){ return x.id===id; }); }
-function matchedMood(t,moods){ for(var i=0;i<t.moods.length;i++){ if(moods.has(t.moods[i])) return moodById(t.moods[i]); } return null; }
-function pairScore(titles){
-  return titles.map(function(t){
-    var who=pair.people.map(function(p){
-      var ok=personSat(t,p.moods), any=p.moods.size===0;
-      var want=null; if(p.moods.size){ want=moodById([].concat.apply([],[Array.from(p.moods)])[0]); }
-      return { name:p.name, ok:ok, any:any, mood:ok?matchedMood(t,p.moods):null, want:want };
-    });
-    return { t:t, who:who, n:who.filter(function(w){return w.ok;}).length };
-  });
+function pairToggle(el,id){ haptic('LIGHT'); if(pair._cur.has(id)){ pair._cur.delete(id); el.classList.remove('selected'); } else { pair._cur.add(id); el.classList.add('selected'); } el.setAttribute('aria-pressed',pair._cur.has(id)?'true':'false'); var s=document.getElementById('pairSel'); if(s) s.textContent=pair._cur.size?(pair._cur.size+' picked'):'Nothing picked — up for anything.'; }
+function pairNext(){ pair.people.push({name:palName(pair.idx),moods:new Set(pair._cur)}); pair.idx++; if(pair.idx<pair.count) pairPerson(); else pairCompute(); }
+/* The overlap: moods every Pal shares if there are any, else everything anyone picked. */
+function pairMoods(){
+  var sets=pair.people.map(function(p){ return p.moods; }).filter(function(s){ return s.size; });
+  if(!sets.length) return new Set();
+  var common=Array.from(sets[0]).filter(function(id){ return sets.every(function(s){ return s.has(id); }); });
+  if(common.length) return new Set(common);
+  var all=new Set(); sets.forEach(function(s){ s.forEach(function(id){ all.add(id); }); }); return all;
 }
-function pairCompute(widen){
-  var cap=pair.cap;
-  var pool=TITLES.filter(function(t){ return (widen || state.services.has(t.svc)); });
-  if(cap) pool=pool.filter(function(t){ return ratingRank(t.r)<=cap; });
-  if(!pool.length) pool=TITLES.filter(function(t){ return !cap || ratingRank(t.r)<=cap; });
-  if(!pool.length) pool=TITLES.slice();
-  var scored=pairScore(pool);
-  var best=Math.max.apply(null,scored.map(function(x){return x.n;}));
-  var top=scored.filter(function(x){return x.n===best;});
-  if(pair._last && top.length>1) top=top.filter(function(x){return x.t.id!==pair._last;});
-  var pick=top[Math.floor(Math.random()*top.length)]; pair._last=pick.t.id;
-  pair.result={ pick:pick, best:best, widened:!!widen };
-  pairReveal();
+var _pairSeq=0;
+function pairCompute(){
+  var seq=++_pairSeq, b=document.getElementById('groupsBody'), moods=pairMoods();
+  b.innerHTML=spinnerHTML('Finding the one thing for all '+pair.count+' of you…');
+  pickTitle(moods,{cap:pair.cap||null}).then(function(t){ return details(t).then(function(d){ return {t:t,d:d}; }); })
+    .then(function(r){ if(seq!==_pairSeq) return; state.recent.push(r.t.key); if(state.recent.length>25) state.recent.shift(); pair.result={key:r.t.key}; pairReveal(r.t,r.d,moods); })
+    .catch(function(){ if(seq!==_pairSeq) return; b.innerHTML='<div class="empty"><div class="big">📡</div><p>Nothing came back — check your connection.</p><button class="btn secondary small" style="max-width:220px;margin:0 auto" onclick="pairCompute()">Try again</button></div>'; });
 }
-function pairReveal(){
-  var res=pair.result; if(!res){ pairSetup(); return; }
-  haptic('HEAVY');
-  var pick=res.pick, best=res.best, N=pair.count, t=pick.t;
-  var head = best===N ? ('All '+N+' of you get what you wanted 🎉') : (best+' of '+N+' happy — closest match tonight');
-  var rows=pick.who.map(function(w){
-    var label = w.any ? '🤝 up for anything' : (w.ok ? (w.mood.em+' '+w.mood.lbl) : (w.want ? (w.want.em+' '+w.want.lbl) : '—'));
-    return '<div class="rowitem" style="cursor:default;padding:10px 0"><div class="av" style="background:'+(w.ok?'#9BE04A':'#3a2f60')+';color:#151024">'+(w.ok?'✓':'·')+'</div><div class="grow"><div class="name">'+esc(w.name)+'</div><div class="desc">'+label+(w.ok?'':' · not tonight')+'</div></div></div>';
+function pairReveal(t,d,moods){
+  var who=pair.people.map(function(p){
+    var hit=Array.from(p.moods).filter(function(id){ return moods.has(id); }).map(moodById)[0];
+    return '<span class="chip'+(hit||!p.moods.size?'':' x')+'">'+(hit?hit.em+' ':(p.moods.size?'· ':'🤝 '))+esc(p.name)+'</span>';
   }).join('');
-  var b=document.getElementById('groupsBody');
-  b.innerHTML=
-    '<div class="section-title">Your shared pick</div>'
-   +'<div class="poster big pop" id="prposter" style="background:'+t.g+'"><div class="art">'+t.em+'</div><img class="pimg" alt=""><div class="sheen"></div>'
-   +'<div class="pmeta"><div class="ptitle" style="font-size:22px">'+t.t+'</div><div class="psub"><span class="badge svc">'+SVC_BADGE+'</span><span class="badge rating">'+t.r+'</span><span class="badge rating">'+t.rt+'</span></div></div></div>'
-   +'<div class="why"><b>'+head+'</b></div>'
-   +'<div class="card" style="margin-top:12px"><div class="section-title" style="margin:0 0 4px">Why this one</div>'+rows+'</div>'
-   +(best<N ? '<div class="card"><p>'+(res.widened?'Even across every service, ':'')+'no single title lands with everyone tonight.</p>'+(res.widened?'':'<button class="btn secondary small" style="margin-top:10px" onclick="pairCompute(true)">🌐 Widen to all services</button>')+'</div>' : '')
-   +'<div class="synopsis" id="prsyn" style="display:none"></div>'
-   +'<button class="btn" style="margin-top:14px" onclick="watchNow('+t.id+')">🍿 Where to watch</button>'
-   +'<div class="hint" style="margin-top:8px">Opens a live availability search — streaming rights change often.</div>'
-   +'<div class="credit">'+JW_CREDIT+' Artwork and synopsis from TMDB.</div>'
-   +'<div style="display:flex;gap:10px;margin-top:10px"><button class="btn secondary" onclick="pairCompute('+(res.widened?'true':'false')+')">🔀 Another pick</button>'
-   +'<button class="btn secondary" onclick="pairSetup()">↺ New round</button></div>';
-  hydrate(document.getElementById('prposter'),t,function(desc){ var el=document.getElementById('prsyn'); if(!el) return; if(desc){ el.textContent=desc; el.style.display=''; } });
+  var head='<div class="topbar" style="padding:0 0 6px"><button type="button" class="back" onclick="pairSetup()">‹ New round</button><div class="sub">Your shared pick</div><div style="width:44px"></div></div>'
+   +'<div class="chips" style="padding:0 0 10px">'+who+'</div>';
+  mountPick(document.getElementById('groupsBody'),t,d,{why:'Because you all want to '+moodPhrase(moods),again:'pairCompute()'},head);
 }
 
 /* ---------- Saved ---------- */
 function renderSaved(){
-  const g=document.getElementById('savedGrid'); const empty=document.getElementById('savedEmpty');
-  const items=[...state.saved].map(id=>TITLES.find(t=>t.id===id)).filter(Boolean);
+  var g=document.getElementById('savedGrid'), empty=document.getElementById('savedEmpty');
+  var items=Object.keys(state.saved).map(function(k){ var s=state.saved[k]; s.key=k; return s; });
   g.innerHTML=''; empty.style.display=items.length?'none':'block';
-  items.forEach(t=>{ g.appendChild(posterMini(t,true,function(d,tt){ watchNow(tt.id); })); });
+  items.forEach(function(s){ g.appendChild(tileFor(s,function(el,t){ openSaved(t.key); })); });
+}
+function openSaved(key){
+  var s=state.saved[key]; if(!s) return; var t={key:key,kind:s.kind,id:s.id,title:s.title,year:s.year,poster:s.poster,overview:s.overview||'',vote:s.vote||0,genres:s.genres||[]};
+  showScreen('result'); document.getElementById('resultHead').textContent='Saved';
+  document.getElementById('resultBody').innerHTML=spinnerHTML('One sec…');
+  details(t).then(function(d){ renderPick(t,d,{why:'From your saved list',again:'setTab(\'saved\')'}); });
 }
 
-/* ---------- Profile ---------- */
+/* ---------- You ---------- */
 function renderProfile(){
-  buildServiceChips(document.getElementById('profileSvc'));
-  var at=document.getElementById('attribution');
-  if(at) at.textContent=tmdbNote()+' '+ATTRIBUTION+' '+JW_CREDIT;
+  var b=document.getElementById('profileBody');
+  var seenN=Object.keys(state.seen).length, nopeN=Object.keys(state.noped).length, rated=Object.keys(state.ratings).map(function(k){ var r=state.ratings[k]; r.key=k; return r; }).sort(function(a,b){ return b.at-a.at; });
+  b.innerHTML=
+    '<div class="card" style="display:flex;align-items:center;gap:14px"><div class="mascot" style="width:56px;height:56px"><div class="eye l"></div><div class="eye r"></div><div class="smile"></div></div>'
+   +'<div style="flex:1"><div style="font-weight:800;font-size:18px">Moodie</div><div style="font-size:13px;color:var(--muted)">Free — no account, no purchases. '+seenN+' seen · '+rated.length+' rated · '+Object.keys(state.saved).length+' saved</div></div></div>'
+   +'<div class="section-title">My services</div>'
+   +'<div class="card"><input class="search" id="profSvcSearch" placeholder="Search any service" autocomplete="off" oninput="renderServices(\'profSvcGrid\',this.value)"><div class="counter" id="profSvcCount"></div><div class="svcgrid" id="profSvcGrid"></div></div>'
+   +'<div class="section-title">Picks</div>'
+   +'<div class="card">'
+   +'<div class="rowitem"><div class="grow"><div class="name">Include things I’ve seen</div><div class="desc">Off = Moodie only suggests new-to-you titles</div></div><button type="button" class="toggle'+(state.includeSeen?' on':'')+'" role="switch" aria-checked="'+state.includeSeen+'" onclick="toggleIncludeSeen()"></button></div>'
+   +'<button type="button" class="rowitem" onclick="showScreen(\'ob3\');buildTaste()"><div class="grow"><div class="name">Mark what I’ve seen</div><div class="desc">'+seenN+' titles marked</div></div><span class="chev">›</span></button>'
+   +'<button type="button" class="rowitem" onclick="clearList(\'noped\')"><div class="grow"><div class="name">Not-for-me list</div><div class="desc">'+(nopeN?nopeN+' titles Moodie will never suggest · tap to clear':'Empty — thumbs-down a pick to add to it')+'</div></div>'+(nopeN?'<span class="chev">✕</span>':'')+'</button>'
+   +'</div>'
+   +'<div class="section-title">My ratings</div>'
+   +'<div class="card">'+(rated.length?rated.slice(0,12).map(function(r){ return '<div class="rowitem"><div class="av" style="background:var(--surface2);color:#fff;font-size:13px">'+r.n+'★</div><div class="grow"><div class="name">'+esc(r.title)+'</div><div class="desc">'+(r.kind==='tv'?'Series':'Movie')+'</div></div></div>'; }).join(''):'<p>Rate a pick with the stars and Moodie leans toward what you love.</p>')+'</div>'
+   +'<div class="section-title">Popcorn Pals</div>'
+   +'<div class="card"><p>The people you watch with. Their names are pre-filled in Together.</p><div class="chips" id="palChips" style="margin-top:10px"></div>'
+   +'<div style="display:flex;gap:8px;margin-top:10px"><input class="input" id="palInput" placeholder="Add a Pal" maxlength="24"><button class="btn small" style="width:auto" onclick="addPal()">Add</button></div></div>'
+   +'<div class="section-title">About</div>'
+   +'<div class="card">'
+   +'<button type="button" class="rowitem" onclick="openURL(\'https://jonathanscribbles.com/moodie#privacy\')"><div class="grow"><div class="name">Privacy Policy</div></div><span class="chev">›</span></button>'
+   +'<button type="button" class="rowitem" onclick="openURL(\'https://jonathanscribbles.com/moodie#support\')"><div class="grow"><div class="name">Support</div></div><span class="chev">›</span></button>'
+   +'<button type="button" class="rowitem" onclick="openURL(\'https://jonathanscribbles.com\')"><div class="grow"><div class="name">More from Jonathan Scribbles</div><div class="desc">jonathanscribbles.com</div></div><span class="chev">›</span></button>'
+   +'<p class="credit">'+tmdbNote()+' '+ATTRIBUTION+' '+JW_CREDIT+'</p></div>'
+   +'<div class="brand" style="padding-bottom:20px">Made with 🍿 by <button type="button" onclick="openURL(\'https://jonathanscribbles.com\')">jonathanscribbles.com</button></div>';
+  renderServices('profSvcGrid',''); renderPals();
 }
+function toggleIncludeSeen(){ state.includeSeen=!state.includeSeen; persist('includeSeen'); haptic('LIGHT'); renderProfile(); }
+function clearList(which){ if(!Object.keys(state[which]).length) return; haptic('LIGHT'); state[which]={}; persist(which); toast('Cleared'); renderProfile(); }
+function renderPals(){
+  var c=document.getElementById('palChips'); if(!c) return;
+  c.innerHTML=state.pals.length?state.pals.map(function(n,i){ return '<button type="button" class="chip" onclick="removePal('+i+')">'+esc(n)+' <span style="color:var(--dim)">✕</span></button>'; }).join(''):'<span class="hint" style="margin:0">No Pals yet.</span>';
+}
+function addPal(){ var i=document.getElementById('palInput'); var n=(i.value||'').trim(); if(!n) return; if(state.pals.length>=6){ toast('Six Pals is a full couch'); return; } state.pals.push(n); persist('pals'); i.value=''; haptic('LIGHT'); renderPals(); }
+function removePal(i){ state.pals.splice(i,1); persist('pals'); renderPals(); }
 
-/* ---------- Toast ---------- */
-let toastT; function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(function(){ t.classList.remove('show'); },1900); }
-
-/* ---------- init ---------- */
+/* ---------- Boot: paint first, then restore, then decide where to open ---------- */
+function boot(){
+  buildMoods(); renderServices('svcGrid','');
+  var keys=['services','seen','noped','ratings','saved','pals','includeSeen','onboarded'];
+  Promise.all(keys.map(function(k){ return Store.get(k); })).then(function(vals){
+    vals.forEach(function(v,i){ var k=keys[i]; if(v==null) return;
+      if(k==='services'&&Array.isArray(v)) state.services=new Set(v.map(Number).filter(Boolean));
+      else if(k==='pals'&&Array.isArray(v)) state.pals=v.filter(function(x){ return typeof x==='string'; });
+      else if(k==='includeSeen'||k==='onboarded') state[k]=!!v;
+      else if(v&&typeof v==='object'&&!Array.isArray(v)) state[k]=v;
+    });
+    renderServices('svcGrid',''); buildMoods();
+    if(state.onboarded) setTab('home');
+  });
+  loadProviders().then(function(){ renderServices('svcGrid',document.getElementById('svcSearch').value); if(document.getElementById('profSvcGrid')) renderServices('profSvcGrid',''); });
+}
 boot();
 </script>
 </body>
