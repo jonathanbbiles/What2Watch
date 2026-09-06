@@ -1,1 +1,9 @@
-Posters and synopses are back — now sourced properly from TMDB, with where-to-watch links powered by JustWatch. No streaming-service logos, no scraped artwork. Plus the same one-tap mood picking and pass-the-phone group picks.
+A whole new Moodie.
+
+• Picks from thousands of movies and shows, on the services you actually pay for — and never something you've marked as seen.
+• Tell Moodie what you've already watched: scroll or search the catalog and tap.
+• One-screen pick: poster, why it fits your mood, synopsis, IMDb, and a Watch button that opens the streaming app itself.
+• Rate picks with stars and Moodie leans toward what you love. Thumbs-down anything you never want to see again.
+• Add any streaming service, not just the big ones.
+• Watch Together now uses Popcorn Pals — name the people on your couch once and they're remembered.
+• Everything fits the screen properly, and the mascot finally moves.
