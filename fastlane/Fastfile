@@ -305,8 +305,9 @@ def deliver_listing(api_key:, app_identifier:, app_version:, submit:)
     screenshot_processing_timeout: 1200,
 
     submit_for_review: submit,
-    # Release on Jonathan's say-so, not the instant Apple approves.
-    automatic_release: false,
+    # Release the moment Apple approves. Manual release is what left 1.0 approved but
+    # invisible for a week (nobody pressed the button) — an update should just ship.
+    automatic_release: true,
 
     # Non-interactive: no HTML preview, no "does this look right? (y/n)" on a build machine
     # with nothing attached to stdin.
