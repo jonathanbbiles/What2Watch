@@ -62,9 +62,6 @@ workflows:
         ASC_USES_ENCRYPTION: "false"
         ASC_CONTENT_RIGHTS: "true"
         ASC_USES_IDFA: "false"
-        # TEMPORARY — re-armed 2026-09-06 to resubmit 1.1 with the new screenshots (no Codemagic
-        # API token available to pass it per build). Remove this line right after the submission lands.
-        SUBMIT_FOR_REVIEW: "true"
         # SUBMIT_FOR_REVIEW is otherwise intentionally NOT declared here.
         #
         # The post-publish listing step below submits only when SUBMIT_FOR_REVIEW=true, and
