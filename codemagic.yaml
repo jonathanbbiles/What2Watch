@@ -96,6 +96,9 @@ workflows:
           rm -f fastlane/screenshots/en-US/*.png
           node store-assets/render_shots_1_1.mjs
           ls -la fastlane/screenshots/en-US
+          # Moodie is universal: no 13" iPad set = an App Store version that cannot be
+          # submitted. Fail here, before anything uploads, if the renderer did not make one.
+          ls fastlane/screenshots/en-US/ipad-13-*.png >/dev/null 2>&1 || { echo "FATAL: no iPad 13-inch screenshots rendered"; exit 1; }
           export LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8
           ruby scripts/lint_listing.rb
       - name: Inject the TMDB API key (secure var -> placeholder; never in git)
@@ -333,7 +336,7 @@ workflows:
           # currently editable in App Store Connect — which is literally "1.0", not "1.0.0".
           # deliver attaches the build to that editable version; a build stamped 1.0.0 can never
           # attach to ASC version 1.0, and the submit step would just wait until it times out.
-          MARKETING_VERSION="1.1"
+          MARKETING_VERSION="1.2"
           # Build number is a UTC timestamp: always increases, never collides, and needs no
           # network round-trip to App Store Connect to work out "the last one plus one".
           BUILD_NUMBER="$(date -u +%Y%m%d%H%M)"
@@ -354,6 +357,40 @@ workflows:
             /usr/libexec/PlistBuddy -c "Add :LSApplicationQueriesSchemes: string $s" "$PLIST"
           done
           echo "LSApplicationQueriesSchemes = $(/usr/libexec/PlistBuddy -c "Print :LSApplicationQueriesSchemes" "$PLIST" | tr -d '\n' | tr -s ' ')"
+      - name: iPad orientations — all four, stated explicitly, read back
+        script: |
+          set -euo pipefail
+          PLIST=ios/App/App/Info.plist
+          PBX=ios/App/App.xcodeproj/project.pbxproj
+          # 1.2 (Jonathan, 2026-10-11): Moodie must fill the iPad and the iPhone Duo in every
+          # orientation, with a layout that changes when the iPad turns (www/index.html,
+          # "Big screens"). Until now the iPad orientations were whatever Capacitor's template
+          # shipped. A universal build that does not list all four in
+          # UISupportedInterfaceOrientations~ipad is rejected at upload (ITMS-90474) AFTER a
+          # green build — so write them here and fail the build if they are not there.
+          # The iPhone key (UISupportedInterfaceOrientations) is deliberately left as it is.
+          /usr/libexec/PlistBuddy -c "Delete :UISupportedInterfaceOrientations~ipad" "$PLIST" 2>/dev/null || true
+          /usr/libexec/PlistBuddy -c "Add :UISupportedInterfaceOrientations~ipad array" "$PLIST"
+          for o in UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight; do
+            /usr/libexec/PlistBuddy -c "Add :UISupportedInterfaceOrientations~ipad: string $o" "$PLIST"
+          done
+          echo "--- read back ---"
+          IPAD="$(/usr/libexec/PlistBuddy -c "Print :UISupportedInterfaceOrientations~ipad" "$PLIST")"
+          echo "UISupportedInterfaceOrientations~ipad = $(echo "$IPAD" | tr -d '\n' | tr -s ' ')"
+          echo "UISupportedInterfaceOrientations      = $(/usr/libexec/PlistBuddy -c "Print :UISupportedInterfaceOrientations" "$PLIST" 2>/dev/null | tr -d '\n' | tr -s ' ' || echo '(unset)')"
+          for o in UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight; do
+            echo "$IPAD" | grep -qx "[[:space:]]*$o" || { echo "FATAL: iPad orientation $o missing"; exit 1; }
+          done
+          [ "$(echo "$IPAD" | grep -c 'UIInterfaceOrientation')" -eq 4 ] || { echo "FATAL: iPad orientation list is not exactly four"; exit 1; }
+          # The universal device family set before cap sync must still be there.
+          grep -q 'TARGETED_DEVICE_FAMILY = "1,2";' "$PBX" || { echo "FATAL: TARGETED_DEVICE_FAMILY is no longer \"1,2\""; exit 1; }
+          if /usr/libexec/PlistBuddy -c "Print :UIDeviceFamily" "$PLIST" >/dev/null 2>&1; then
+            echo "FATAL: Info.plist pins UIDeviceFamily; it must come from TARGETED_DEVICE_FAMILY (1,2)"; exit 1
+          fi
+          # iPad multitasking: without UIRequiresFullScreen, all four orientations also let the
+          # app run in Split View / Slide Over, which the width-based CSS handles (<600pt = the
+          # iPhone layout). Say which way this build went.
+          echo "UIRequiresFullScreen = $(/usr/libexec/PlistBuddy -c "Print :UIRequiresFullScreen" "$PLIST" 2>/dev/null || echo '(unset -> multitasking allowed)')"
       - name: Set up code signing — apply the stored profile + the ONE shared cert (no mint, no revoke)
         script: |
           security find-identity -v -p codesigning || true
