@@ -1,9 +1,5 @@
-A whole new Moodie.
+Now made for iPad and the iPhone Duo.
 
-• Picks from thousands of movies and shows, on the services you actually pay for — and never something you've marked as seen.
-• Tell Moodie what you've already watched: scroll or search the catalog and tap.
-• One-screen pick: poster, why it fits your mood, synopsis, IMDb, and a Watch button that opens the streaming app itself.
-• Rate picks with stars and Moodie leans toward what you love. Thumbs-down anything you never want to see again.
-• Add any streaming service, not just the big ones.
-• Watch Together now uses Popcorn Pals — name the people on your couch once and they're remembered.
-• Everything fits the screen properly, and the mascot finally moves.
+• Fills the whole screen on iPad and the iPhone Duo's open screen — no more phone-sized strip in the middle.
+• Turn your iPad sideways and the pick sits beside its poster, the moods spread into one wall of tiles, and the You screen splits into two columns.
+• Bigger type and bigger buttons on the big screen.
