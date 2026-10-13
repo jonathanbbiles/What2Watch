@@ -27,6 +27,13 @@ workflows:
           source: true
       # A newer push supersedes an in-flight build of the same branch.
       cancel_previous_builds: true
+    # A push that changes only release.json is the "ship" gesture: it is for the `release`
+    # workflow at the bottom of this file, not a new binary. (A changeset filter is a hint,
+    # not a guard — a stray build here is a harmless extra TestFlight upload.)
+    when:
+      changeset:
+        excludes:
+          - 'release.json'
     integrations:
       app_store_connect: ChordLoopAPIKey
     environment:
@@ -404,6 +411,13 @@ workflows:
     artifacts:
       - build/ios/ipa/*.ipa
     publishing:
+      # Gmail is the status bus: a phone chat reads the result here.
+      email:
+        recipients:
+          - jonathanbbiles@gmail.com
+        notify:
+          success: true
+          failure: true
       app_store_connect:
         auth: integration
         submit_to_testflight: true
@@ -638,3 +652,77 @@ workflows:
     scripts:
       - name: Prove the ASC key authenticates for a submission (submits nothing)
         script: bash scripts/asc-auth-check.sh
+
+  # ---------------------------------------------------------------------------
+  # RELEASE: hand a device-tested TestFlight build to App Review, driven by a committed
+  # release.json (contract: the docstring at the top of scripts/release.py). Ported from
+  # Slow Burn's lane, which submitted Slow Burn 1.2. Committing release.json IS the ship;
+  # nothing else in this file can submit (SUBMIT_FOR_REVIEW stays undeclared above).
+  #
+  # Builds nothing and needs no TMDB key: it re-renders the App Store screenshots from the
+  # shipping www/index.html exactly as ios-testflight does (TMDB mocked, our own card art),
+  # then release.py creates the version record if it is missing, attaches the build, writes
+  # What's New (release-notes/<version>.txt) and the review notes, replaces the iPhone 6.9",
+  # 6.5" and iPad 13" sets, and submits — reading the submission's items back first.
+  # ---------------------------------------------------------------------------
+  release:
+    name: Moodie -> submit for App Store review
+    instance_type: mac_mini_m2
+    max_build_duration: 30
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: main
+          include: true
+          source: true
+      cancel_previous_builds: false
+    when:
+      changeset:
+        includes:
+          - 'release.json'
+    integrations:
+      app_store_connect: ChordLoopAPIKey
+    environment:
+      vars:
+        BUNDLE_ID: "com.jonathanbiles.moodie"
+        ASC_APP_ID: "6788245223"
+      node: 22
+    scripts:
+      - name: Release gate (the lane against a fake App Store Connect)
+        script: node scripts/verify-release.js
+      - name: Render the screenshots, submit the tested build for review, read the submission back
+        script: |
+          set -e
+          # The changeset filter is not a guarantee, so the lane checks for itself and
+          # acts only when THIS push changed release.json; a deliberate re-run sets
+          # FORCE_RELEASE=1.
+          if [ "${FORCE_RELEASE:-0}" != 1 ]; then
+            git rev-parse -q --verify HEAD~1 >/dev/null || git fetch -q --deepen=1 origin || true
+            CHANGED="$(git diff --name-only HEAD~1 HEAD -- release.json)" \
+              || { echo "ERROR: cannot diff against HEAD~1; re-run with FORCE_RELEASE=1"; exit 1; }
+            [ -n "$CHANGED" ] || { echo "release.json did not change in this push: nothing to release."; exit 0; }
+          fi
+          # Same render as ios-testflight: the store set shows exactly the shipping UI.
+          npm install --no-save playwright-core
+          rm -f fastlane/screenshots/en-US/*.png
+          node store-assets/render_shots_1_1.mjs
+          ls -la fastlane/screenshots/en-US
+          for set in iphone-6-9 iphone-6-5 ipad-13; do
+            n=$(ls fastlane/screenshots/en-US/$set-*.png 2>/dev/null | wc -l | tr -d ' ')
+            [ "$n" -ge 3 ] || { echo "FATAL: only $n $set screenshots rendered"; exit 1; }
+          done
+          # codemagic-cli-tools' interpreter carries PyJWT; release.py falls back to openssl.
+          CLI_PY="$(head -1 "$(command -v app-store-connect)" | sed 's|^#!||' | awk '{print $1}')"
+          [ -x "$CLI_PY" ] || CLI_PY=python3
+          "$CLI_PY" scripts/release.py "${RELEASE_FILE:-release.json}"
+    artifacts:
+      - release-status.json
+      - fastlane/screenshots/en-US/*.png
+    publishing:
+      email:
+        recipients:
+          - jonathanbbiles@gmail.com
+        notify:
+          success: true
+          failure: true
