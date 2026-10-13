@@ -1,0 +1,9 @@
+{
+  "version": "1.2",
+  "build": "202610120455",
+  "submit": true,
+  "iaps": [],
+  "screenshots": true,
+  "reviewNotes": "fastlane/metadata/review_information/notes.txt",
+  "releaseType": "AFTER_APPROVAL"
+}
