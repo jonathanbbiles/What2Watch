@@ -57,6 +57,7 @@ function png(w, h, c1, c2) {
 const POSTERS = CAT.map((c) => png(342, 513, c[5][0], c[5][1]));
 
 const DEVICES = [
+  { name: 'iphone-6-9', w: 440, h: 956, scale: 3 },   // 1320 x 2868 — Apple's top iPhone set (APP_IPHONE_67)
   { name: 'iphone-6-5', w: 414, h: 896, scale: 3 },   // 1242 x 2688
   { name: 'ipad-13', w: 1024, h: 1366, scale: 2 },    // 2048 x 2732
 ];

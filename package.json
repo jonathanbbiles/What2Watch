@@ -4,8 +4,9 @@
   "private": true,
   "description": "Moodie \u2014 what to watch tonight, by mood.",
   "scripts": {
-    "test": "ruby -E UTF-8 scripts/lint_listing.rb",
-    "layout": "node scripts/layout-check.mjs"
+    "test": "ruby -E UTF-8 scripts/lint_listing.rb && node scripts/verify-release.js",
+    "layout": "node scripts/layout-check.mjs",
+    "test:release": "node scripts/verify-release.js"
   },
   "dependencies": {
     "@capacitor/core": "^6.2.0",

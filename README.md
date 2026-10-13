@@ -18,3 +18,14 @@ renders every screen at iPhone, Duo (closed/open/sideways) and iPad 11"/13" (bot
 fails on sideways scroll or an unreachable last control. Needs a browser, so it is not in
 `npm test` (which is the listing lint). The 13" iPad App Store set is rendered on every build
 by `store-assets/render_shots_1_1.mjs` and uploaded by `fastlane deliver`.
+
+## Shipping to App Review (`release` lane)
+
+Committing `release.json` to `main` **is** the ship; nothing else submits. The `release`
+workflow in `codemagic.yaml` (ported from Slow Burn) acts only when that push changed
+`release.json`, re-renders the store screenshots (iPhone 6.9", 6.5", iPad 13" into
+`fastlane/screenshots/en-US`), then `scripts/release.py` creates the version record if it is
+missing, attaches the build, writes What's New from `release-notes/<version>.txt`, uploads the
+sets and submits, reading the submission back first. The contract is the docstring at the top
+of `scripts/release.py`; `npm test` runs `scripts/verify-release.js`, which drives the lane
+against a fake App Store Connect.
